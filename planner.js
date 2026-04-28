@@ -7,14 +7,14 @@ const jobs = {
         location: "Manchester",
         date: "2026-04-27",
         time: "09:00",
-        isDepot: false
+        isDepot: false,
       },
       deliver: {
         location: "Depot",
         date: "2026-04-27",
         time: "17:00",
-        isDepot: true
-      }
+        isDepot: true,
+      },
     },
     {
       key: "1001-1",
@@ -23,15 +23,15 @@ const jobs = {
         location: "Depot",
         date: "2026-04-28",
         time: "07:00",
-        isDepot: true
+        isDepot: true,
       },
       deliver: {
         location: "Oxford",
         date: "2026-04-28",
         time: "11:00",
-        isDepot: false
-      }
-    }
+        isDepot: false,
+      },
+    },
   ],
 
   1002: [
@@ -42,21 +42,21 @@ const jobs = {
         location: "Bristol",
         date: "2026-04-27",
         time: "10:00",
-        isDepot: false
+        isDepot: false,
       },
       deliver: {
         location: "Swindon",
         date: "2026-04-27",
         time: "13:00",
-        isDepot: false
-      }
-    }
-  ]
+        isDepot: false,
+      },
+    },
+  ],
 };
 
 function renderJobPot() {
   const jobList = document.querySelector(".job-list");
-jobList.innerHTML = `
+  jobList.innerHTML = `
   <div class="job-header">
     <div></div>
     <div>Order</div>
@@ -96,7 +96,7 @@ jobList.innerHTML = `
       row.dataset.move = index;
       row.dataset.movementId = movement.id;
 
-        row.innerHTML = `
+      row.innerHTML = `
 
         <div class="col select-col">
             <input type="checkbox" class="row-select" data-id="${movement.id}" />
@@ -137,20 +137,20 @@ let movements = [
     customer: "Tesco",
     pallets: 2,
     collect: {
-      location: "Coop Manchester",  
+      location: "Coop Manchester",
       detail: "For Tesco Oxford",
       date: "2026-04-27",
       time: "09:00",
-      isDepot: false
+      isDepot: false,
     },
     deliver: {
       location: "Depot",
       detail: "Tesco Oxford Ex Coop Manchester",
       date: "2026-04-27",
       time: "17:00",
-      isDepot: true
+      isDepot: true,
     },
-    runId: null
+    runId: null,
   },
   {
     id: "1001-1",
@@ -160,19 +160,19 @@ let movements = [
     pallets: 2,
     collect: {
       location: "Depot",
-      detail:"Tesco Oxford Ex Coop Manchester",
+      detail: "Tesco Oxford Ex Coop Manchester",
       date: "2026-04-28",
       time: "07:00",
-      isDepot: true
+      isDepot: true,
     },
     deliver: {
       location: "Tesco Oxford",
       detail: "Ex Coop Manchester",
       date: "2026-04-28",
       time: "11:00",
-      isDepot: false
+      isDepot: false,
     },
-    runId: null
+    runId: null,
   },
   {
     id: "1002-0",
@@ -185,17 +185,17 @@ let movements = [
       detail: "For Aldi Swindon",
       date: "2026-04-27",
       time: "10:00",
-      isDepot: false
+      isDepot: false,
     },
     deliver: {
       location: "Aldi Swindon",
       detail: "Ex Aldi Bristol",
       date: "2026-04-27",
       time: "13:00",
-      isDepot: false
+      isDepot: false,
     },
-    runId: null
-  }
+    runId: null,
+  },
 ];
 
 function formatStop(action, stop) {
@@ -205,7 +205,7 @@ function formatStop(action, stop) {
 const runs = {
   1: { name: "Manchester Multi Drop", stops: [] },
   2: { name: "South West", stops: [] },
-  3: { name: "London", stops: [] }
+  3: { name: "London", stops: [] },
 };
 
 let activeRunId = null;
@@ -223,6 +223,8 @@ let currentSearchTerm = "";
 let customDateFilter = "";
 
 let selectedMovements = new Set();
+
+let activeOrderId = null;
 
 const movementAllocations = {};
 
@@ -273,24 +275,24 @@ function attachJobPotEvents() {
     row.addEventListener("dragstart", () => {
       dragPayload = {
         type: "jobMovement",
-        movementId: row.dataset.movementId
+        movementId: row.dataset.movementId,
       };
     });
   });
 
-    document.querySelectorAll(".row-select").forEach((checkbox) => {
+  document.querySelectorAll(".row-select").forEach((checkbox) => {
     checkbox.addEventListener("change", (e) => {
-        const id = e.target.dataset.id;
+      const id = e.target.dataset.id;
 
-        if (e.target.checked) {
+      if (e.target.checked) {
         selectedMovements.add(id);
-        } else {
+      } else {
         selectedMovements.delete(id);
-        }
+      }
 
-        updateSelectedCount();
+      updateSelectedCount();
     });
-    });
+  });
 
   document.querySelectorAll(".run-input").forEach((input) => {
     input.addEventListener("keydown", (e) => {
@@ -320,17 +322,17 @@ function attachJobPotEvents() {
   });
 
   document.querySelectorAll(".order-link").forEach((button) => {
-  button.addEventListener("click", (e) => {
-    e.stopPropagation();
-    renderOrderDetail(button.dataset.order);
+    button.addEventListener("click", (e) => {
+      e.stopPropagation();
+      renderOrderDetail(button.dataset.order);
+    });
   });
-});
 }
 
-    document.getElementById("jobSearchInput").addEventListener("input", (e) => {
-    currentSearchTerm = e.target.value.trim().toLowerCase();
-    applyJobPotFilters();
-    });
+document.getElementById("jobSearchInput").addEventListener("input", (e) => {
+  currentSearchTerm = e.target.value.trim().toLowerCase();
+  applyJobPotFilters();
+});
 
 document.querySelectorAll(".run-input").forEach((input) => {
   input.addEventListener("keydown", (e) => {
@@ -368,7 +370,9 @@ function selectRun(runId) {
   activeRunId = runId;
 
   runCards.forEach((c) => c.classList.remove("active"));
-  document.querySelector(`.run-card[data-run="${runId}"]`)?.classList.add("active");
+  document
+    .querySelector(`.run-card[data-run="${runId}"]`)
+    ?.classList.add("active");
 
   renderActiveRun();
 }
@@ -382,23 +386,23 @@ function assignMovementToRun(movementId, runId) {
 
   removeMovementFromAllRuns(movement.id);
 
-    runs[runId].stops.push({
+  runs[runId].stops.push({
     movementKey: movement.id,
     type: "collect",
     ...movement.collect,
     jobId: movement.jobId,
     orderId: movement.orderId,
-    pallets: movement.pallets
-    });
+    pallets: movement.pallets,
+  });
 
-    runs[runId].stops.push({
+  runs[runId].stops.push({
     movementKey: movement.id,
     type: "deliver",
     ...movement.deliver,
     jobId: movement.jobId,
     orderId: movement.orderId,
-    pallets: movement.pallets
-    });
+    pallets: movement.pallets,
+  });
 
   movement.runId = runId;
   movementAllocations[movement.id] = runId;
@@ -459,9 +463,13 @@ function removeMovementFromAllRuns(movementKey) {
 }
 
 function renderOrderDetail(orderId) {
+  activeOrderId = orderId;
   const orderMovements = movements.filter((m) => m.orderId === orderId);
 
-  activeRouteHeader.textContent = `Order Detail — ${orderId}`;
+  activeRouteHeader.innerHTML = `
+   Order Detail — ${orderId}
+   <button id="addJobBtn" class="primary-btn" data-order="${orderId}">Add Job</button>
+ `;
 
   routeEmpty.style.display = "none";
   routeList.style.display = "flex";
@@ -477,14 +485,18 @@ function renderOrderDetail(orderId) {
     <div>Pallets</div>
     <div>Load</div>
   </div>
-`;
+ `;
 
   orderMovements.forEach((movement) => {
     const row = document.createElement("div");
     row.className = "order-detail-row";
 
     row.innerHTML = `
-      <div>${movement.jobId}</div>
+      <div>
+  <button class="job-link" data-job="${movement.jobId}">
+    ${movement.jobId}
+  </button>
+</div>
       <div>C</div>
       <div>${movement.collect.location}</div>
       <div>${movement.collect.detail}</div>
@@ -497,6 +509,21 @@ function renderOrderDetail(orderId) {
 
     routeList.appendChild(row);
   });
+
+    const addJobBtn = document.getElementById("addJobBtn");
+
+    if (addJobBtn) {
+    addJobBtn.addEventListener("click", () => {
+        openOrderWizard(orderId);
+    });
+    }
+
+    document.querySelectorAll(".job-link").forEach((button) => {
+  button.addEventListener("click", () => {
+    openJobWizardForEdit(button.dataset.job);
+  });
+});
+
 }
 
 function renderActiveRun() {
@@ -549,17 +576,17 @@ function renderActiveRun() {
         type: "routeMovement",
         runId: activeRunId,
         movementKey: stop.movementKey,
-        stopIndex: index
+        stopIndex: index,
       };
     });
 
     stopRow.addEventListener("dragover", (e) => {
-    e.preventDefault();
-    stopRow.classList.add("drag-over");
+      e.preventDefault();
+      stopRow.classList.add("drag-over");
     });
 
     stopRow.addEventListener("dragleave", () => {
-    stopRow.classList.remove("drag-over");
+      stopRow.classList.remove("drag-over");
     });
 
     stopRow.addEventListener("drop", (e) => {
@@ -572,13 +599,13 @@ function renderActiveRun() {
       const toIndex = index;
 
       const movedStop = run.stops.splice(fromIndex, 1)[0];
-        run.stops.splice(toIndex, 0, movedStop);
+      run.stops.splice(toIndex, 0, movedStop);
 
-        stopRow.classList.remove("drag-over");
+      stopRow.classList.remove("drag-over");
 
-        saveRunOrderToSupabase(activeRunId);
+      saveRunOrderToSupabase(activeRunId);
 
-        renderActiveRun();
+      renderActiveRun();
     });
 
     routeList.appendChild(stopRow);
@@ -599,7 +626,7 @@ function updateJobPotAllocationDisplay() {
       row.classList.remove("allocated");
     }
   });
-    applyJobPotFilters();
+  applyJobPotFilters();
 }
 
 unallocateDropzone.addEventListener("dragover", (e) => {
@@ -637,7 +664,9 @@ document.querySelectorAll(".filter-btn").forEach((btn) => {
   btn.addEventListener("click", () => {
     currentFilter = btn.dataset.filter;
 
-    document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+    document
+      .querySelectorAll(".filter-btn")
+      .forEach((b) => b.classList.remove("active"));
     btn.classList.add("active");
 
     applyJobPotFilters();
@@ -648,7 +677,9 @@ document.querySelectorAll(".view-btn").forEach((btn) => {
   btn.addEventListener("click", () => {
     currentView = btn.dataset.view;
 
-    document.querySelectorAll(".view-btn").forEach(b => b.classList.remove("active"));
+    document
+      .querySelectorAll(".view-btn")
+      .forEach((b) => b.classList.remove("active"));
     btn.classList.add("active");
 
     applyJobPotFilters();
@@ -660,10 +691,13 @@ function applyJobPotFilters() {
   const tomorrow = "2026-04-28";
 
   const selectedDate =
-    currentDateFilter === "today" ? today :
-    currentDateFilter === "tomorrow" ? tomorrow :
-    currentDateFilter === "custom" ? customDateFilter :
-    null;
+    currentDateFilter === "today"
+      ? today
+      : currentDateFilter === "tomorrow"
+        ? tomorrow
+        : currentDateFilter === "custom"
+          ? customDateFilter
+          : null;
 
   document.querySelectorAll(".job-group").forEach((group) => {
     const rows = Array.from(group.querySelectorAll(".job-row"));
@@ -681,14 +715,16 @@ function applyJobPotFilters() {
       // COLLECTIONS MODE
       if (currentTypeFilter === "collect") {
         if (!includeDepot && movement.collect.isDepot) return false;
-        if (selectedDate && movement.collect.date !== selectedDate) return false;
+        if (selectedDate && movement.collect.date !== selectedDate)
+          return false;
         return true;
       }
 
       // DELIVERIES MODE
       if (currentTypeFilter === "deliver") {
         if (!includeDepot && movement.deliver.isDepot) return false;
-        if (selectedDate && movement.deliver.date !== selectedDate) return false;
+        if (selectedDate && movement.deliver.date !== selectedDate)
+          return false;
         return true;
       }
 
@@ -741,7 +777,9 @@ document.querySelectorAll(".date-btn").forEach((btn) => {
     customDateFilter = "";
     document.getElementById("jobDatePicker").value = "";
 
-    document.querySelectorAll(".date-btn").forEach(b => b.classList.remove("active"));
+    document
+      .querySelectorAll(".date-btn")
+      .forEach((b) => b.classList.remove("active"));
     btn.classList.add("active");
 
     applyJobPotFilters();
@@ -753,7 +791,9 @@ document.querySelectorAll(".type-btn").forEach((btn) => {
   btn.addEventListener("click", () => {
     currentTypeFilter = btn.dataset.type;
 
-    document.querySelectorAll(".type-btn").forEach(b => b.classList.remove("active"));
+    document
+      .querySelectorAll(".type-btn")
+      .forEach((b) => b.classList.remove("active"));
     btn.classList.add("active");
 
     const jobPotPanel = document.querySelector(".job-pot");
@@ -781,7 +821,9 @@ document.getElementById("jobDatePicker").addEventListener("change", (e) => {
   customDateFilter = e.target.value;
   currentDateFilter = "custom";
 
-  document.querySelectorAll(".date-btn").forEach(b => b.classList.remove("active"));
+  document
+    .querySelectorAll(".date-btn")
+    .forEach((b) => b.classList.remove("active"));
 
   applyJobPotFilters();
 });
@@ -816,11 +858,11 @@ function updateSelectedCount() {
 
 async function saveAllocationToSupabase(movementId, runId) {
   try {
-        const { data: runData, error: runError } = await supabaseClient
-        .from("runs")
-        .select("id")
-        .eq("planner_run_no", runId)
-        .single();
+    const { data: runData, error: runError } = await supabaseClient
+      .from("runs")
+      .select("id")
+      .eq("planner_run_no", runId)
+      .single();
 
     if (runError) throw runError;
 
@@ -833,11 +875,11 @@ async function saveAllocationToSupabase(movementId, runId) {
           account_id: accountId,
           run_id: runData.id,
           movement_id: movementId,
-          stop_sequence: 1
+          stop_sequence: 1,
         },
         {
-          onConflict: "movement_id"
-        }
+          onConflict: "movement_id",
+        },
       );
 
     if (upsertError) throw upsertError;
@@ -864,9 +906,7 @@ async function getAccountId() {
 }
 
 async function loadAllocationsFromSupabase() {
-  const { data, error } = await supabaseClient
-    .from("run_allocations")
-    .select(`
+  const { data, error } = await supabaseClient.from("run_allocations").select(`
         movement_id,
         stop_sequence,
         collect_sequence,
@@ -893,31 +933,32 @@ async function loadAllocationsFromSupabase() {
     movementAllocations[movement.id] = plannerRunNo;
 
     if (!runs[plannerRunNo].stops.some((s) => s.movementKey === movement.id)) {
-    runs[plannerRunNo].stops.push({
-    movementKey: movement.id,
-    type: "collect",
-    sequence: allocation.collect_sequence || allocation.stop_sequence || 1,
-    ...movement.collect,
-    jobId: movement.jobId,
-    orderId: movement.orderId,
-    pallets: movement.pallets
-    });
+      runs[plannerRunNo].stops.push({
+        movementKey: movement.id,
+        type: "collect",
+        sequence: allocation.collect_sequence || allocation.stop_sequence || 1,
+        ...movement.collect,
+        jobId: movement.jobId,
+        orderId: movement.orderId,
+        pallets: movement.pallets,
+      });
 
-    runs[plannerRunNo].stops.push({
-    movementKey: movement.id,
-    type: "deliver",
-    sequence: allocation.deliver_sequence || (allocation.stop_sequence || 1) + 1,
-    ...movement.deliver,
-    jobId: movement.jobId,
-    orderId: movement.orderId,
-    pallets: movement.pallets
-    });
+      runs[plannerRunNo].stops.push({
+        movementKey: movement.id,
+        type: "deliver",
+        sequence:
+          allocation.deliver_sequence || (allocation.stop_sequence || 1) + 1,
+        ...movement.deliver,
+        jobId: movement.jobId,
+        orderId: movement.orderId,
+        pallets: movement.pallets,
+      });
     }
   });
 
-    Object.values(runs).forEach(run => {
+  Object.values(runs).forEach((run) => {
     run.stops.sort((a, b) => a.sequence - b.sequence);
-    });
+  });
 
   updateJobPotAllocationDisplay();
 
@@ -953,9 +994,7 @@ document.getElementById("clearSelectionBtn").addEventListener("click", () => {
 });
 
 async function loadPlannerDataFromSupabase() {
-  const { data, error } = await supabaseClient
-    .from("orders")
-.select(`
+  const { data, error } = await supabaseClient.from("orders").select(`
   id,
   order_number,
   jobs (
@@ -999,21 +1038,23 @@ async function loadPlannerDataFromSupabase() {
           jobId: job.job_number,
           customer: "Demo Customer",
           pallets: 1,
-            collect: {
+          collect: {
             location: job.collection_address?.name || "Collection address",
-            detail: `${job.collection_address?.town || ""} ${job.collection_address?.postcode || ""}`.trim(),
+            detail:
+              `${job.collection_address?.town || ""} ${job.collection_address?.postcode || ""}`.trim(),
             date: "2026-04-27",
             time: "09:00",
-            isDepot: false
-            },
-            deliver: {
+            isDepot: false,
+          },
+          deliver: {
             location: job.delivery_address?.name || "Delivery address",
-            detail: `${job.delivery_address?.town || ""} ${job.delivery_address?.postcode || ""}`.trim(),
+            detail:
+              `${job.delivery_address?.town || ""} ${job.delivery_address?.postcode || ""}`.trim(),
             date: "2026-04-27",
             time: "17:00",
-            isDepot: false
-            },
-          runId: null
+            isDepot: false,
+          },
+          runId: null,
         });
       });
     });
@@ -1066,4 +1107,383 @@ async function saveRunOrderToSupabase(runId) {
   } catch (err) {
     console.error("Error saving order:", err);
   }
+}
+
+const orderWizard = document.getElementById("orderWizard");
+const newOrderBtn = document.getElementById("newOrderBtn");
+const closeWizardBtn = document.getElementById("closeWizardBtn");
+const cancelWizardBtn = document.getElementById("cancelWizardBtn");
+const saveWizardBtn = document.getElementById("saveWizardBtn");
+
+function openOrderWizard(orderId = activeOrderId) {
+  activeOrderId = orderId;
+  orderWizard.classList.remove("hidden");
+}
+
+function closeOrderWizard() {
+  orderWizard.classList.add("hidden");
+}
+
+newOrderBtn.addEventListener("click", createBlankOrder);
+closeWizardBtn.addEventListener("click", closeOrderWizard);
+cancelWizardBtn.addEventListener("click", closeOrderWizard);
+
+saveWizardBtn.addEventListener("click", (e) => {
+  e.preventDefault();
+  const wizardData = {
+    customer: document.getElementById("wizardCustomer").value.trim(),
+    orderNumber: document.getElementById("wizardOrderNumber").value.trim(),
+    collectName: document.getElementById("wizardCollectName").value.trim(),
+    collectTown: document.getElementById("wizardCollectTown").value.trim(),
+    collectPostcode: document
+      .getElementById("wizardCollectPostcode")
+      .value.trim(),
+    deliverName: document.getElementById("wizardDeliverName").value.trim(),
+    deliverTown: document.getElementById("wizardDeliverTown").value.trim(),
+    deliverPostcode: document
+      .getElementById("wizardDeliverPostcode")
+      .value.trim(),
+    pallets: Number(document.getElementById("wizardPallets").value || 1),
+    planningMode: document.getElementById("wizardPlanningMode").value,
+  };
+
+  console.log("Wizard data:", wizardData);
+  createJobFromWizard(activeOrderId, wizardData);
+});
+
+async function createOrderFromWizard(wizardData) {
+  try {
+    const accountId = await getAccountId();
+
+    // 1. Create or find customer
+    // 1. Create customer for now
+    const { data: customer, error: customerError } = await supabaseClient
+      .from("customers")
+      .insert({
+        account_id: accountId,
+        name: wizardData.customer || "Unknown Customer",
+      })
+      .select()
+      .single();
+
+    if (customerError) throw customerError;
+
+    // 2. Create collection address
+    const { data: collectionAddress, error: collectionError } =
+      await supabaseClient
+        .from("addresses")
+        .insert({
+          account_id: accountId,
+          customer_id: customer.id,
+          name: wizardData.collectName,
+          town: wizardData.collectTown,
+          postcode: wizardData.collectPostcode,
+        })
+        .select()
+        .single();
+
+    if (collectionError) throw collectionError;
+
+    // 3. Create delivery address
+    const { data: deliveryAddress, error: deliveryError } = await supabaseClient
+      .from("addresses")
+      .insert({
+        account_id: accountId,
+        customer_id: customer.id,
+        name: wizardData.deliverName,
+        town: wizardData.deliverTown,
+        postcode: wizardData.deliverPostcode,
+      })
+      .select()
+      .single();
+
+    if (deliveryError) throw deliveryError;
+
+    // 4. Create order
+    const { data: order, error: orderError } = await supabaseClient
+      .from("orders")
+      .insert({
+        account_id: accountId,
+        customer_id: customer.id,
+        order_number: wizardData.orderNumber,
+        status: "planned",
+      })
+      .select()
+      .single();
+
+    if (orderError) throw orderError;
+
+    // 5. Create job
+    const { data: job, error: jobError } = await supabaseClient
+      .from("jobs")
+      .insert({
+        account_id: accountId,
+        order_id: order.id,
+        job_number: `${wizardData.orderNumber}-A`,
+        planning_mode: wizardData.planningMode,
+        status: "unplanned",
+        pallets: wizardData.pallets,
+        collection_address_id: collectionAddress.id,
+        delivery_address_id: deliveryAddress.id,
+      })
+      .select()
+      .single();
+
+    if (jobError) throw jobError;
+
+    // 6. Create movement
+    // 6. Create movement(s)
+    if (wizardData.planningMode === "direct") {
+      const { error: movementError } = await supabaseClient
+        .from("movements")
+        .insert({
+          account_id: accountId,
+          job_id: job.id,
+          movement_type: "direct",
+          from_address_id: collectionAddress.id,
+          to_address_id: deliveryAddress.id,
+          sequence_no: 1,
+          active: true,
+        });
+
+      if (movementError) throw movementError;
+    }
+
+    if (wizardData.planningMode === "via_depot") {
+      const { data: depotAddress, error: depotError } = await supabaseClient
+        .from("addresses")
+        .select("id")
+        .eq("account_id", accountId)
+        .eq("name", "Depot")
+        .single();
+
+      if (depotError) throw depotError;
+
+      const { error: movementError } = await supabaseClient
+        .from("movements")
+        .insert([
+          {
+            account_id: accountId,
+            job_id: job.id,
+            movement_type: "to_depot",
+            from_address_id: collectionAddress.id,
+            to_address_id: depotAddress.id,
+            sequence_no: 1,
+            active: true,
+          },
+          {
+            account_id: accountId,
+            job_id: job.id,
+            movement_type: "from_depot",
+            from_address_id: depotAddress.id,
+            to_address_id: deliveryAddress.id,
+            sequence_no: 2,
+            active: true,
+          },
+        ]);
+
+      if (movementError) throw movementError;
+    }
+
+    alert("Order created");
+
+    closeOrderWizard();
+    await loadPlannerDataFromSupabase();
+  } catch (err) {
+    console.error("Error creating order:", err);
+    alert("Could not create order. Check console.");
+  }
+}
+
+async function createJobFromWizard(orderNumber, wizardData) {
+  try {
+    if (!orderNumber) {
+      alert("No active order selected");
+      return;
+    }
+
+    const accountId = await getAccountId();
+
+    const { data: order, error: orderError } = await supabaseClient
+      .from("orders")
+      .select("id, order_number")
+      .eq("order_number", orderNumber)
+      .single();
+
+    if (orderError) throw orderError;
+
+    const { data: collectionAddress, error: collectionError } = await supabaseClient
+      .from("addresses")
+      .insert({
+        account_id: accountId,
+        name: wizardData.collectName,
+        town: wizardData.collectTown,
+        postcode: wizardData.collectPostcode
+      })
+      .select()
+      .single();
+
+    if (collectionError) throw collectionError;
+
+    const { data: deliveryAddress, error: deliveryError } = await supabaseClient
+      .from("addresses")
+      .insert({
+        account_id: accountId,
+        name: wizardData.deliverName,
+        town: wizardData.deliverTown,
+        postcode: wizardData.deliverPostcode
+      })
+      .select()
+      .single();
+
+    if (deliveryError) throw deliveryError;
+
+    const { data: existingJobs, error: jobsError } = await supabaseClient
+      .from("jobs")
+      .select("id")
+      .eq("order_id", order.id);
+
+    if (jobsError) throw jobsError;
+
+    const suffix = String.fromCharCode(65 + existingJobs.length);
+    const jobNumber = `${order.order_number}-${suffix}`;
+
+    const { data: job, error: jobError } = await supabaseClient
+      .from("jobs")
+      .insert({
+        account_id: accountId,
+        order_id: order.id,
+        job_number: jobNumber,
+        planning_mode: wizardData.planningMode,
+        status: "unplanned",
+        pallets: wizardData.pallets,
+        collection_address_id: collectionAddress.id,
+        delivery_address_id: deliveryAddress.id
+      })
+      .select()
+      .single();
+
+    if (jobError) throw jobError;
+
+    if (wizardData.planningMode === "direct") {
+      const { error: movementError } = await supabaseClient
+        .from("movements")
+        .insert({
+          account_id: accountId,
+          job_id: job.id,
+          movement_type: "direct",
+          from_address_id: collectionAddress.id,
+          to_address_id: deliveryAddress.id,
+          sequence_no: 1,
+          active: true
+        });
+
+      if (movementError) throw movementError;
+    }
+
+    if (wizardData.planningMode === "via_depot") {
+      const { data: depotAddress, error: depotError } = await supabaseClient
+        .from("addresses")
+        .select("id")
+        .eq("account_id", accountId)
+        .eq("name", "Depot")
+        .single();
+
+      if (depotError) throw depotError;
+
+      const { error: movementError } = await supabaseClient
+        .from("movements")
+        .insert([
+          {
+            account_id: accountId,
+            job_id: job.id,
+            movement_type: "to_depot",
+            from_address_id: collectionAddress.id,
+            to_address_id: depotAddress.id,
+            sequence_no: 1,
+            active: true
+          },
+          {
+            account_id: accountId,
+            job_id: job.id,
+            movement_type: "from_depot",
+            from_address_id: depotAddress.id,
+            to_address_id: deliveryAddress.id,
+            sequence_no: 2,
+            active: true
+          }
+        ]);
+
+      if (movementError) throw movementError;
+    }
+
+    alert("Job created");
+
+    closeOrderWizard();
+    await loadPlannerDataFromSupabase();
+    renderOrderDetail(order.order_number);
+
+  } catch (err) {
+    console.error("Error creating job:", err);
+    alert("Could not create job. Check console.");
+  }
+}
+
+async function createBlankOrder() {
+  try {
+    const accountId = await getAccountId();
+
+    // simple order number generator
+    const orderNumber = "ORD-" + Math.floor(1000 + Math.random() * 9000);
+
+    const { data: order, error } = await supabaseClient
+      .from("orders")
+      .insert({
+        account_id: accountId,
+        order_number: orderNumber,
+        status: "draft",
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    console.log("Created blank order:", order);
+
+    // open order detail panel
+    renderOrderDetail(order.order_number);
+
+    // OPTIONAL: reload planner so order appears in pot
+    await loadPlannerDataFromSupabase();
+  } catch (err) {
+    console.error("Error creating blank order:", err);
+    alert("Could not create order");
+  }
+}
+
+function openJobWizardForEdit(jobNumber) {
+  const movement = movements.find((m) => m.jobId === jobNumber);
+
+  if (!movement) {
+    alert("Could not find job details");
+    return;
+  }
+
+  activeOrderId = movement.orderId;
+
+  document.getElementById("wizardCustomer").value = movement.customer || "";
+  document.getElementById("wizardOrderNumber").value = movement.orderId || "";
+  document.getElementById("wizardCollectName").value = movement.collect.location || "";
+  document.getElementById("wizardCollectTown").value = "";
+  document.getElementById("wizardCollectPostcode").value = movement.collect.detail || "";
+  document.getElementById("wizardDeliverName").value = movement.deliver.location || "";
+  document.getElementById("wizardDeliverTown").value = "";
+  document.getElementById("wizardDeliverPostcode").value = movement.deliver.detail || "";
+  document.getElementById("wizardPallets").value = movement.pallets || 1;
+  document.getElementById("wizardPlanningMode").value =
+    movement.movement_type === "to_depot" || movement.movement_type === "from_depot"
+      ? "via_depot"
+      : "direct";
+
+  openOrderWizard(activeOrderId);
 }

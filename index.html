@@ -16,14 +16,19 @@
       <div class="top">
         <!-- JOB POT -->
         <div class="panel job-pot">
-          <div class="panel-header">
+            <div class="panel-header">
             <h2>Job Pot</h2>
-            <input
-              id="jobSearchInput"
-              type="text"
-              placeholder="Search jobs..."
-            />
-          </div>
+
+            <div class="panel-actions">
+                <button id="newOrderBtn" class="primary-btn">New Order</button>
+
+                <input
+                id="jobSearchInput"
+                type="text"
+                placeholder="Search jobs..."
+                />
+            </div>
+            </div>
 
           <div class="job-controls">
             <div class="filter-group">
@@ -136,6 +141,75 @@
         </div>
       </div>
     </div>
+
+    <div id="orderWizard" class="wizard-backdrop hidden">
+  <div class="wizard-panel">
+    <div class="wizard-header">
+      <h2>New Job</h2>
+      <button id="closeWizardBtn" class="icon-btn">×</button>
+    </div>
+
+    <div class="wizard-grid">
+      <label>
+        Customer
+        <input id="wizardCustomer" type="text" placeholder="Demo Customer Ltd" />
+      </label>
+
+      <label>
+        Order number
+        <input id="wizardOrderNumber" type="text" placeholder="ORD-1002" />
+      </label>
+
+      <label>
+        Collection name
+        <input id="wizardCollectName" type="text" placeholder="Collection site" />
+      </label>
+
+      <label>
+        Collection town
+        <input id="wizardCollectTown" type="text" placeholder="Leeds" />
+      </label>
+
+      <label>
+        Collection postcode
+        <input id="wizardCollectPostcode" type="text" placeholder="LS1 1AA" />
+      </label>
+
+      <label>
+        Delivery name
+        <input id="wizardDeliverName" type="text" placeholder="Delivery site" />
+      </label>
+
+      <label>
+        Delivery town
+        <input id="wizardDeliverTown" type="text" placeholder="Manchester" />
+      </label>
+
+      <label>
+        Delivery postcode
+        <input id="wizardDeliverPostcode" type="text" placeholder="M1 1AE" />
+      </label>
+
+      <label>
+        Pallets
+        <input id="wizardPallets" type="number" min="1" value="1" />
+      </label>
+
+      <label>
+        Planning mode
+        <select id="wizardPlanningMode">
+          <option value="direct">Direct</option>
+          <option value="via_depot">Via depot</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="wizard-footer">
+      <button id="cancelWizardBtn" class="secondary-btn">Cancel</button>
+      <button id="saveWizardBtn" class="primary-btn">Create Job</button>
+    </div>
+  </div>
+</div>
 
     <script src="supabase.js"></script>
 
