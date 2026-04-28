@@ -226,6 +226,8 @@ let selectedMovements = new Set();
 
 let activeOrderId = null;
 
+let editingJobNumber = null;
+
 const movementAllocations = {};
 
 renderJobPot();
@@ -514,6 +516,7 @@ function renderOrderDetail(orderId) {
 
     if (addJobBtn) {
     addJobBtn.addEventListener("click", () => {
+        editingJobNumber = null;
         openOrderWizard(orderId);
     });
     }
@@ -1148,7 +1151,11 @@ saveWizardBtn.addEventListener("click", (e) => {
   };
 
   console.log("Wizard data:", wizardData);
+  if (editingJobNumber) {
+  updateJobFromWizard(editingJobNumber, wizardData);
+} else {
   createJobFromWizard(activeOrderId, wizardData);
+}
 });
 
 async function createOrderFromWizard(wizardData) {
@@ -1429,6 +1436,11 @@ async function createJobFromWizard(orderNumber, wizardData) {
   }
 }
 
+async function updateJobFromWizard(jobNumber, wizardData) {
+  console.log("Ready to update job:", jobNumber, wizardData);
+  alert("Edit mode detected. Next step will update this job.");
+}
+
 async function createBlankOrder() {
   try {
     const accountId = await getAccountId();
@@ -1462,7 +1474,9 @@ async function createBlankOrder() {
 }
 
 function openJobWizardForEdit(jobNumber) {
+  editingJobNumber = jobNumber;
   const movement = movements.find((m) => m.jobId === jobNumber);
+  
 
   if (!movement) {
     alert("Could not find job details");
