@@ -1231,8 +1231,12 @@ saveWizardBtn.addEventListener("click", (e) => {
     deliverPostcode: document
       .getElementById("wizardDeliverPostcode")
       .value.trim(),
+    collectionDate: document.getElementById("wizardCollectionDate").value,
+    collectionTime: document.getElementById("wizardCollectionTime").value || "09:00",
+    deliveryDate: document.getElementById("wizardDeliveryDate").value,
+    deliveryTime: document.getElementById("wizardDeliveryTime").value || "11:00",
     pallets: Number(document.getElementById("wizardPallets").value || 1),
-    planningMode: document.getElementById("wizardPlanningMode").value,
+    planningMode: document.getElementById("wizardPlanningMode").value
   };
 
   console.log("Wizard data:", wizardData);
@@ -1450,7 +1454,11 @@ async function createJobFromWizard(orderNumber, wizardData) {
         status: "unplanned",
         pallets: wizardData.pallets,
         collection_address_id: collectionAddress.id,
-        delivery_address_id: deliveryAddress.id
+        delivery_address_id: deliveryAddress.id,
+        collection_date: wizardData.collectionDate || null,
+        collection_time: wizardData.collectionTime || null,
+        delivery_date: wizardData.deliveryDate || null,
+        delivery_time: wizardData.deliveryTime || null
       })
       .select()
       .single();
@@ -1474,11 +1482,13 @@ async function createJobFromWizard(orderNumber, wizardData) {
     }
 
     if (wizardData.planningMode === "via_depot") {
-      const { data: depotAddress, error: depotError } = await supabaseClient
+        const { data: depotAddress, error: depotError } = await supabaseClient
         .from("addresses")
         .select("id")
         .eq("account_id", accountId)
         .eq("name", "Depot")
+        .eq("postcode", "DEP 001")
+        .limit(1)
         .single();
 
       if (depotError) throw depotError;
@@ -1561,10 +1571,14 @@ async function updateJobFromWizard(jobNumber, wizardData) {
     // 4. Update job core fields
     const { error: updateJobError } = await supabaseClient
       .from("jobs")
-      .update({
+        .update({
         pallets: wizardData.pallets,
-        planning_mode: wizardData.planningMode
-      })
+        planning_mode: wizardData.planningMode,
+        collection_date: wizardData.collectionDate || null,
+        collection_time: wizardData.collectionTime || null,
+        delivery_date: wizardData.deliveryDate || null,
+        delivery_time: wizardData.deliveryTime || null
+        })
       .eq("id", job.id);
 
     if (updateJobError) throw updateJobError;
@@ -1607,11 +1621,13 @@ async function updateJobFromWizard(jobNumber, wizardData) {
     }
 
     if (wizardData.planningMode === "via_depot") {
-      const { data: depotAddress, error: depotError } = await supabaseClient
+        const { data: depotAddress, error: depotError } = await supabaseClient
         .from("addresses")
         .select("id")
         .eq("account_id", accountId)
         .eq("name", "Depot")
+        .eq("postcode", "DEP 001")
+        .limit(1)
         .single();
 
       if (depotError) throw depotError;
@@ -1687,31 +1703,67 @@ async function createBlankOrder() {
   }
 }
 
-function openJobWizardForEdit(jobNumber) {
-  editingJobNumber = jobNumber;
-  const movement = movements.find((m) => m.jobId === jobNumber);
-  
+async function openJobWizardForEdit(jobNumber) {
+  try {
+    editingJobNumber = jobNumber;
 
-  if (!movement) {
-    alert("Could not find job details");
-    return;
+    const { data: job, error } = await supabaseClient
+      .from("jobs")
+      .select(`
+        id,
+        job_number,
+        pallets,
+        planning_mode,
+        collection_date,
+        collection_time,
+        delivery_date,
+        delivery_time,
+        collection_address:addresses!jobs_collection_address_id_fkey (
+          name,
+          town,
+          postcode
+        ),
+        delivery_address:addresses!jobs_delivery_address_id_fkey (
+          name,
+          town,
+          postcode
+        ),
+        orders (
+          order_number
+        )
+      `)
+      .eq("job_number", jobNumber)
+      .single();
+
+    if (error) throw error;
+
+    activeOrderId = job.orders.order_number;
+
+    // Fill wizard with TRUE data
+    document.getElementById("wizardCustomer").value = "";
+    document.getElementById("wizardOrderNumber").value = job.orders.order_number;
+
+    document.getElementById("wizardCollectName").value = job.collection_address?.name || "";
+    document.getElementById("wizardCollectTown").value = job.collection_address?.town || "";
+    document.getElementById("wizardCollectPostcode").value = job.collection_address?.postcode || "";
+
+    document.getElementById("wizardDeliverName").value = job.delivery_address?.name || "";
+    document.getElementById("wizardDeliverTown").value = job.delivery_address?.town || "";
+    document.getElementById("wizardDeliverPostcode").value = job.delivery_address?.postcode || "";
+
+    document.getElementById("wizardCollectionDate").value = job.collection_date || "";
+    document.getElementById("wizardCollectionTime").value = job.collection_time || "09:00";
+
+    document.getElementById("wizardDeliveryDate").value = job.delivery_date || "";
+    document.getElementById("wizardDeliveryTime").value = job.delivery_time || "11:00";
+
+    document.getElementById("wizardPallets").value = job.pallets || 1;
+    document.getElementById("wizardPlanningMode").value = job.planning_mode;
+
+    openOrderWizard(activeOrderId);
+
+  } catch (err) {
+    console.error("Error loading job:", err);
+    alert("Could not load job");
   }
-
-  activeOrderId = movement.orderId;
-
-  document.getElementById("wizardCustomer").value = movement.customer || "";
-  document.getElementById("wizardOrderNumber").value = movement.orderId || "";
-  document.getElementById("wizardCollectName").value = movement.collect.location || "";
-  document.getElementById("wizardCollectTown").value = "";
-  document.getElementById("wizardCollectPostcode").value = movement.collect.detail || "";
-  document.getElementById("wizardDeliverName").value = movement.deliver.location || "";
-  document.getElementById("wizardDeliverTown").value = "";
-  document.getElementById("wizardDeliverPostcode").value = movement.deliver.detail || "";
-  document.getElementById("wizardPallets").value = movement.pallets || 1;
-  document.getElementById("wizardPlanningMode").value =
-    movement.movement_type === "to_depot" || movement.movement_type === "from_depot"
-      ? "via_depot"
-      : "direct";
-
-  openOrderWizard(activeOrderId);
 }
