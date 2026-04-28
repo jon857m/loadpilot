@@ -814,11 +814,11 @@ function updateSelectedCount() {
 
 async function saveAllocationToSupabase(movementId, runId) {
   try {
-    const { data: runData, error: runError } = await supabaseClient
-      .from("runs")
-      .select("id")
-      .limit(1)
-      .single();
+        const { data: runData, error: runError } = await supabaseClient
+        .from("runs")
+        .select("id")
+        .eq("planner_run_no", runId)
+        .single();
 
     if (runError) throw runError;
 
@@ -866,10 +866,11 @@ async function loadAllocationsFromSupabase() {
     .from("run_allocations")
     .select(`
       movement_id,
-      runs (
+        runs (
         id,
-        run_name
-      )
+        run_name,
+        planner_run_no
+        )
     `);
 
   if (error) {
@@ -881,11 +882,13 @@ async function loadAllocationsFromSupabase() {
     const movement = movements.find((m) => m.id === allocation.movement_id);
     if (!movement) return;
 
-    movement.runId = "1";
-    movementAllocations[movement.id] = "1";
+    const plannerRunNo = allocation.runs?.planner_run_no || "1";
 
-    if (!runs["1"].stops.some((s) => s.movementKey === movement.id)) {
-      runs["1"].stops.push({
+    movement.runId = plannerRunNo;
+    movementAllocations[movement.id] = plannerRunNo;
+
+    if (!runs[plannerRunNo].stops.some((s) => s.movementKey === movement.id)) {
+      runs[plannerRunNo].stops.push({
         movementKey: movement.id,
         type: "collect",
         ...movement.collect,
@@ -894,7 +897,7 @@ async function loadAllocationsFromSupabase() {
         pallets: movement.pallets
       });
 
-      runs["1"].stops.push({
+      runs[plannerRunNo].stops.push({
         movementKey: movement.id,
         type: "deliver",
         ...movement.deliver,
