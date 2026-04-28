@@ -15,7 +15,11 @@
         <div class="panel job-pot">
           <div class="panel-header">
             <h2>Job Pot</h2>
-            <input id="jobSearchInput" type="text" placeholder="Search jobs..." />
+            <input
+              id="jobSearchInput"
+              type="text"
+              placeholder="Search jobs..."
+            />
           </div>
 
           <div class="job-controls">
@@ -37,10 +41,10 @@
 
           <div class="job-controls">
             <div class="date-group">
-            <button class="date-btn active" data-date="all">All Dates</button>
-            <button class="date-btn" data-date="today">Today</button>
-            <button class="date-btn" data-date="tomorrow">Tomorrow</button>
-            <input id="jobDatePicker" class="date-picker" type="date" />
+              <button class="date-btn active" data-date="all">All Dates</button>
+              <button class="date-btn" data-date="today">Today</button>
+              <button class="date-btn" data-date="tomorrow">Tomorrow</button>
+              <input id="jobDatePicker" class="date-picker" type="date" />
             </div>
 
             <div class="type-group">
@@ -57,9 +61,36 @@
             </div>
           </div>
 
-        <div class="job-list">
-        <!-- Job rows will be rendered by planner.js -->
-        </div>
+          <div class="bulk-bar">
+            <span id="selectedCount">0 selected</span>
+
+            <input id="bulkRunInput" type="text" placeholder="Run" />
+
+            <button id="assignSelectedBtn">Assign Selected</button>
+            <button id="clearSelectionBtn">Clear Selection</button>
+          </div>
+
+          <div class="job-list">
+            <!-- HEADER ROW -->
+            <div class="job-header">
+              <div></div>
+              <!-- checkbox space -->
+              <div>Order</div>
+
+              <div>C/D</div>
+              <div>Depot</div>
+              <div>Detail</div>
+
+              <div>C/D</div>
+              <div>Depot</div>
+              <div>Detail</div>
+
+              <div>Pallets</div>
+              <div>Load</div>
+            </div>
+
+            <!-- Job rows will be rendered by planner.js -->
+          </div>
         </div>
 
         <!-- RUNS -->

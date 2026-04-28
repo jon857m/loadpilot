@@ -184,9 +184,10 @@ body {
 .job-row {
   display: grid;
   grid-template-columns:
-    70px
-    28px 170px 1fr
-    28px 170px 1fr
+    30px
+    90px
+    28px 220px 1fr
+    28px 220px 1fr
     90px
     80px;
   gap: 8px;
@@ -194,7 +195,6 @@ body {
   background: #1d2128;
   border-radius: 6px;
   border: 1px solid #2a2d33;
-  cursor: grab;
 }
 
 .job-row:hover {
@@ -362,8 +362,11 @@ body {
 .job-pot.show-collect .job-row,
 .job-pot.show-deliver .job-row {
   grid-template-columns:
-    70px
-    28px 180px 1fr
+    30px
+    90px
+    28px
+    220px
+    1fr
     90px
     80px;
 }
@@ -411,4 +414,93 @@ body {
 .runs,
 .bottom {
   overflow: auto;
+}
+
+.bulk-bar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid #2a2d33;
+  margin-bottom: 8px;
+}
+
+.bulk-bar input {
+  width: 60px;
+  background: #1d2128;
+  border: 1px solid #2a2d33;
+  color: #ccc;
+  padding: 4px;
+  border-radius: 6px;
+}
+
+.route-stop-grid {
+  display: grid;
+  grid-template-columns: 40px 70px 28px 170px 1fr 90px 100px;
+  gap: 8px;
+  align-items: center;
+  font-size: 12px;
+}
+
+.job-header {
+  display: grid;
+  grid-template-columns:
+    30px
+    90px
+    28px 220px 1fr
+    28px 220px 1fr
+    90px
+    80px;
+
+  gap: 8px;
+  padding: 6px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #9aa3ad;
+  border-bottom: 1px solid #2a2d33;
+}
+
+.job-header {
+  position: sticky;
+  top: 0;
+  background: #11131a;
+  z-index: 5;
+}
+
+.job-pot.show-collect .job-row,
+.job-pot.show-collect .job-header,
+.job-pot.show-deliver .job-row,
+.job-pot.show-deliver .job-header {
+  grid-template-columns:
+    30px
+    90px
+    28px 220px 1fr
+    90px
+    80px;
+}
+
+.job-header div {
+  opacity: 0.7;
+}
+
+.job-pot.show-collect .job-header .deliver-head {
+  display: none;
+}
+
+.job-pot.show-deliver .job-header .collect-head {
+  display: none;
+}
+
+.route-header,
+.order-detail-header {
+  background: #11131a;
+  color: #9aa3ad;
+  font-weight: 600;
+  font-size: 11px;
+  border-bottom: 1px solid #2a2d33;
+}
+
+.route-header div,
+.order-detail-header div {
+  opacity: 0.75;
 }

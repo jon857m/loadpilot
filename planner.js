@@ -56,7 +56,23 @@ const jobs = {
 
 function renderJobPot() {
   const jobList = document.querySelector(".job-list");
-  jobList.innerHTML = "";
+jobList.innerHTML = `
+  <div class="job-header">
+    <div></div>
+    <div>Order</div>
+
+    <div class="collect-head">C/D</div>
+    <div class="collect-head">Depot</div>
+    <div class="collect-head">Detail</div>
+
+    <div class="deliver-head">C/D</div>
+    <div class="deliver-head">Depot</div>
+    <div class="deliver-head">Detail</div>
+
+    <div>Pallets</div>
+    <div>Load</div>
+  </div>
+`;
 
   const grouped = {};
 
@@ -81,8 +97,13 @@ function renderJobPot() {
       row.dataset.movementId = movement.id;
 
         row.innerHTML = `
+
+        <div class="col select-col">
+            <input type="checkbox" class="row-select" data-id="${movement.id}" />
+        </div>
+
         <div class="col order-id">
-          ${index === 0 ? `<button class="order-link" data-order="${movement.orderId}">${movement.orderId}</button>` : ""}
+          <button class="order-link" data-order="${movement.orderId}">${movement.orderId}</button>
         </div>
 
         <div class="col cd-col collect-col">C</div>
@@ -201,6 +222,8 @@ let currentSearchTerm = "";
 
 let customDateFilter = "";
 
+let selectedMovements = new Set();
+
 const movementAllocations = {};
 
 renderJobPot();
@@ -254,6 +277,20 @@ function attachJobPotEvents() {
       };
     });
   });
+
+    document.querySelectorAll(".row-select").forEach((checkbox) => {
+    checkbox.addEventListener("change", (e) => {
+        const id = e.target.dataset.id;
+
+        if (e.target.checked) {
+        selectedMovements.add(id);
+        } else {
+        selectedMovements.delete(id);
+        }
+
+        updateSelectedCount();
+    });
+    });
 
   document.querySelectorAll(".run-input").forEach((input) => {
     input.addEventListener("keydown", (e) => {
@@ -345,19 +382,23 @@ function assignMovementToRun(movementId, runId) {
 
   removeMovementFromAllRuns(movement.id);
 
-  runs[runId].stops.push({
+    runs[runId].stops.push({
     movementKey: movement.id,
     type: "collect",
     ...movement.collect,
-    jobId: movement.jobId
-  });
+    jobId: movement.jobId,
+    orderId: movement.orderId,
+    pallets: movement.pallets
+    });
 
-  runs[runId].stops.push({
+    runs[runId].stops.push({
     movementKey: movement.id,
     type: "deliver",
     ...movement.deliver,
-    jobId: movement.jobId
-  });
+    jobId: movement.jobId,
+    orderId: movement.orderId,
+    pallets: movement.pallets
+    });
 
   movement.runId = runId;
   movementAllocations[movement.id] = runId;
@@ -415,7 +456,19 @@ function renderOrderDetail(orderId) {
 
   routeEmpty.style.display = "none";
   routeList.style.display = "flex";
-  routeList.innerHTML = "";
+  routeList.innerHTML = `
+  <div class="order-detail-header order-detail-row">
+    <div>Job</div>
+    <div>C/D</div>
+    <div>Depot</div>
+    <div>Detail</div>
+    <div>C/D</div>
+    <div>Depot</div>
+    <div>Detail</div>
+    <div>Pallets</div>
+    <div>Load</div>
+  </div>
+`;
 
   orderMovements.forEach((movement) => {
     const row = document.createElement("div");
@@ -443,7 +496,19 @@ function renderActiveRun() {
   const run = runs[activeRunId];
 
   activeRouteHeader.textContent = `Active Route — Run ${activeRunId}: ${run.name}`;
-  routeList.innerHTML = "";
+
+
+  routeList.innerHTML = `
+  <div class="route-header route-stop-grid">
+    <div>Seq</div>
+    <div>Job</div>
+    <div>C/D</div>
+    <div>Depot</div>
+    <div>Detail</div>
+    <div>Pallets</div>
+    <div>Order</div>
+  </div>
+`;
 
   if (!run.stops.length) {
     routeEmpty.style.display = "block";
@@ -457,10 +522,20 @@ function renderActiveRun() {
 
   run.stops.forEach((stop, index) => {
     const stopRow = document.createElement("div");
-    stopRow.className = "route-stop";
+    stopRow.className = "route-stop route-stop-grid";
     const action = stop.type === "collect" ? "Collect" : "Deliver";
     stopRow.textContent = `${index + 1}. ${formatStop(action, stop)} — Job ${stop.jobId}`;
     stopRow.setAttribute("draggable", "true");
+
+    stopRow.innerHTML = `
+    <div>${index + 1}</div>
+    <div>${stop.jobId}</div>
+    <div>${stop.type === "collect" ? "C" : "D"}</div>
+    <div>${stop.location}</div>
+    <div>${stop.detail}</div>
+    <div>${stop.pallets || ""}</div>
+    <div>${stop.orderId || ""}</div>
+    `;
 
     stopRow.addEventListener("dragstart", () => {
     dragPayload = {
@@ -728,4 +803,42 @@ document.getElementById("jobDatePicker").addEventListener("change", (e) => {
   document.querySelectorAll(".date-btn").forEach(b => b.classList.remove("active"));
 
   applyJobPotFilters();
+});
+
+document.getElementById("assignSelectedBtn").addEventListener("click", () => {
+  const runId = document.getElementById("bulkRunInput").value.trim();
+
+  if (!runs[runId]) {
+    alert("Invalid run");
+    return;
+  }
+
+  selectedMovements.forEach((movementId) => {
+    assignMovementToRun(movementId, runId);
+  });
+
+  selectedMovements.clear();
+  updateSelectedCount();
+});
+
+function updateSelectedCount() {
+  document.getElementById("selectedCount").textContent =
+    `${selectedMovements.size} selected`;
+}
+
+function updateSelectedCount() {
+  const countEl = document.getElementById("selectedCount");
+  if (!countEl) return;
+
+  countEl.textContent = `${selectedMovements.size} selected`;
+}
+
+document.getElementById("clearSelectionBtn").addEventListener("click", () => {
+  selectedMovements.clear();
+
+  document.querySelectorAll(".row-select").forEach((checkbox) => {
+    checkbox.checked = false;
+  });
+
+  updateSelectedCount();
 });
