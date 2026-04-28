@@ -550,3 +550,16 @@ body {
 .job-row .unassign-btn {
   cursor: pointer;
 }
+
+.route-stop.drag-over {
+  border-color: #5aa7ff;
+  background: #243044;
+  transform: translateY(2px);
+}
+
+.route-stop {
+  transition:
+    transform 0.16s ease,
+    background 0.16s ease,
+    border-color 0.16s ease;
+}

@@ -545,7 +545,12 @@ function renderActiveRun() {
     });
 
     stopRow.addEventListener("dragover", (e) => {
-      e.preventDefault();
+    e.preventDefault();
+    stopRow.classList.add("drag-over");
+    });
+
+    stopRow.addEventListener("dragleave", () => {
+    stopRow.classList.remove("drag-over");
     });
 
     stopRow.addEventListener("drop", (e) => {
@@ -559,6 +564,8 @@ function renderActiveRun() {
 
       const movedStop = run.stops.splice(fromIndex, 1)[0];
       run.stops.splice(toIndex, 0, movedStop);
+
+      stopRow.classList.remove("drag-over");
 
       renderActiveRun();
     });
@@ -660,70 +667,36 @@ function applyJobPotFilters() {
       if (currentFilter === "unallocated" && isAllocated) return false;
       if (currentFilter === "allocated" && !isAllocated) return false;
 
-      // Search text changes depending on view mode
-      let searchableText = "";
-
+      // COLLECTIONS MODE
       if (currentTypeFilter === "collect") {
-        searchableText = [
-          movement.orderId,
-          movement.jobId,
-          movement.customer,
-          movement.collect.location,
-          movement.collect.detail
-        ].join(" ").toLowerCase();
-      } else if (currentTypeFilter === "deliver") {
-        searchableText = [
-          movement.orderId,
-          movement.jobId,
-          movement.customer,
-          movement.deliver.location,
-          movement.deliver.detail
-        ].join(" ").toLowerCase();
-      } else {
-        searchableText = [
-          movement.orderId,
-          movement.jobId,
-          movement.customer,
-          movement.collect.location,
-          movement.collect.detail,
-          movement.deliver.location,
-          movement.deliver.detail
-        ].join(" ").toLowerCase();
-      }
-
-      if (currentSearchTerm && !searchableText.includes(currentSearchTerm)) {
-        return false;
-      }
-
-      // Collections mode
-      if (currentTypeFilter === "collect") {
-        if (movement.collect.isDepot) return false;
+        if (!includeDepot && movement.collect.isDepot) return false;
         if (selectedDate && movement.collect.date !== selectedDate) return false;
         return true;
       }
 
-      // Deliveries mode
+      // DELIVERIES MODE
       if (currentTypeFilter === "deliver") {
-        if (movement.deliver.isDepot) return false;
+        if (!includeDepot && movement.deliver.isDepot) return false;
         if (selectedDate && movement.deliver.date !== selectedDate) return false;
         return true;
       }
 
-      // All mode
+      // ALL MODE
       const collectVisible =
-        !movement.collect.isDepot &&
+        (includeDepot || !movement.collect.isDepot) &&
         (!selectedDate || movement.collect.date === selectedDate);
 
       const deliverVisible =
-        !movement.deliver.isDepot &&
+        (includeDepot || !movement.deliver.isDepot) &&
         (!selectedDate || movement.deliver.date === selectedDate);
 
       return collectVisible || deliverVisible;
     });
 
-    // Jobs view
+    // JOBS VIEW
     if (currentView === "jobs") {
       const showWholeJob = rowMatches.some(Boolean);
+
       group.style.display = showWholeJob ? "block" : "none";
 
       rows.forEach((row) => {
@@ -733,12 +706,13 @@ function applyJobPotFilters() {
       return;
     }
 
-    // Legs view
+    // LEGS VIEW
     if (currentView === "legs") {
       let anyVisible = false;
 
       rows.forEach((row, index) => {
         const show = rowMatches[index];
+
         row.style.display = show ? "grid" : "none";
         if (show) anyVisible = true;
       });
