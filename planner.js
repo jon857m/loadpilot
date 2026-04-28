@@ -197,6 +197,8 @@ let currentDateFilter = "all";
 let currentTypeFilter = "all";
 let includeDepot = true;
 
+let currentSearchTerm = "";
+
 let customDateFilter = "";
 
 const movementAllocations = {};
@@ -287,6 +289,11 @@ function attachJobPotEvents() {
   });
 });
 }
+
+    document.getElementById("jobSearchInput").addEventListener("input", (e) => {
+    currentSearchTerm = e.target.value.trim().toLowerCase();
+    applyJobPotFilters();
+    });
 
 document.querySelectorAll(".run-input").forEach((input) => {
   input.addEventListener("keydown", (e) => {
@@ -573,50 +580,77 @@ function applyJobPotFilters() {
     const rows = Array.from(group.querySelectorAll(".job-row"));
 
     const rowMatches = rows.map((row) => {
-      const jobId = row.dataset.job;
-      const moveIndex = Number(row.dataset.move);
-      const movement = jobs[jobId][moveIndex];
+      const movementId = row.dataset.movementId;
+      const movement = movements.find((m) => m.id === movementId);
 
-      const key = movement.key;
-      const isAllocated = !!movementAllocations[key];
+      const isAllocated = !!movement.runId;
 
       // Allocation filter
       if (currentFilter === "unallocated" && isAllocated) return false;
       if (currentFilter === "allocated" && !isAllocated) return false;
 
-      // COLLECTION VIEW
+      // Search text changes depending on view mode
+      let searchableText = "";
+
       if (currentTypeFilter === "collect") {
-        if (!includeDepot && movement.collect.isDepot) return false;
+        searchableText = [
+          movement.orderId,
+          movement.jobId,
+          movement.customer,
+          movement.collect.location,
+          movement.collect.detail
+        ].join(" ").toLowerCase();
+      } else if (currentTypeFilter === "deliver") {
+        searchableText = [
+          movement.orderId,
+          movement.jobId,
+          movement.customer,
+          movement.deliver.location,
+          movement.deliver.detail
+        ].join(" ").toLowerCase();
+      } else {
+        searchableText = [
+          movement.orderId,
+          movement.jobId,
+          movement.customer,
+          movement.collect.location,
+          movement.collect.detail,
+          movement.deliver.location,
+          movement.deliver.detail
+        ].join(" ").toLowerCase();
+      }
+
+      if (currentSearchTerm && !searchableText.includes(currentSearchTerm)) {
+        return false;
+      }
+
+      // Collections mode
+      if (currentTypeFilter === "collect") {
+        if (movement.collect.isDepot) return false;
         if (selectedDate && movement.collect.date !== selectedDate) return false;
         return true;
       }
 
-      // DELIVERY VIEW
+      // Deliveries mode
       if (currentTypeFilter === "deliver") {
-        if (!includeDepot && movement.deliver.isDepot) return false;
+        if (movement.deliver.isDepot) return false;
         if (selectedDate && movement.deliver.date !== selectedDate) return false;
         return true;
       }
 
-      // ALL VIEW
+      // All mode
       const collectVisible =
-        (includeDepot || !movement.collect.isDepot) &&
-        (
-          !selectedDate ||
-          movement.collect.date === selectedDate
-        );
+        !movement.collect.isDepot &&
+        (!selectedDate || movement.collect.date === selectedDate);
 
       const deliverVisible =
-        (includeDepot || !movement.deliver.isDepot) &&
-        (
-          !selectedDate ||
-          movement.deliver.date === selectedDate
-        );
+        !movement.deliver.isDepot &&
+        (!selectedDate || movement.deliver.date === selectedDate);
 
       return collectVisible || deliverVisible;
     });
 
-    // JOBS VIEW
+    // Jobs view
     if (currentView === "jobs") {
       const showWholeJob = rowMatches.some(Boolean);
       group.style.display = showWholeJob ? "block" : "none";
@@ -628,7 +662,7 @@ function applyJobPotFilters() {
       return;
     }
 
-    // LEGS VIEW
+    // Legs view
     if (currentView === "legs") {
       let anyVisible = false;
 
