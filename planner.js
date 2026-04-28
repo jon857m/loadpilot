@@ -1437,8 +1437,137 @@ async function createJobFromWizard(orderNumber, wizardData) {
 }
 
 async function updateJobFromWizard(jobNumber, wizardData) {
-  console.log("Ready to update job:", jobNumber, wizardData);
-  alert("Edit mode detected. Next step will update this job.");
+  try {
+    const accountId = await getAccountId();
+
+    // 1. Find job
+    const { data: job, error: jobError } = await supabaseClient
+      .from("jobs")
+      .select("*")
+      .eq("job_number", jobNumber)
+      .single();
+
+    if (jobError) throw jobError;
+
+    // 2. Update collection address
+    const { error: collectError } = await supabaseClient
+      .from("addresses")
+      .update({
+        name: wizardData.collectName,
+        town: wizardData.collectTown,
+        postcode: wizardData.collectPostcode
+      })
+      .eq("id", job.collection_address_id);
+
+    if (collectError) throw collectError;
+
+    // 3. Update delivery address
+    const { error: deliverError } = await supabaseClient
+      .from("addresses")
+      .update({
+        name: wizardData.deliverName,
+        town: wizardData.deliverTown,
+        postcode: wizardData.deliverPostcode
+      })
+      .eq("id", job.delivery_address_id);
+
+    if (deliverError) throw deliverError;
+
+    // 4. Update job core fields
+    const { error: updateJobError } = await supabaseClient
+      .from("jobs")
+      .update({
+        pallets: wizardData.pallets,
+        planning_mode: wizardData.planningMode
+      })
+      .eq("id", job.id);
+
+    if (updateJobError) throw updateJobError;
+
+    // 5. Delete old movements + allocations
+    const { data: existingMovements } = await supabaseClient
+      .from("movements")
+      .select("id")
+      .eq("job_id", job.id);
+
+    if (existingMovements && existingMovements.length) {
+      const movementIds = existingMovements.map(m => m.id);
+
+      await supabaseClient
+        .from("run_allocations")
+        .delete()
+        .in("movement_id", movementIds);
+
+      await supabaseClient
+        .from("movements")
+        .delete()
+        .eq("job_id", job.id);
+    }
+
+    // 6. Recreate movements
+    if (wizardData.planningMode === "direct") {
+      const { error: movementError } = await supabaseClient
+        .from("movements")
+        .insert({
+          account_id: accountId,
+          job_id: job.id,
+          movement_type: "direct",
+          from_address_id: job.collection_address_id,
+          to_address_id: job.delivery_address_id,
+          sequence_no: 1,
+          active: true
+        });
+
+      if (movementError) throw movementError;
+    }
+
+    if (wizardData.planningMode === "via_depot") {
+      const { data: depotAddress, error: depotError } = await supabaseClient
+        .from("addresses")
+        .select("id")
+        .eq("account_id", accountId)
+        .eq("name", "Depot")
+        .single();
+
+      if (depotError) throw depotError;
+
+      const { error: movementError } = await supabaseClient
+        .from("movements")
+        .insert([
+          {
+            account_id: accountId,
+            job_id: job.id,
+            movement_type: "to_depot",
+            from_address_id: job.collection_address_id,
+            to_address_id: depotAddress.id,
+            sequence_no: 1,
+            active: true
+          },
+          {
+            account_id: accountId,
+            job_id: job.id,
+            movement_type: "from_depot",
+            from_address_id: depotAddress.id,
+            to_address_id: job.delivery_address_id,
+            sequence_no: 2,
+            active: true
+          }
+        ]);
+
+      if (movementError) throw movementError;
+    }
+
+    alert("Job updated");
+
+    closeOrderWizard();
+
+    await loadPlannerDataFromSupabase();
+    renderOrderDetail(activeOrderId);
+
+  } catch (err) {
+    console.error("Error updating job:", err);
+    alert("Could not update job");
+  }
 }
 
 async function createBlankOrder() {
