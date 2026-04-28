@@ -129,7 +129,7 @@ jobList.innerHTML = `
   });
 }
 
-const movements = [
+let movements = [
   {
     id: "1001-0",
     orderId: "ORD-5001",
@@ -405,6 +405,7 @@ function assignMovementToRun(movementId, runId) {
 
   updateJobPotAllocationDisplay();
   selectRun(runId);
+  saveAllocationToSupabase(movementId, runId);
 }
 
 function moveMovementToRun(movementKey, newRunId) {
@@ -424,8 +425,15 @@ function unallocateMovement(movementKey) {
   removeMovementFromAllRuns(movementKey);
   delete movementAllocations[movementKey];
 
+  const movement = movements.find((m) => m.id === movementKey);
+  if (movement) {
+    movement.runId = null;
+  }
+
   updateJobPotAllocationDisplay();
   renderActiveRun();
+
+  deleteAllocationFromSupabase(movementKey);
 }
 
 function removeMovementFromAllRuns(movementKey) {
@@ -803,6 +811,120 @@ function updateSelectedCount() {
   countEl.textContent = `${selectedMovements.size} selected`;
 }
 
+async function saveAllocationToSupabase(movementId, runId) {
+  try {
+    // 1. Get the real Supabase run (we only have 1 for now)
+    const { data: runData, error: runError } = await supabaseClient
+      .from("runs")
+      .select("id")
+      .limit(1)
+      .single();
+
+    if (runError) throw runError;
+
+    const runDbId = runData.id;
+
+    // 2. Insert allocation
+    const { error: insertError } = await supabaseClient
+      .from("run_allocations")
+      .insert({
+        account_id: await getAccountId(),
+        run_id: runDbId,
+        movement_id: movementId,
+        stop_sequence: 1
+      });
+
+    if (insertError) throw insertError;
+
+    console.log("Saved allocation:", movementId, "→ run", runId);
+
+  } catch (err) {
+    console.error("Error saving allocation:", err);
+  }
+}
+
+async function getAccountId() {
+  const { data, error } = await supabaseClient
+    .from("accounts")
+    .select("id")
+    .limit(1)
+    .single();
+
+  if (error) {
+    console.error("Error fetching account:", error);
+    return null;
+  }
+
+  return data.id;
+}
+
+async function loadAllocationsFromSupabase() {
+  const { data, error } = await supabaseClient
+    .from("run_allocations")
+    .select(`
+      movement_id,
+      runs (
+        id,
+        run_name
+      )
+    `);
+
+  if (error) {
+    console.error("Error loading allocations:", error);
+    return;
+  }
+
+  data.forEach((allocation) => {
+    const movement = movements.find((m) => m.id === allocation.movement_id);
+    if (!movement) return;
+
+    movement.runId = "1";
+    movementAllocations[movement.id] = "1";
+
+    if (!runs["1"].stops.some((s) => s.movementKey === movement.id)) {
+      runs["1"].stops.push({
+        movementKey: movement.id,
+        type: "collect",
+        ...movement.collect,
+        jobId: movement.jobId,
+        orderId: movement.orderId,
+        pallets: movement.pallets
+      });
+
+      runs["1"].stops.push({
+        movementKey: movement.id,
+        type: "deliver",
+        ...movement.deliver,
+        jobId: movement.jobId,
+        orderId: movement.orderId,
+        pallets: movement.pallets
+      });
+    }
+  });
+
+  updateJobPotAllocationDisplay();
+
+  if (activeRunId) {
+    renderActiveRun();
+  }
+
+  console.log("Loaded allocations from Supabase:", data);
+}
+
+async function deleteAllocationFromSupabase(movementId) {
+  const { error } = await supabaseClient
+    .from("run_allocations")
+    .delete()
+    .eq("movement_id", movementId);
+
+  if (error) {
+    console.error("Error deleting allocation:", error);
+    return;
+  }
+
+  console.log("Deleted allocation:", movementId);
+}
+
 document.getElementById("clearSelectionBtn").addEventListener("click", () => {
   selectedMovements.clear();
 
@@ -813,27 +935,82 @@ document.getElementById("clearSelectionBtn").addEventListener("click", () => {
   updateSelectedCount();
 });
 
-async function testLoadData() {
+async function loadPlannerDataFromSupabase() {
   const { data, error } = await supabaseClient
-    .from('orders')
-    .select(`
+    .from("orders")
+.select(`
+  id,
+  order_number,
+  jobs (
+    id,
+    job_number,
+    collection_address:addresses!jobs_collection_address_id_fkey (
       id,
-      order_number,
-      jobs (
-        id,
-        job_number,
-        movements (
-          id,
-          movement_type
-        )
-      )
-    `);
+      name,
+      town,
+      postcode
+    ),
+    delivery_address:addresses!jobs_delivery_address_id_fkey (
+      id,
+      name,
+      town,
+      postcode
+    ),
+    movements (
+      id,
+      movement_type,
+      sequence_no
+    )
+  )
+`);
 
   if (error) {
-    console.error('Error loading data:', error);
-  } else {
-    console.log('Supabase data:', data);
+    console.error("Error loading planner data:", error);
+    return;
   }
+
+  console.log("Supabase raw planner data:", data);
+
+  const transformedMovements = [];
+
+  data.forEach((order) => {
+    order.jobs.forEach((job) => {
+      job.movements.forEach((movement) => {
+        transformedMovements.push({
+          id: movement.id,
+          orderId: order.order_number,
+          jobId: job.job_number,
+          customer: "Demo Customer",
+          pallets: 1,
+            collect: {
+            location: job.collection_address?.name || "Collection address",
+            detail: `${job.collection_address?.town || ""} ${job.collection_address?.postcode || ""}`.trim(),
+            date: "2026-04-27",
+            time: "09:00",
+            isDepot: false
+            },
+            deliver: {
+            location: job.delivery_address?.name || "Delivery address",
+            detail: `${job.delivery_address?.town || ""} ${job.delivery_address?.postcode || ""}`.trim(),
+            date: "2026-04-27",
+            time: "17:00",
+            isDepot: false
+            },
+          runId: null
+        });
+      });
+    });
+  });
+
+  movements = transformedMovements;
+
+  renderJobPot();
+  attachJobPotEvents();
+  applyJobPotFilters();
+
+  await loadAllocationsFromSupabase();
+
+  console.log("Planner movements from Supabase:", movements);
 }
 
-testLoadData();
+loadPlannerDataFromSupabase();
