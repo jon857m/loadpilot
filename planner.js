@@ -572,11 +572,13 @@ function renderActiveRun() {
       const toIndex = index;
 
       const movedStop = run.stops.splice(fromIndex, 1)[0];
-      run.stops.splice(toIndex, 0, movedStop);
+        run.stops.splice(toIndex, 0, movedStop);
 
-      stopRow.classList.remove("drag-over");
+        stopRow.classList.remove("drag-over");
 
-      renderActiveRun();
+        saveRunOrderToSupabase(activeRunId);
+
+        renderActiveRun();
     });
 
     routeList.appendChild(stopRow);
@@ -865,7 +867,10 @@ async function loadAllocationsFromSupabase() {
   const { data, error } = await supabaseClient
     .from("run_allocations")
     .select(`
-      movement_id,
+        movement_id,
+        stop_sequence,
+        collect_sequence,
+        deliver_sequence,
         runs (
         id,
         run_name,
@@ -888,25 +893,31 @@ async function loadAllocationsFromSupabase() {
     movementAllocations[movement.id] = plannerRunNo;
 
     if (!runs[plannerRunNo].stops.some((s) => s.movementKey === movement.id)) {
-      runs[plannerRunNo].stops.push({
-        movementKey: movement.id,
-        type: "collect",
-        ...movement.collect,
-        jobId: movement.jobId,
-        orderId: movement.orderId,
-        pallets: movement.pallets
-      });
+    runs[plannerRunNo].stops.push({
+    movementKey: movement.id,
+    type: "collect",
+    sequence: allocation.collect_sequence || allocation.stop_sequence || 1,
+    ...movement.collect,
+    jobId: movement.jobId,
+    orderId: movement.orderId,
+    pallets: movement.pallets
+    });
 
-      runs[plannerRunNo].stops.push({
-        movementKey: movement.id,
-        type: "deliver",
-        ...movement.deliver,
-        jobId: movement.jobId,
-        orderId: movement.orderId,
-        pallets: movement.pallets
-      });
+    runs[plannerRunNo].stops.push({
+    movementKey: movement.id,
+    type: "deliver",
+    sequence: allocation.deliver_sequence || (allocation.stop_sequence || 1) + 1,
+    ...movement.deliver,
+    jobId: movement.jobId,
+    orderId: movement.orderId,
+    pallets: movement.pallets
+    });
     }
   });
+
+    Object.values(runs).forEach(run => {
+    run.stops.sort((a, b) => a.sequence - b.sequence);
+    });
 
   updateJobPotAllocationDisplay();
 
@@ -1020,3 +1031,39 @@ async function loadPlannerDataFromSupabase() {
 }
 
 loadPlannerDataFromSupabase();
+
+async function saveRunOrderToSupabase(runId) {
+  try {
+    const run = runs[runId];
+    if (!run) return;
+
+    const sequenceByMovement = {};
+
+    run.stops.forEach((stop, index) => {
+      if (!sequenceByMovement[stop.movementKey]) {
+        sequenceByMovement[stop.movementKey] = {};
+      }
+
+      if (stop.type === "collect") {
+        sequenceByMovement[stop.movementKey].collect_sequence = index + 1;
+      }
+
+      if (stop.type === "deliver") {
+        sequenceByMovement[stop.movementKey].deliver_sequence = index + 1;
+      }
+    });
+
+    for (const movementId of Object.keys(sequenceByMovement)) {
+      const update = sequenceByMovement[movementId];
+
+      await supabaseClient
+        .from("run_allocations")
+        .update(update)
+        .eq("movement_id", movementId);
+    }
+
+    console.log("Saved run stop order");
+  } catch (err) {
+    console.error("Error saving order:", err);
+  }
+}
