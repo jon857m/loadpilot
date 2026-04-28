@@ -996,6 +996,74 @@ document.getElementById("clearSelectionBtn").addEventListener("click", () => {
   updateSelectedCount();
 });
 
+function buildMovementDisplay(job, movement) {
+  const originalCollect = job.collection_address?.name || "Collection";
+  const originalDeliver = job.delivery_address?.name || "Delivery";
+
+  const fromName = movement.from_address?.name || "From";
+  const toName = movement.to_address?.name || "To";
+
+  const sharedDetail = `${originalDeliver} Ex ${originalCollect}`;
+
+  if (movement.movement_type === "direct") {
+    return {
+      collect: {
+        location: fromName,
+        detail: `For ${originalDeliver}`,
+        isDepot: false
+      },
+      deliver: {
+        location: toName,
+        detail: `Ex ${originalCollect}`,
+        isDepot: false
+      }
+    };
+  }
+
+  if (movement.movement_type === "to_depot") {
+    return {
+      collect: {
+        location: fromName,
+        detail: `For ${originalDeliver}`,
+        isDepot: false
+      },
+      deliver: {
+        location: toName,
+        detail: sharedDetail,
+        isDepot: true
+      }
+    };
+  }
+
+  if (movement.movement_type === "from_depot") {
+    return {
+      collect: {
+        location: fromName,
+        detail: sharedDetail,
+        isDepot: true
+      },
+      deliver: {
+        location: toName,
+        detail: `Ex ${originalCollect}`,
+        isDepot: false
+      }
+    };
+  }
+
+  return {
+    collect: {
+      location: fromName,
+      detail: "",
+      isDepot: false
+    },
+    deliver: {
+      location: toName,
+      detail: "",
+      isDepot: false
+    }
+  };
+}
+
 async function loadPlannerDataFromSupabase() {
   const { data, error } = await supabaseClient.from("orders").select(`
   id,
@@ -1003,6 +1071,8 @@ async function loadPlannerDataFromSupabase() {
   jobs (
     id,
     job_number,
+    pallets,
+    planning_mode,
     collection_address:addresses!jobs_collection_address_id_fkey (
       id,
       name,
@@ -1018,7 +1088,19 @@ async function loadPlannerDataFromSupabase() {
     movements (
       id,
       movement_type,
-      sequence_no
+      sequence_no,
+      from_address:addresses!movements_from_address_id_fkey (
+        id,
+        name,
+        town,
+        postcode
+      ),
+      to_address:addresses!movements_to_address_id_fkey (
+        id,
+        name,
+        town,
+        postcode
+      )
     )
   )
 `);
@@ -1035,29 +1117,32 @@ async function loadPlannerDataFromSupabase() {
   data.forEach((order) => {
     order.jobs.forEach((job) => {
       job.movements.forEach((movement) => {
+        const display = buildMovementDisplay(job, movement);
+
         transformedMovements.push({
-          id: movement.id,
-          orderId: order.order_number,
-          jobId: job.job_number,
-          customer: "Demo Customer",
-          pallets: 1,
-          collect: {
-            location: job.collection_address?.name || "Collection address",
-            detail:
-              `${job.collection_address?.town || ""} ${job.collection_address?.postcode || ""}`.trim(),
+        id: movement.id,
+        orderId: order.order_number,
+        jobId: job.job_number,
+        movement_type: movement.movement_type,
+        customer: "Demo Customer",
+        pallets: job.pallets || 1,
+
+        jobCollect: job.collection_address,
+        jobDeliver: job.delivery_address,
+
+        collect: {
+            ...display.collect,
             date: "2026-04-27",
-            time: "09:00",
-            isDepot: false,
-          },
-          deliver: {
-            location: job.delivery_address?.name || "Delivery address",
-            detail:
-              `${job.delivery_address?.town || ""} ${job.delivery_address?.postcode || ""}`.trim(),
+            time: "09:00"
+        },
+
+        deliver: {
+            ...display.deliver,
             date: "2026-04-27",
-            time: "17:00",
-            isDepot: false,
-          },
-          runId: null,
+            time: "17:00"
+        },
+
+        runId: null
         });
       });
     });
