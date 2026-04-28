@@ -419,6 +419,7 @@ function moveMovementToRun(movementKey, newRunId) {
 
   updateJobPotAllocationDisplay();
   selectRun(newRunId);
+  saveAllocationToSupabase(movementKey, newRunId);
 }
 
 function unallocateMovement(movementKey) {
@@ -813,7 +814,6 @@ function updateSelectedCount() {
 
 async function saveAllocationToSupabase(movementId, runId) {
   try {
-    // 1. Get the real Supabase run (we only have 1 for now)
     const { data: runData, error: runError } = await supabaseClient
       .from("runs")
       .select("id")
@@ -822,22 +822,25 @@ async function saveAllocationToSupabase(movementId, runId) {
 
     if (runError) throw runError;
 
-    const runDbId = runData.id;
+    const accountId = await getAccountId();
 
-    // 2. Insert allocation
-    const { error: insertError } = await supabaseClient
+    const { error: upsertError } = await supabaseClient
       .from("run_allocations")
-      .insert({
-        account_id: await getAccountId(),
-        run_id: runDbId,
-        movement_id: movementId,
-        stop_sequence: 1
-      });
+      .upsert(
+        {
+          account_id: accountId,
+          run_id: runData.id,
+          movement_id: movementId,
+          stop_sequence: 1
+        },
+        {
+          onConflict: "movement_id"
+        }
+      );
 
-    if (insertError) throw insertError;
+    if (upsertError) throw upsertError;
 
     console.log("Saved allocation:", movementId, "→ run", runId);
-
   } catch (err) {
     console.error("Error saving allocation:", err);
   }
