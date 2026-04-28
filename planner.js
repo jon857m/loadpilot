@@ -496,19 +496,7 @@ function renderActiveRun() {
   const run = runs[activeRunId];
 
   activeRouteHeader.textContent = `Active Route — Run ${activeRunId}: ${run.name}`;
-
-
-  routeList.innerHTML = `
-  <div class="route-header route-stop-grid">
-    <div>Seq</div>
-    <div>Job</div>
-    <div>C/D</div>
-    <div>Depot</div>
-    <div>Detail</div>
-    <div>Pallets</div>
-    <div>Order</div>
-  </div>
-`;
+  routeList.innerHTML = "";
 
   if (!run.stops.length) {
     routeEmpty.style.display = "block";
@@ -520,32 +508,40 @@ function renderActiveRun() {
   routeEmpty.style.display = "none";
   routeList.style.display = "flex";
 
+  routeList.innerHTML = `
+    <div class="route-header route-stop-grid">
+      <div>Seq</div>
+      <div>Job</div>
+      <div>C/D</div>
+      <div>Depot</div>
+      <div>Detail</div>
+      <div>Pallets</div>
+      <div>Order</div>
+    </div>
+  `;
+
   run.stops.forEach((stop, index) => {
     const stopRow = document.createElement("div");
     stopRow.className = "route-stop route-stop-grid";
-    const action = stop.type === "collect" ? "Collect" : "Deliver";
-    stopRow.textContent = `${index + 1}. ${formatStop(action, stop)} — Job ${stop.jobId}`;
     stopRow.setAttribute("draggable", "true");
 
     stopRow.innerHTML = `
-    <div>${index + 1}</div>
-    <div>${stop.jobId}</div>
-    <div>${stop.type === "collect" ? "C" : "D"}</div>
-    <div>${stop.location}</div>
-    <div>${stop.detail}</div>
-    <div>${stop.pallets || ""}</div>
-    <div>${stop.orderId || ""}</div>
+      <div>${index + 1}</div>
+      <div>${stop.jobId}</div>
+      <div>${stop.type === "collect" ? "C" : "D"}</div>
+      <div>${stop.location}</div>
+      <div>${stop.detail}</div>
+      <div>${stop.pallets || ""}</div>
+      <div>${stop.orderId || ""}</div>
     `;
 
     stopRow.addEventListener("dragstart", () => {
-    dragPayload = {
+      dragPayload = {
         type: "routeMovement",
         runId: activeRunId,
         movementKey: stop.movementKey,
         stopIndex: index
-    };
-
-    unallocateDropzone.classList.add("visible");
+      };
     });
 
     stopRow.addEventListener("dragover", (e) => {
