@@ -576,9 +576,9 @@ function renderActiveRun() {
 
 function updateJobPotAllocationDisplay() {
   document.querySelectorAll(".job-row").forEach((row) => {
-    const key = `${row.dataset.job}-${row.dataset.move}`;
+    const movementId = row.dataset.movementId;
     const input = row.querySelector(".run-input");
-    const runId = movementAllocations[key];
+    const runId = movementAllocations[movementId];
 
     if (runId) {
       input.value = runId;
@@ -812,3 +812,28 @@ document.getElementById("clearSelectionBtn").addEventListener("click", () => {
 
   updateSelectedCount();
 });
+
+async function testLoadData() {
+  const { data, error } = await supabaseClient
+    .from('orders')
+    .select(`
+      id,
+      order_number,
+      jobs (
+        id,
+        job_number,
+        movements (
+          id,
+          movement_type
+        )
+      )
+    `);
+
+  if (error) {
+    console.error('Error loading data:', error);
+  } else {
+    console.log('Supabase data:', data);
+  }
+}
+
+testLoadData();
