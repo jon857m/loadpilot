@@ -1,0 +1,414 @@
+/* RESET */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* BODY */
+body {
+  background: #0f1115;
+  color: #e6e6e6;
+}
+
+/* MAIN APP LAYOUT */
+.app {
+  display: grid;
+  grid-template-columns: 70% 30%;
+  grid-template-rows: 55% 45%;
+  height: 100vh;
+}
+
+.top {
+  display: contents;
+}
+
+.job-pot {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.runs {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  width: 100%;
+}
+
+.bottom {
+  grid-column: 1;
+  grid-row: 2;
+  height: auto;
+  border-top: 1px solid #2a2d33;
+}
+
+/* PANELS */
+.panel {
+  background: #15181e;
+  border-right: 1px solid #2a2d33;
+  padding: 12px;
+  overflow: hidden;
+}
+
+.panel:last-child {
+  border-right: none;
+}
+
+/* PANEL HEADER */
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.panel-header h2 {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+/* SEARCH BOX */
+.panel-header input {
+  background: #1d2128;
+  border: 1px solid #2a2d33;
+  color: #ccc;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+/* JOB POT */
+.job-pot {
+  display: flex;
+  flex-direction: column;
+}
+
+.job-list {
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* JOB CARD */
+.job-card {
+  background: #1d2128;
+  padding: 10px;
+  border-radius: 8px;
+  cursor: grab;
+  border: 1px solid #2a2d33;
+  transition: 0.2s;
+}
+
+.job-card:hover {
+  background: #242933;
+}
+
+.job-title {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+/* RUNS PANEL */
+
+
+.run-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* RUN CARD */
+.run-card {
+  background: #1d2128;
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 1px solid #2a2d33;
+  transition: 0.2s;
+}
+
+.run-card:hover {
+  background: #242933;
+}
+
+/* ACTIVE ROUTE */
+.route-empty {
+  color: #888;
+  margin-top: 20px;
+  text-align: center;
+}
+
+/* ROUTE LIST */
+.route-list {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* ROUTE STOP */
+.route-stop {
+  background: #1d2128;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #2a2d33;
+}
+
+.run-card.active {
+  border-color: #5aa7ff;
+  background: #243044;
+}
+
+.route-stop {
+  cursor: grab;
+}
+
+.route-stop:active {
+  cursor: grabbing;
+  opacity: 0.7;
+}
+
+.job-list {
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.job-group {
+  border-bottom: 1px solid #2a2d33;
+  padding-bottom: 6px;
+}
+
+.job-row {
+  display: grid;
+  grid-template-columns:
+    70px
+    28px 170px 1fr
+    28px 170px 1fr
+    90px
+    80px;
+  gap: 8px;
+  padding: 8px;
+  background: #1d2128;
+  border-radius: 6px;
+  border: 1px solid #2a2d33;
+  cursor: grab;
+}
+
+.job-row:hover {
+  background: #242933;
+}
+
+.col {
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+}
+
+.job-id {
+  font-weight: 600;
+}
+
+.run-assign {
+  text-align: center;
+  opacity: 0.6;
+}
+
+.job-row.allocated {
+  border-color: #3f7f5f;
+  background: #1c2a24;
+}
+
+.job-row.allocated .run-assign {
+  color: #7ee2a8;
+  opacity: 1;
+  font-weight: 600;
+}
+
+.run-input {
+  width: 54px;
+  background: #11141a;
+  border: 1px solid #2a2d33;
+  color: #e6e6e6;
+  border-radius: 5px;
+  padding: 4px 6px;
+  font-size: 12px;
+  text-align: center;
+}
+
+.job-row.allocated .run-input {
+  border-color: #3f7f5f;
+  color: #7ee2a8;
+  font-weight: 600;
+}
+
+.unallocate-dropzone {
+  margin-bottom: 10px;
+  padding: 10px;
+  border: 1px dashed #2a2d33;
+  border-radius: 8px;
+  text-align: center;
+  color: #888;
+  background: #15181e;
+  font-size: 12px;
+}
+
+.unallocate-dropzone.visible {
+  display: block;
+}
+
+.unallocate-dropzone.drag-over {
+  border-color: #ffb86b;
+  color: #ffb86b;
+  background: #241b12;
+}
+
+.run-assign {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.unassign-btn {
+  display: none;
+  width: 22px;
+  height: 22px;
+  border: 1px solid #5c2d2d;
+  border-radius: 50%;
+  background: #251616;
+  color: #ff8a8a;
+  font-size: 14px;
+  line-height: 18px;
+  cursor: pointer;
+}
+
+.job-row.allocated .unassign-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.unassign-btn:hover {
+  background: #3a1d1d;
+  color: #ffb0b0;
+}
+
+.job-controls {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.filter-group,
+.view-group {
+  display: flex;
+  gap: 6px;
+}
+
+.filter-btn,
+.view-btn {
+  background: #1d2128;
+  border: 1px solid #2a2d33;
+  color: #ccc;
+  padding: 4px 8px;
+  font-size: 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.filter-btn.active,
+.view-btn.active {
+  background: #243044;
+  border-color: #5aa7ff;
+  color: #5aa7ff;
+}
+
+.date-group,
+.type-group,
+.depot-group {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.date-btn,
+.type-btn {
+  background: #1d2128;
+  border: 1px solid #2a2d33;
+  color: #ccc;
+  padding: 4px 8px;
+  font-size: 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.date-btn.active,
+.type-btn.active {
+  background: #243044;
+  border-color: #5aa7ff;
+  color: #5aa7ff;
+}
+
+.job-pot.show-collect .job-row .deliver-col {
+  display: none;
+}
+
+.job-pot.show-deliver .job-row .collect-col {
+  display: none;
+}
+
+.job-pot.show-collect .job-row,
+.job-pot.show-deliver .job-row {
+  grid-template-columns:
+    70px
+    28px 180px 1fr
+    90px
+    80px;
+}
+
+.date-picker {
+  background: #1d2128;
+  border: 1px solid #2a2d33;
+  color: #ccc;
+  padding: 4px 8px;
+  font-size: 12px;
+  border-radius: 6px;
+}
+
+.order-link {
+  background: none;
+  border: none;
+  color: #7db7ff;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  font-size: 12px;
+}
+
+.order-link:hover {
+  text-decoration: underline;
+}
+
+.order-detail-row {
+  display: grid;
+  grid-template-columns:
+    70px
+    28px 170px 1fr
+    28px 170px 1fr
+    90px
+    90px;
+  gap: 8px;
+  padding: 8px;
+  background: #1d2128;
+  border-radius: 6px;
+  border: 1px solid #2a2d33;
+  font-size: 12px;
+}
+
+.job-pot,
+.runs,
+.bottom {
+  overflow: auto;
+}
