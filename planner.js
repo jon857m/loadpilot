@@ -385,24 +385,6 @@ document.getElementById("jobSearchInput").addEventListener("input", (e) => {
   applyJobPotFilters();
 });
 
-document.querySelectorAll(".run-input").forEach((input) => {
-  input.addEventListener("keydown", (e) => {
-    if (e.key !== "Enter") return;
-
-    const row = input.closest(".job-row");
-    const jobId = row.dataset.job;
-    const moveIndex = Number(row.dataset.move);
-    const runId = input.value.trim();
-
-    if (!runs[runId]) {
-      alert("That run does not exist.");
-      input.value = "";
-      return;
-    }
-
-    assignMovementToRun(jobId, moveIndex, runId);
-  });
-});
 
 jobPot.addEventListener("dragover", (e) => {
   e.preventDefault();
@@ -554,9 +536,9 @@ function renderOrderDetail(orderId) {
     row.innerHTML = `
       <div>
   <button class="job-link" data-job="${movement.jobId}">
-    ${movement.jobId}
-  </button>
-</div>
+      ${movement.jobId}
+    </button>
+  </div>
       <div>C</div>
       <div>${movement.collect.location}</div>
       <div>${movement.collect.detail}</div>
@@ -564,7 +546,13 @@ function renderOrderDetail(orderId) {
       <div>${movement.deliver.location}</div>
       <div>${movement.deliver.detail}</div>
       <div>${movement.pallets} pallets</div>
-      <div>${movement.runId ? `Run ${movement.runId}` : "Unallocated"}</div>
+      <div>
+    ${
+      movement.runId && runs[movement.runId]?.plannerRunNo
+        ? `<span class="run-badge">${String(Number(runs[movement.runId].plannerRunNo))}</span>`
+        : `<span class="run-badge run-badge--empty">Unallocated</span>`
+    }
+      </div>
     `;
 
     routeList.appendChild(row);
@@ -591,7 +579,7 @@ function renderActiveRun() {
 
   const run = runs[activeRunId];
 
-  activeRouteHeader.textContent = `Active Route — Run ${run.plannerRunNo || ""}: ${run.name}`;
+  activeRouteHeader.textContent = `Active Route — Run ${run.plannerRunNo ? String(Number(run.plannerRunNo)) : ""}: ${run.name}`;
   routeList.innerHTML = "";
 
   if (!run.stops.length) {
@@ -679,7 +667,9 @@ function updateJobPotAllocationDisplay() {
     const runId = movementAllocations[movementId];
 
     if (runId) {
-      input.value = runs[runId]?.plannerRunNo || "";
+      input.value = runs[runId]?.plannerRunNo
+      ? String(Number(runs[runId].plannerRunNo))
+      : "";
       row.classList.add("allocated");
     } else {
       input.value = "";
@@ -802,12 +792,12 @@ function applyJobPotFilters() {
 
     // JOBS VIEW
     if (currentView === "jobs") {
-      const showWholeJob = rowMatches.some(Boolean);
+      const anyVisible = rowMatches.some(Boolean);
 
-      group.style.display = showWholeJob ? "block" : "none";
+      group.style.display = anyVisible ? "block" : "none";
 
-      rows.forEach((row) => {
-        row.style.display = showWholeJob ? "grid" : "none";
+      rows.forEach((row, index) => {
+        row.style.display = rowMatches[index] ? "grid" : "none";
       });
 
       return;
@@ -851,11 +841,14 @@ document.querySelectorAll(".mode-btn").forEach((btn) => {
     document
       .querySelectorAll(".mode-btn")
       .forEach((b) => b.classList.remove("active"));
+
     btn.classList.add("active");
 
     activeModeFilter = btn.dataset.mode;
 
     renderJobPot();
+    attachJobPotEvents();
+    updateJobPotAllocationDisplay();
   });
 });
 
@@ -1171,6 +1164,7 @@ async function loadPlannerDataFromSupabase() {
   jobs (
     id,
     job_number,
+    status,
     pallets,
     planning_mode,
     collection_date,
@@ -1220,6 +1214,8 @@ async function loadPlannerDataFromSupabase() {
 
   data.forEach((order) => {
     order.jobs.forEach((job) => {
+      if (job.status === "deleted") return;
+
       job.movements.forEach((movement) => {
         const display = buildMovementDisplay(job, movement);
 
@@ -1991,7 +1987,10 @@ function renderRuns() {
         <input class="run-time-input" type="time" value="${run.startTime}" ${runEditMode ? "" : "readonly"} />
         <input class="run-name-input" type="text" value="${run.name || "Unknown"}" ${runEditMode ? "" : "readonly"} />
       </div>
-      <div class="run-ref">#${run.plannerRunNo || String(run.id).slice(0, 7)}</div>
+      <div class="run-ref">
+        #${run.plannerRunNo ? String(Number(run.plannerRunNo)) : ""}
+        ${runEditMode ? `<button class="run-delete-btn" data-run-id="${run.id}">×</button>` : ""}
+      </div>
     `;
 
     card.addEventListener("click", () => {
@@ -2032,6 +2031,11 @@ function renderRuns() {
 
     nameInput.addEventListener("change", () => {
       renderRuns();
+    });
+
+    card.querySelector(".run-delete-btn")?.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      await softDeleteRun(run.id);
     });
 
     card.addEventListener("dragover", (e) => {
@@ -2104,17 +2108,29 @@ document.getElementById("runDatePicker").addEventListener("change", (e) => {
 });
 
 document.getElementById("addRunBtn").addEventListener("click", async () => {
-  const plannerRunNo = String(Date.now()).slice(-7); // temp unique
+    const accountId = await getAccountId();
+
+    const existingRunNumbers = Object.values(runs)
+    .map((run) => Number(run.plannerRunNo))
+    .filter((number) => Number.isFinite(number));
+
+  const nextRunNumber =
+    existingRunNumbers.length > 0
+      ? Math.max(...existingRunNumbers) + 1
+      : 1;
+
+  const plannerRunNo = String(nextRunNumber).padStart(7, "0");
 
   const { data, error } = await supabaseClient
     .from("runs")
     .insert([
       {
+        account_id: accountId,
         run_name: "New Run",
         run_date: currentRunDate,
         start_time: null,
         planner_run_no: plannerRunNo,
-        account_id: YOUR_ACCOUNT_ID // we’ll handle properly later
+        status: "active"
       }
     ])
     .select()
@@ -2122,15 +2138,17 @@ document.getElementById("addRunBtn").addEventListener("click", async () => {
 
   if (error) {
     console.error("Error creating run:", error);
+    alert("Could not create run. Check console.");
     return;
   }
 
   runs[data.id] = {
     id: data.id,
-    name: data.run_name,
+    name: data.run_name || "New Run",
     date: data.run_date,
-    startTime: data.start_time,
-    plannerRunNo: data.planner_run_no
+    startTime: data.start_time ? data.start_time.slice(0, 5) : "",
+    plannerRunNo: data.planner_run_no,
+    stops: []
   };
 
   activeRunId = data.id;
@@ -2157,6 +2175,7 @@ async function loadRunsFromDB() {
   const { data, error } = await supabaseClient
     .from("runs")
     .select("*")
+    .or("status.is.null,status.neq.deleted")
     .order("run_date", { ascending: true })
     .order("start_time", { ascending: true });
 
@@ -2182,4 +2201,67 @@ async function loadRunsFromDB() {
   });
 
   renderRuns();
+}
+
+async function softDeleteRun(runId) {
+  const run = runs[runId];
+
+  if (!run) return;
+
+  const hasStops = run.stops && run.stops.length > 0;
+
+  if (hasStops) {
+    const proceed = confirm(
+      "This run has jobs allocated to it. Delete the run and return all jobs to the pot?"
+    );
+
+    if (!proceed) return;
+
+    const movementIds = [...new Set(run.stops.map((stop) => stop.movementKey))];
+
+    const { error: allocationError } = await supabaseClient
+      .from("run_allocations")
+      .delete()
+      .eq("run_id", runId);
+
+    if (allocationError) {
+      console.error("Could not remove run allocations:", allocationError);
+      alert("Could not remove allocations. Run was not deleted.");
+      return;
+    }
+
+    movementIds.forEach((movementId) => {
+      delete movementAllocations[movementId];
+
+      const movement = movements.find((m) => m.id === movementId);
+      if (movement) {
+        movement.runId = null;
+      }
+    });
+  }
+
+  const { error } = await supabaseClient
+    .from("runs")
+    .update({ status: "deleted" })
+    .eq("id", runId);
+
+  if (error) {
+    console.error("Could not delete run:", error);
+    alert("Could not delete run.");
+    return;
+  }
+
+  delete runs[runId];
+
+  if (activeRunId === runId) {
+    activeRunId = null;
+    activeRouteHeader.textContent = "Active Route";
+    routeEmpty.style.display = "block";
+    routeEmpty.textContent = "Select a run to begin planning";
+    routeList.style.display = "none";
+    routeList.innerHTML = "";
+  }
+
+  renderRuns();
+  updateJobPotAllocationDisplay();
 }
