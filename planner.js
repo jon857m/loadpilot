@@ -545,8 +545,9 @@ function renderOrderDetail(orderId) {
   const orderMovements = movements.filter((m) => m.orderId === orderId);
 
   activeRouteHeader.innerHTML = `
-   Order Detail — ${orderId}
-   <button id="addJobBtn" class="primary-btn" data-order="${orderId}">Add Job</button>
+    Order Detail — ${orderId}
+    <button id="addJobBtn" class="primary-btn" data-order="${orderId}">Add Job</button>
+    <button id="closeOrderBtn" class="danger-btn" data-order="${orderId}">×</button>
  `;
 
   routeEmpty.style.display = "none";
@@ -562,6 +563,7 @@ function renderOrderDetail(orderId) {
     <div>Detail</div>
     <div>Pallets</div>
     <div>Load</div>
+    <div></div>
   </div>
  `;
 
@@ -569,9 +571,10 @@ function renderOrderDetail(orderId) {
     const row = document.createElement("div");
     row.className = "order-detail-row";
 
-    row.innerHTML = `
-      <div>
-  <button class="job-link" data-job="${movement.jobId}">
+  row.innerHTML = `
+    <div class="order-row-inner">
+      <button class="job-delete-btn" data-job="${movement.jobId}">×</button>
+    <button class="job-link" data-job="${movement.jobId}">
       ${movement.jobId}
     </button>
   </div>
@@ -590,6 +593,7 @@ function renderOrderDetail(orderId) {
           </button>`
         : `<span class="run-badge run-badge--empty">Unallocated</span>`
     }
+
       </div>
     `;
 
@@ -617,6 +621,58 @@ function renderOrderDetail(orderId) {
       focusRun(button.dataset.runId);
     });
   });
+
+  document.querySelectorAll(".job-delete-btn").forEach((button) => {
+  button.addEventListener("click", async (e) => {
+    e.stopPropagation();
+    await softDeleteJob(button.dataset.job);
+  });
+});
+
+const closeOrderBtn = document.getElementById("closeOrderBtn");
+
+if (closeOrderBtn) {
+closeOrderBtn.addEventListener("click", async () => {
+  const hasJobs = movements.some((m) => m.orderId === activeOrderId);
+
+  // 🔴 Soft delete if empty
+  if (!hasJobs && activeOrderId) {
+    try {
+      await supabaseClient
+        .from("orders")
+        .update({ status: "deleted" })
+        .eq("id", activeOrderId);
+
+      console.log(`Order ${activeOrderId} marked as deleted`);
+    } catch (err) {
+      console.error("Failed to delete empty order:", err);
+    }
+  }
+
+  // 🧹 FULL UI RESET (this is the key bit you're missing)
+
+  activeOrderId = null;
+  activeRunId = null;
+
+  // Clear order detail panel
+  activeRouteHeader.innerHTML = "";
+  routeList.innerHTML = "";
+
+  // Reset empty state properly
+  routeEmpty.style.display = "block";
+  routeEmpty.innerText = "Select a run to begin planning";
+
+  // Optional: clear any selection highlights
+  document.querySelectorAll(".selected").forEach(el => {
+    el.classList.remove("selected");
+  });
+
+  // Re-render everything clean
+  renderRuns();
+  renderJobPot();
+});
+}
+
 
 }
 
@@ -2310,4 +2366,89 @@ async function softDeleteRun(runId) {
 
   renderRuns();
   updateJobPotAllocationDisplay();
+}
+
+async function softDeleteJob(jobNumber) {
+  const confirmDelete = confirm(
+    `Delete job ${jobNumber}? It will be removed from runs and hidden from the planner.`
+  );
+
+  if (!confirmDelete) return;
+
+  try {
+    const jobMovements = movements.filter((m) => m.jobId === jobNumber);
+    const movementIds = jobMovements.map((m) => m.id);
+
+    if (movementIds.length > 0) {
+      const { error: allocationError } = await supabaseClient
+        .from("run_allocations")
+        .delete()
+        .in("movement_id", movementIds);
+
+      if (allocationError) throw allocationError;
+    }
+
+    Object.values(runs).forEach((run) => {
+      run.stops = run.stops.filter(
+        (stop) => !movementIds.includes(stop.movementKey)
+      );
+    });
+
+    movementIds.forEach((movementId) => {
+      delete movementAllocations[movementId];
+    });
+
+    const { error: jobError } = await supabaseClient
+      .from("jobs")
+      .update({ status: "deleted" })
+      .eq("job_number", jobNumber);
+
+    if (jobError) throw jobError;
+
+    movements = movements.filter((m) => m.jobId !== jobNumber);
+
+    // check if order now empty
+    const hasJobsLeft = movements.some((m) => m.orderId === activeOrderId);
+
+    if (!hasJobsLeft && activeOrderId) {
+      try {
+        await supabaseClient
+          .from("orders")
+          .update({ status: "deleted" })
+          .eq("id", activeOrderId);
+
+        console.log(`Order ${activeOrderId} marked as deleted`);
+      } catch (err) {
+        console.error("Failed to update order status:", err);
+      }
+    }
+
+    cleanupEmptyOrderView();
+
+
+    renderJobPot();
+    attachJobPotEvents();
+    updateJobPotAllocationDisplay();
+
+    if (activeOrderId) {
+      renderOrderDetail(activeOrderId);
+    } else if (activeRunId) {
+      renderActiveRun();
+    }
+
+    alert(`Job ${jobNumber} deleted`);
+  } catch (err) {
+    console.error("Could not delete job:", err);
+    alert("Could not delete job. Check console.");
+  }
+}
+
+function cleanupEmptyOrderView() {
+  const hasJobs = movements.some((m) => m.orderId === activeOrderId);
+
+  if (!hasJobs) {
+    activeOrderId = null;
+    routeList.innerHTML = "";
+    routeEmpty.style.display = "block";
+  }
 }
