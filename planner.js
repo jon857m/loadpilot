@@ -233,7 +233,7 @@ function formatStop(action, stop) {
   return `${action} ${stop.location} ${stop.detail}`;
 }
 
-const runs = {
+let runs = {
   1: {
     name: "Manchester Multi Drop",
     date: "2026-04-29",
@@ -289,7 +289,7 @@ const jobPot = document.querySelector(".job-list");
 
 const unallocateDropzone = document.querySelector(".unallocate-dropzone");
 
-renderRuns();
+loadRunsFromDB();
 
 runCards.forEach((card) => {
   card.addEventListener("click", () => {
@@ -591,7 +591,7 @@ function renderActiveRun() {
 
   const run = runs[activeRunId];
 
-  activeRouteHeader.textContent = `Active Route — Run ${activeRunId}: ${run.name}`;
+  activeRouteHeader.textContent = `Active Route — Run ${run.plannerRunNo || ""}: ${run.name}`;
   routeList.innerHTML = "";
 
   if (!run.stops.length) {
@@ -1990,7 +1990,7 @@ function renderRuns() {
         <input class="run-time-input" type="time" value="${run.startTime}" ${runEditMode ? "" : "readonly"} />
         <input class="run-name-input" type="text" value="${run.name || "Unknown"}" ${runEditMode ? "" : "readonly"} />
       </div>
-      <div class="run-ref">#${String(run.id).padStart(7, "0")}</div>
+      <div class="run-ref">#${run.plannerRunNo || String(run.id).slice(0, 7)}</div>
     `;
 
     card.addEventListener("click", () => {
@@ -2003,16 +2003,30 @@ function renderRuns() {
     timeInput.addEventListener("click", (e) => e.stopPropagation());
     nameInput.addEventListener("click", (e) => e.stopPropagation());
 
-    timeInput.addEventListener("input", (e) => {
-      runs[run.id].startTime = e.target.value || "";
+    timeInput.addEventListener("input", async (e) => {
+      const value = e.target.value || "";
+
+      runs[run.id].startTime = value;
+
+      await supabaseClient
+        .from("runs")
+        .update({ start_time: value || null })
+        .eq("id", run.id);
     });
 
     timeInput.addEventListener("change", () => {
       renderRuns();
     });
 
-    nameInput.addEventListener("input", (e) => {
-      runs[run.id].name = e.target.value.trim() || "Unknown";
+    nameInput.addEventListener("input", async (e) => {
+      const value = e.target.value.trim() || "Unknown";
+
+      runs[run.id].name = value;
+
+      await supabaseClient
+        .from("runs")
+        .update({ run_name: value })
+        .eq("id", run.id);
     });
 
     nameInput.addEventListener("change", () => {
@@ -2088,21 +2102,40 @@ document.getElementById("runDatePicker").addEventListener("change", (e) => {
   renderActiveRun();
 });
 
-document.getElementById("addRunBtn").addEventListener("click", () => {
-  const nextRunId = Math.max(...Object.keys(runs).map((id) => Number(id))) + 1;
+document.getElementById("addRunBtn").addEventListener("click", async () => {
+  const plannerRunNo = String(Date.now()).slice(-7); // temp unique
 
-  const runId = String(nextRunId);
+  const { data, error } = await supabaseClient
+    .from("runs")
+    .insert([
+      {
+        run_name: "New Run",
+        run_date: currentRunDate,
+        start_time: null,
+        planner_run_no: plannerRunNo,
+        account_id: YOUR_ACCOUNT_ID // we’ll handle properly later
+      }
+    ])
+    .select()
+    .single();
 
-  runs[runId] = {
-    name: "Unknown",
-    date: normaliseDate(currentRunDate),
-    startTime: "",
-    stops: [],
+  if (error) {
+    console.error("Error creating run:", error);
+    return;
+  }
+
+  runs[data.id] = {
+    id: data.id,
+    name: data.run_name,
+    date: data.run_date,
+    startTime: data.start_time,
+    plannerRunNo: data.planner_run_no
   };
 
-  activeRunId = runId;
+  activeRunId = data.id;
+
   renderRuns();
-  selectRun(runId);
+  selectRun(data.id);
 });
 
 document
@@ -2118,3 +2151,34 @@ document.getElementById("runEditModeToggle").addEventListener("change", (e) => {
   runEditMode = e.target.checked;
   renderRuns();
 });
+
+async function loadRunsFromDB() {
+  const { data, error } = await supabaseClient
+    .from("runs")
+    .select("*")
+    .order("run_date", { ascending: true })
+    .order("start_time", { ascending: true });
+
+  if (error) {
+    console.error("Error loading runs:", error);
+    alert("Could not load runs from Supabase. Check console.");
+    return;
+  }
+
+  console.log("Runs loaded from Supabase:", data);
+
+  runs = {};
+
+  data.forEach((row) => {
+    runs[row.id] = {
+      id: row.id,
+      name: row.run_name || "Unknown",
+      date: row.run_date,
+      startTime: row.start_time ? row.start_time.slice(0, 5) : "",
+      plannerRunNo: row.planner_run_no,
+      stops: []
+    };
+  });
+
+  renderRuns();
+}
