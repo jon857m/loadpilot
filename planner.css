@@ -863,3 +863,13 @@ grid-template-columns:
   border: 1px solid #3a3f47;
   color: #888;
 }
+
+.run-jump-btn {
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.run-jump-btn:hover {
+  background: #263826;
+  border-color: #4f8f4f;
+}

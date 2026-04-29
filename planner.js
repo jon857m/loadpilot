@@ -329,6 +329,16 @@ function attachJobPotEvents() {
         movementId: row.dataset.movementId,
       };
     });
+
+    row.addEventListener("dblclick", () => {
+    const movementId = row.dataset.movementId;
+    const runId = movementAllocations[movementId];
+
+    if (!runId) return;
+
+    focusRun(runId);
+  });
+
   });
 
   document.querySelectorAll(".row-select").forEach((checkbox) => {
@@ -417,6 +427,32 @@ function selectRun(runId) {
     routeList.style.display = "none";
     routeList.innerHTML = "";
   }
+}
+
+function focusRun(runId) {
+  const run = runs[runId];
+
+  if (!run) {
+    alert("Run not found.");
+    return;
+  }
+
+  currentRunDate = normaliseDate(run.date);
+  document.getElementById("runDatePicker").value = currentRunDate;
+
+  document
+    .querySelectorAll(".run-date-btn")
+    .forEach((b) => b.classList.remove("active"));
+
+  activeRunId = runId;
+
+  renderRuns();
+
+  document.querySelectorAll(".run-card").forEach((card) => {
+    card.classList.toggle("active", card.dataset.run === activeRunId);
+  });
+
+  renderActiveRun();
 }
 
 function getMovement(jobId, moveIndex) {
@@ -549,7 +585,9 @@ function renderOrderDetail(orderId) {
       <div>
     ${
       movement.runId && runs[movement.runId]?.plannerRunNo
-        ? `<span class="run-badge">${String(Number(runs[movement.runId].plannerRunNo))}</span>`
+        ? `<button class="run-badge run-jump-btn" data-run-id="${movement.runId}">
+            ${String(Number(runs[movement.runId].plannerRunNo))}
+          </button>`
         : `<span class="run-badge run-badge--empty">Unallocated</span>`
     }
       </div>
@@ -572,6 +610,14 @@ function renderOrderDetail(orderId) {
       openJobWizardForEdit(button.dataset.job);
     });
   });
+
+  document.querySelectorAll(".run-jump-btn").forEach((button) => {
+    button.addEventListener("click", (e) => {
+      e.stopPropagation();
+      focusRun(button.dataset.runId);
+    });
+  });
+
 }
 
 function renderActiveRun() {
