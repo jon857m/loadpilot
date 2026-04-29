@@ -108,10 +108,25 @@
         </div>
 
         <!-- RUNS -->
-        <div class="panel runs">
-          <div class="panel-header">
-            <h2>Runs (Today)</h2>
-          </div>
+            <div class="panel runs">
+            <div class="panel-header">
+                <h2 id="runsTitle">Runs</h2>
+            </div>
+
+            <div class="run-controls">
+                <button class="run-date-btn active" data-run-date="today">Today</button>
+                <button class="run-date-btn" data-run-date="tomorrow">Tomorrow</button>
+                <input id="runDatePicker" class="date-picker" type="date" />
+                <label class="run-window-toggle">
+                <input type="checkbox" id="runWindowOffsetToggle" />
+                -4hrs
+                </label>
+                <label class="run-window-toggle">
+                <input type="checkbox" id="runEditModeToggle" />
+                Edit runs
+                </label>
+                <button id="addRunBtn" class="primary-btn">Add Run</button>
+            </div>
 
           <div class="run-list">
             <div class="run-card" data-run="1">

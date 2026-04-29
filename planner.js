@@ -65,7 +65,7 @@ function formatDateTime(date, time) {
 
 function renderJobPot() {
   const jobList = document.querySelector(".job-list");
-jobList.innerHTML = `
+  jobList.innerHTML = `
   <div class="job-header">
     <div></div>
     <div>Order</div>
@@ -90,18 +90,18 @@ jobList.innerHTML = `
 
   const grouped = {};
 
-movements
-  .filter(movement => {
-    if (activeModeFilter === "all") return true;
-    return movement.planningMode === activeModeFilter;
-  })
-  .forEach(movement => {
-    if (!grouped[movement.jobId]) {
-      grouped[movement.jobId] = [];
-    }
+  movements
+    .filter((movement) => {
+      if (activeModeFilter === "all") return true;
+      return movement.planningMode === activeModeFilter;
+    })
+    .forEach((movement) => {
+      if (!grouped[movement.jobId]) {
+        grouped[movement.jobId] = [];
+      }
 
-    grouped[movement.jobId].push(movement);
-  });
+      grouped[movement.jobId].push(movement);
+    });
 
   Object.keys(grouped).forEach((jobId) => {
     const group = document.createElement("div");
@@ -126,8 +126,8 @@ movements
         </div>
 
         <div class="col mode-col">
-  <span class="mode-badge ${movement.planningMode === 'direct' ? 'mode-direct' : 'mode-depot'}">
-    ${movement.planningMode === 'direct' ? 'Direct' : 'Via Depot'}
+  <span class="mode-badge ${movement.planningMode === "direct" ? "mode-direct" : "mode-depot"}">
+    ${movement.planningMode === "direct" ? "Direct" : "Via Depot"}
   </span>
 </div>
 
@@ -234,9 +234,14 @@ function formatStop(action, stop) {
 }
 
 const runs = {
-  1: { name: "Manchester Multi Drop", stops: [] },
-  2: { name: "South West", stops: [] },
-  3: { name: "London", stops: [] },
+  1: {
+    name: "Manchester Multi Drop",
+    date: "2026-04-29",
+    startTime: "08:00",
+    stops: [],
+  },
+  2: { name: "South West", date: "2026-04-29", startTime: "08:30", stops: [] },
+  3: { name: "London", date: "2026-04-29", startTime: "09:00", stops: [] },
 };
 
 let activeRunId = null;
@@ -255,16 +260,25 @@ let customDateFilter = "";
 
 let selectedMovements = new Set();
 
+let runEditMode = false;
+
 let activeModeFilter = "all";
 
 let activeOrderId = null;
 
 let editingJobNumber = null;
 
+let currentRunDate = "2026-04-29";
+
+let includePreviousEveningRuns = false;
+
 const movementAllocations = {};
 
 renderJobPot();
 attachJobPotEvents();
+
+
+document.getElementById("runDatePicker").value = currentRunDate;
 
 const runCards = document.querySelectorAll(".run-card");
 const jobRows = document.querySelectorAll(".job-row");
@@ -274,6 +288,8 @@ const activeRouteHeader = document.querySelector(".bottom .panel-header h2");
 const jobPot = document.querySelector(".job-list");
 
 const unallocateDropzone = document.querySelector(".unallocate-dropzone");
+
+renderRuns();
 
 runCards.forEach((card) => {
   card.addEventListener("click", () => {
@@ -402,14 +418,23 @@ jobPot.addEventListener("drop", (e) => {
 });
 
 function selectRun(runId) {
-  activeRunId = runId;
+  const clickedSameRun = activeRunId === runId;
 
-  runCards.forEach((c) => c.classList.remove("active"));
-  document
-    .querySelector(`.run-card[data-run="${runId}"]`)
-    ?.classList.add("active");
+  activeRunId = clickedSameRun ? null : runId;
 
-  renderActiveRun();
+  document.querySelectorAll(".run-card").forEach((card) => {
+    card.classList.toggle("active", card.dataset.run === activeRunId);
+  });
+
+  if (activeRunId) {
+    renderActiveRun();
+  } else {
+    activeRouteHeader.textContent = "Active Route";
+    routeEmpty.style.display = "block";
+    routeEmpty.textContent = "Select a run to begin planning";
+    routeList.style.display = "none";
+    routeList.innerHTML = "";
+  }
 }
 
 function getMovement(jobId, moveIndex) {
@@ -545,21 +570,20 @@ function renderOrderDetail(orderId) {
     routeList.appendChild(row);
   });
 
-    const addJobBtn = document.getElementById("addJobBtn");
+  const addJobBtn = document.getElementById("addJobBtn");
 
-    if (addJobBtn) {
+  if (addJobBtn) {
     addJobBtn.addEventListener("click", () => {
-        editingJobNumber = null;
-        openOrderWizard(orderId);
+      editingJobNumber = null;
+      openOrderWizard(orderId);
     });
-    }
+  }
 
-    document.querySelectorAll(".job-link").forEach((button) => {
-  button.addEventListener("click", () => {
-    openJobWizardForEdit(button.dataset.job);
+  document.querySelectorAll(".job-link").forEach((button) => {
+    button.addEventListener("click", () => {
+      openJobWizardForEdit(button.dataset.job);
+    });
   });
-});
-
 }
 
 function renderActiveRun() {
@@ -822,9 +846,11 @@ document.querySelectorAll(".date-btn").forEach((btn) => {
   });
 });
 
-document.querySelectorAll(".mode-btn").forEach(btn => {
+document.querySelectorAll(".mode-btn").forEach((btn) => {
   btn.addEventListener("click", () => {
-    document.querySelectorAll(".mode-btn").forEach(b => b.classList.remove("active"));
+    document
+      .querySelectorAll(".mode-btn")
+      .forEach((b) => b.classList.remove("active"));
     btn.classList.add("active");
 
     activeModeFilter = btn.dataset.mode;
@@ -1061,10 +1087,10 @@ function buildMovementDisplay(job, movement) {
 
   const sharedDetail = `${originalDeliver} Ex ${originalCollect}`;
 
-    const collectionDate = formatDate(job.collection_date);
-    const collectionTime = formatTime(job.collection_time);
-    const deliveryDate = formatDate(job.delivery_date);
-    const deliveryTime = formatTime(job.delivery_time);
+  const collectionDate = formatDate(job.collection_date);
+  const collectionTime = formatTime(job.collection_time);
+  const deliveryDate = formatDate(job.delivery_date);
+  const deliveryTime = formatTime(job.delivery_time);
 
   if (movement.movement_type === "direct") {
     return {
@@ -1073,15 +1099,15 @@ function buildMovementDisplay(job, movement) {
         detail: `For ${originalDeliver}`,
         date: collectionDate,
         time: collectionTime,
-        isDepot: false
+        isDepot: false,
       },
       deliver: {
         location: toName,
         detail: `Ex ${originalCollect}`,
         date: deliveryDate,
         time: deliveryTime,
-        isDepot: false
-      }
+        isDepot: false,
+      },
     };
   }
 
@@ -1092,48 +1118,48 @@ function buildMovementDisplay(job, movement) {
         detail: `For ${originalDeliver}`,
         date: collectionDate,
         time: collectionTime,
-        isDepot: false
+        isDepot: false,
       },
       deliver: {
         location: toName,
         detail: sharedDetail,
         date: collectionDate,
         time: "",
-        isDepot: true
-      }
+        isDepot: true,
+      },
     };
   }
 
-if (movement.movement_type === "from_depot") {
-  return {
-    collect: {
-      location: fromName,
-      detail: sharedDetail,
-      date: deliveryDate,
-      time: "",
-      isDepot: true
-    },
-    deliver: {
-      location: toName,
-      detail: `Ex ${originalCollect}`,
-      date: deliveryDate,
-      time: deliveryTime,
-      isDepot: false
-    }
-  };
-}
+  if (movement.movement_type === "from_depot") {
+    return {
+      collect: {
+        location: fromName,
+        detail: sharedDetail,
+        date: deliveryDate,
+        time: "",
+        isDepot: true,
+      },
+      deliver: {
+        location: toName,
+        detail: `Ex ${originalCollect}`,
+        date: deliveryDate,
+        time: deliveryTime,
+        isDepot: false,
+      },
+    };
+  }
 
   return {
     collect: {
       location: fromName,
       detail: "",
-      isDepot: false
+      isDepot: false,
     },
     deliver: {
       location: toName,
       detail: "",
-      isDepot: false
-    }
+      isDepot: false,
+    },
   };
 }
 
@@ -1197,22 +1223,22 @@ async function loadPlannerDataFromSupabase() {
         const display = buildMovementDisplay(job, movement);
 
         transformedMovements.push({
-        id: movement.id,
-        orderId: order.order_number,
-        jobId: job.job_number,
-        movement_type: movement.movement_type,
-        customer: "Demo Customer",
-        pallets: job.pallets || 1,
+          id: movement.id,
+          orderId: order.order_number,
+          jobId: job.job_number,
+          movement_type: movement.movement_type,
+          customer: "Demo Customer",
+          pallets: job.pallets || 1,
 
-        planningMode: job.planning_mode,
+          planningMode: job.planning_mode,
 
-        jobCollect: job.collection_address,
-        jobDeliver: job.delivery_address,
+          jobCollect: job.collection_address,
+          jobDeliver: job.delivery_address,
 
-        collect: display.collect,
-        deliver: display.deliver,
+          collect: display.collect,
+          deliver: display.deliver,
 
-        runId: null
+          runId: null,
         });
       });
     });
@@ -1302,19 +1328,21 @@ saveWizardBtn.addEventListener("click", (e) => {
       .getElementById("wizardDeliverPostcode")
       .value.trim(),
     collectionDate: document.getElementById("wizardCollectionDate").value,
-    collectionTime: document.getElementById("wizardCollectionTime").value || "09:00",
+    collectionTime:
+      document.getElementById("wizardCollectionTime").value || "09:00",
     deliveryDate: document.getElementById("wizardDeliveryDate").value,
-    deliveryTime: document.getElementById("wizardDeliveryTime").value || "11:00",
+    deliveryTime:
+      document.getElementById("wizardDeliveryTime").value || "11:00",
     pallets: Number(document.getElementById("wizardPallets").value || 1),
-    planningMode: document.getElementById("wizardPlanningMode").value
+    planningMode: document.getElementById("wizardPlanningMode").value,
   };
 
   console.log("Wizard data:", wizardData);
   if (editingJobNumber) {
-  updateJobFromWizard(editingJobNumber, wizardData);
-} else {
-  createJobFromWizard(activeOrderId, wizardData);
-}
+    updateJobFromWizard(editingJobNumber, wizardData);
+  } else {
+    createJobFromWizard(activeOrderId, wizardData);
+  }
 });
 
 async function createOrderFromWizard(wizardData) {
@@ -1478,16 +1506,17 @@ async function createJobFromWizard(orderNumber, wizardData) {
 
     if (orderError) throw orderError;
 
-    const { data: collectionAddress, error: collectionError } = await supabaseClient
-      .from("addresses")
-      .insert({
-        account_id: accountId,
-        name: wizardData.collectName,
-        town: wizardData.collectTown,
-        postcode: wizardData.collectPostcode
-      })
-      .select()
-      .single();
+    const { data: collectionAddress, error: collectionError } =
+      await supabaseClient
+        .from("addresses")
+        .insert({
+          account_id: accountId,
+          name: wizardData.collectName,
+          town: wizardData.collectTown,
+          postcode: wizardData.collectPostcode,
+        })
+        .select()
+        .single();
 
     if (collectionError) throw collectionError;
 
@@ -1497,7 +1526,7 @@ async function createJobFromWizard(orderNumber, wizardData) {
         account_id: accountId,
         name: wizardData.deliverName,
         town: wizardData.deliverTown,
-        postcode: wizardData.deliverPostcode
+        postcode: wizardData.deliverPostcode,
       })
       .select()
       .single();
@@ -1528,7 +1557,7 @@ async function createJobFromWizard(orderNumber, wizardData) {
         collection_date: wizardData.collectionDate || null,
         collection_time: wizardData.collectionTime || null,
         delivery_date: wizardData.deliveryDate || null,
-        delivery_time: wizardData.deliveryTime || null
+        delivery_time: wizardData.deliveryTime || null,
       })
       .select()
       .single();
@@ -1545,14 +1574,14 @@ async function createJobFromWizard(orderNumber, wizardData) {
           from_address_id: collectionAddress.id,
           to_address_id: deliveryAddress.id,
           sequence_no: 1,
-          active: true
+          active: true,
         });
 
       if (movementError) throw movementError;
     }
 
     if (wizardData.planningMode === "via_depot") {
-        const { data: depotAddress, error: depotError } = await supabaseClient
+      const { data: depotAddress, error: depotError } = await supabaseClient
         .from("addresses")
         .select("id")
         .eq("account_id", accountId)
@@ -1573,7 +1602,7 @@ async function createJobFromWizard(orderNumber, wizardData) {
             from_address_id: collectionAddress.id,
             to_address_id: depotAddress.id,
             sequence_no: 1,
-            active: true
+            active: true,
           },
           {
             account_id: accountId,
@@ -1582,8 +1611,8 @@ async function createJobFromWizard(orderNumber, wizardData) {
             from_address_id: depotAddress.id,
             to_address_id: deliveryAddress.id,
             sequence_no: 2,
-            active: true
-          }
+            active: true,
+          },
         ]);
 
       if (movementError) throw movementError;
@@ -1594,7 +1623,6 @@ async function createJobFromWizard(orderNumber, wizardData) {
     closeOrderWizard();
     await loadPlannerDataFromSupabase();
     renderOrderDetail(order.order_number);
-
   } catch (err) {
     console.error("Error creating job:", err);
     alert("Could not create job. Check console.");
@@ -1620,7 +1648,7 @@ async function updateJobFromWizard(jobNumber, wizardData) {
       .update({
         name: wizardData.collectName,
         town: wizardData.collectTown,
-        postcode: wizardData.collectPostcode
+        postcode: wizardData.collectPostcode,
       })
       .eq("id", job.collection_address_id);
 
@@ -1632,7 +1660,7 @@ async function updateJobFromWizard(jobNumber, wizardData) {
       .update({
         name: wizardData.deliverName,
         town: wizardData.deliverTown,
-        postcode: wizardData.deliverPostcode
+        postcode: wizardData.deliverPostcode,
       })
       .eq("id", job.delivery_address_id);
 
@@ -1641,14 +1669,14 @@ async function updateJobFromWizard(jobNumber, wizardData) {
     // 4. Update job core fields
     const { error: updateJobError } = await supabaseClient
       .from("jobs")
-        .update({
+      .update({
         pallets: wizardData.pallets,
         planning_mode: wizardData.planningMode,
         collection_date: wizardData.collectionDate || null,
         collection_time: wizardData.collectionTime || null,
         delivery_date: wizardData.deliveryDate || null,
-        delivery_time: wizardData.deliveryTime || null
-        })
+        delivery_time: wizardData.deliveryTime || null,
+      })
       .eq("id", job.id);
 
     if (updateJobError) throw updateJobError;
@@ -1660,17 +1688,14 @@ async function updateJobFromWizard(jobNumber, wizardData) {
       .eq("job_id", job.id);
 
     if (existingMovements && existingMovements.length) {
-      const movementIds = existingMovements.map(m => m.id);
+      const movementIds = existingMovements.map((m) => m.id);
 
       await supabaseClient
         .from("run_allocations")
         .delete()
         .in("movement_id", movementIds);
 
-      await supabaseClient
-        .from("movements")
-        .delete()
-        .eq("job_id", job.id);
+      await supabaseClient.from("movements").delete().eq("job_id", job.id);
     }
 
     // 6. Recreate movements
@@ -1684,14 +1709,14 @@ async function updateJobFromWizard(jobNumber, wizardData) {
           from_address_id: job.collection_address_id,
           to_address_id: job.delivery_address_id,
           sequence_no: 1,
-          active: true
+          active: true,
         });
 
       if (movementError) throw movementError;
     }
 
     if (wizardData.planningMode === "via_depot") {
-        const { data: depotAddress, error: depotError } = await supabaseClient
+      const { data: depotAddress, error: depotError } = await supabaseClient
         .from("addresses")
         .select("id")
         .eq("account_id", accountId)
@@ -1712,7 +1737,7 @@ async function updateJobFromWizard(jobNumber, wizardData) {
             from_address_id: job.collection_address_id,
             to_address_id: depotAddress.id,
             sequence_no: 1,
-            active: true
+            active: true,
           },
           {
             account_id: accountId,
@@ -1721,8 +1746,8 @@ async function updateJobFromWizard(jobNumber, wizardData) {
             from_address_id: depotAddress.id,
             to_address_id: job.delivery_address_id,
             sequence_no: 2,
-            active: true
-          }
+            active: true,
+          },
         ]);
 
       if (movementError) throw movementError;
@@ -1734,7 +1759,6 @@ async function updateJobFromWizard(jobNumber, wizardData) {
 
     await loadPlannerDataFromSupabase();
     renderOrderDetail(activeOrderId);
-
   } catch (err) {
     console.error("Error updating job:", err);
     alert("Could not update job");
@@ -1779,7 +1803,8 @@ async function openJobWizardForEdit(jobNumber) {
 
     const { data: job, error } = await supabaseClient
       .from("jobs")
-      .select(`
+      .select(
+        `
         id,
         job_number,
         pallets,
@@ -1801,7 +1826,8 @@ async function openJobWizardForEdit(jobNumber) {
         orders (
           order_number
         )
-      `)
+      `,
+      )
       .eq("job_number", jobNumber)
       .single();
 
@@ -1811,29 +1837,284 @@ async function openJobWizardForEdit(jobNumber) {
 
     // Fill wizard with TRUE data
     document.getElementById("wizardCustomer").value = "";
-    document.getElementById("wizardOrderNumber").value = job.orders.order_number;
+    document.getElementById("wizardOrderNumber").value =
+      job.orders.order_number;
 
-    document.getElementById("wizardCollectName").value = job.collection_address?.name || "";
-    document.getElementById("wizardCollectTown").value = job.collection_address?.town || "";
-    document.getElementById("wizardCollectPostcode").value = job.collection_address?.postcode || "";
+    document.getElementById("wizardCollectName").value =
+      job.collection_address?.name || "";
+    document.getElementById("wizardCollectTown").value =
+      job.collection_address?.town || "";
+    document.getElementById("wizardCollectPostcode").value =
+      job.collection_address?.postcode || "";
 
-    document.getElementById("wizardDeliverName").value = job.delivery_address?.name || "";
-    document.getElementById("wizardDeliverTown").value = job.delivery_address?.town || "";
-    document.getElementById("wizardDeliverPostcode").value = job.delivery_address?.postcode || "";
+    document.getElementById("wizardDeliverName").value =
+      job.delivery_address?.name || "";
+    document.getElementById("wizardDeliverTown").value =
+      job.delivery_address?.town || "";
+    document.getElementById("wizardDeliverPostcode").value =
+      job.delivery_address?.postcode || "";
 
-    document.getElementById("wizardCollectionDate").value = job.collection_date || "";
-    document.getElementById("wizardCollectionTime").value = job.collection_time || "09:00";
+    document.getElementById("wizardCollectionDate").value =
+      job.collection_date || "";
+    document.getElementById("wizardCollectionTime").value =
+      job.collection_time || "09:00";
 
-    document.getElementById("wizardDeliveryDate").value = job.delivery_date || "";
-    document.getElementById("wizardDeliveryTime").value = job.delivery_time || "11:00";
+    document.getElementById("wizardDeliveryDate").value =
+      job.delivery_date || "";
+    document.getElementById("wizardDeliveryTime").value =
+      job.delivery_time || "11:00";
 
     document.getElementById("wizardPallets").value = job.pallets || 1;
     document.getElementById("wizardPlanningMode").value = job.planning_mode;
 
     openOrderWizard(activeOrderId);
-
   } catch (err) {
     console.error("Error loading job:", err);
     alert("Could not load job");
   }
 }
+
+function normaliseDate(value) {
+  if (!value) return "";
+
+  if (value.includes("-")) return value;
+
+  const [day, month, year] = value.split("/");
+  return `${year}-${month}-${day}`;
+}
+
+function addDaysIso(dateIso, days) {
+  const [year, month, day] = dateIso.split("-").map(Number);
+
+  const date = new Date(Date.UTC(year, month - 1, day));
+  date.setUTCDate(date.getUTCDate() + days);
+
+  return date.toISOString().slice(0, 10);
+}
+
+function runMinutes(run) {
+  if (!run.startTime) return 9999;
+
+  const [hours, minutes] = run.startTime.split(":").map(Number);
+  return hours * 60 + minutes;
+}
+
+function shouldShowRunOnSelectedDate(run) {
+  const selectedDate = normaliseDate(currentRunDate);
+  const runDate = normaliseDate(run.date);
+  const minutes = runMinutes(run);
+
+  // Normal selected-day runs
+  if (runDate === selectedDate) return true;
+
+  // Optional previous evening window: previous day from 20:00 onwards
+  if (includePreviousEveningRuns) {
+    const previousDate = addDaysIso(selectedDate, -1);
+
+    if (runDate === previousDate && minutes >= 20 * 60) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function sortRunsForPlanningDay(a, b) {
+  const aIsPrevious = a.date !== currentRunDate ? 0 : 1;
+  const bIsPrevious = b.date !== currentRunDate ? 0 : 1;
+
+  if (aIsPrevious !== bIsPrevious) {
+    return aIsPrevious - bIsPrevious;
+  }
+
+  return (a.startTime || "99:99").localeCompare(b.startTime || "99:99");
+}
+
+function renderRuns() {
+  const runList = document.querySelector(".run-list");
+  runList.innerHTML = "";
+
+  const selectedDate = normaliseDate(currentRunDate);
+  const previousDate = addDaysIso(selectedDate, -1);
+
+  const visibleRuns = Object.keys(runs)
+    .map((runId) => {
+      const run = runs[runId];
+
+      return {
+        id: String(runId),
+        ...run,
+        date: normaliseDate(run.date),
+        startTime: run.startTime || "",
+      };
+    })
+    .filter((run) => {
+      // normal runs for selected day
+      if (run.date === selectedDate) return true;
+
+      // previous evening window
+      if (
+        includePreviousEveningRuns &&
+        run.date === previousDate &&
+        run.startTime >= "20:00"
+      ) {
+        return true;
+      }
+
+      return false;
+    })
+    .sort((a, b) => {
+      const aPrevious = a.date === previousDate ? 0 : 1;
+      const bPrevious = b.date === previousDate ? 0 : 1;
+
+      if (aPrevious !== bPrevious) return aPrevious - bPrevious;
+
+      return (a.startTime || "99:99").localeCompare(b.startTime || "99:99");
+    });
+
+  console.log("VISIBLE RUNS:", {
+    selectedDate,
+    previousDate,
+    includePreviousEveningRuns,
+    visibleRuns,
+    allRuns: runs,
+  });
+
+  visibleRuns.forEach((run) => {
+    const card = document.createElement("div");
+    card.className = "run-card";
+    card.dataset.run = run.id;
+
+    card.innerHTML = `
+      <div class="run-edit-row">
+        <input class="run-time-input" type="time" value="${run.startTime}" ${runEditMode ? "" : "readonly"} />
+        <input class="run-name-input" type="text" value="${run.name || "Unknown"}" ${runEditMode ? "" : "readonly"} />
+      </div>
+      <div class="run-ref">#${String(run.id).padStart(7, "0")}</div>
+    `;
+
+    card.addEventListener("click", () => {
+      selectRun(run.id);
+    });
+
+    const timeInput = card.querySelector(".run-time-input");
+    const nameInput = card.querySelector(".run-name-input");
+
+    timeInput.addEventListener("click", (e) => e.stopPropagation());
+    nameInput.addEventListener("click", (e) => e.stopPropagation());
+
+    timeInput.addEventListener("input", (e) => {
+      runs[run.id].startTime = e.target.value || "";
+    });
+
+    timeInput.addEventListener("change", () => {
+      renderRuns();
+    });
+
+    nameInput.addEventListener("input", (e) => {
+      runs[run.id].name = e.target.value.trim() || "Unknown";
+    });
+
+    nameInput.addEventListener("change", () => {
+      renderRuns();
+    });
+
+    card.addEventListener("dragover", (e) => {
+      e.preventDefault();
+    });
+
+    card.addEventListener("drop", (e) => {
+      e.preventDefault();
+
+      if (!dragPayload) return;
+
+      if (dragPayload.type === "jobMovement") {
+        assignMovementToRun(dragPayload.movementId, run.id);
+      }
+
+      if (dragPayload.type === "routeMovement") {
+        moveMovementToRun(dragPayload.movementKey, run.id);
+      }
+
+      dragPayload = null;
+      unallocateDropzone.classList.remove("visible", "drag-over");
+    });
+
+    runList.appendChild(card);
+  });
+}
+
+function getTodayIso() {
+  return "2026-04-29";
+}
+
+function getTomorrowIso() {
+  return "2026-04-30";
+}
+
+document.querySelectorAll(".run-date-btn").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    document
+      .querySelectorAll(".run-date-btn")
+      .forEach((b) => b.classList.remove("active"));
+
+    btn.classList.add("active");
+
+    if (btn.dataset.runDate === "today") {
+      currentRunDate = getTodayIso();
+    }
+
+    if (btn.dataset.runDate === "tomorrow") {
+      currentRunDate = getTomorrowIso();
+    }
+
+    document.getElementById("runDatePicker").value = currentRunDate;
+
+    activeRunId = null;
+    renderRuns();
+    renderActiveRun();
+  });
+});
+
+document.getElementById("runDatePicker").addEventListener("change", (e) => {
+  currentRunDate = e.target.value;
+
+  document
+    .querySelectorAll(".run-date-btn")
+    .forEach((b) => b.classList.remove("active"));
+
+  activeRunId = null;
+  renderRuns();
+  renderActiveRun();
+});
+
+document.getElementById("addRunBtn").addEventListener("click", () => {
+  const nextRunId = Math.max(...Object.keys(runs).map((id) => Number(id))) + 1;
+
+  const runId = String(nextRunId);
+
+  runs[runId] = {
+    name: "Unknown",
+    date: normaliseDate(currentRunDate),
+    startTime: "",
+    stops: [],
+  };
+
+  activeRunId = runId;
+  renderRuns();
+  selectRun(runId);
+});
+
+document
+  .getElementById("runWindowOffsetToggle")
+  .addEventListener("change", (e) => {
+    includePreviousEveningRuns = e.target.checked;
+    activeRunId = null;
+    renderRuns();
+    renderActiveRun();
+});
+
+document.getElementById("runEditModeToggle").addEventListener("change", (e) => {
+  runEditMode = e.target.checked;
+  renderRuns();
+});
