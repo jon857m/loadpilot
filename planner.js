@@ -679,7 +679,7 @@ function updateJobPotAllocationDisplay() {
     const runId = movementAllocations[movementId];
 
     if (runId) {
-      input.value = runId;
+      input.value = runs[runId]?.plannerRunNo || "";
       row.classList.add("allocated");
     } else {
       input.value = "";
@@ -931,13 +931,12 @@ function updateSelectedCount() {
 
 async function saveAllocationToSupabase(movementId, runId) {
   try {
-    const { data: runData, error: runError } = await supabaseClient
-      .from("runs")
-      .select("id")
-      .eq("planner_run_no", runId)
-      .single();
+    const run = runs[runId];
 
-    if (runError) throw runError;
+    if (!run) {
+      console.error("Cannot save allocation. Run not found:", runId);
+      return;
+    }
 
     const accountId = await getAccountId();
 
@@ -946,18 +945,18 @@ async function saveAllocationToSupabase(movementId, runId) {
       .upsert(
         {
           account_id: accountId,
-          run_id: runData.id,
+          run_id: run.id,
           movement_id: movementId,
           stop_sequence: 1,
         },
         {
           onConflict: "movement_id",
-        },
+        }
       );
 
     if (upsertError) throw upsertError;
 
-    console.log("Saved allocation:", movementId, "→ run", runId);
+    console.log("Saved allocation:", movementId, "→ run", run.plannerRunNo);
   } catch (err) {
     console.error("Error saving allocation:", err);
   }
@@ -980,16 +979,16 @@ async function getAccountId() {
 
 async function loadAllocationsFromSupabase() {
   const { data, error } = await supabaseClient.from("run_allocations").select(`
-        movement_id,
-        stop_sequence,
-        collect_sequence,
-        deliver_sequence,
-        runs (
-        id,
-        run_name,
-        planner_run_no
-        )
-    `);
+    movement_id,
+    stop_sequence,
+    collect_sequence,
+    deliver_sequence,
+    runs (
+      id,
+      run_name,
+      planner_run_no
+    )
+  `);
 
   if (error) {
     console.error("Error loading allocations:", error);
@@ -1000,13 +999,15 @@ async function loadAllocationsFromSupabase() {
     const movement = movements.find((m) => m.id === allocation.movement_id);
     if (!movement) return;
 
-    const plannerRunNo = allocation.runs?.planner_run_no || "1";
+    const runId = allocation.runs?.id;
 
-    movement.runId = plannerRunNo;
-    movementAllocations[movement.id] = plannerRunNo;
+    if (!runId || !runs[runId]) return;
 
-    if (!runs[plannerRunNo].stops.some((s) => s.movementKey === movement.id)) {
-      runs[plannerRunNo].stops.push({
+    movement.runId = runId;
+    movementAllocations[movement.id] = runId;
+
+    if (!runs[runId].stops.some((s) => s.movementKey === movement.id)) {
+      runs[runId].stops.push({
         movementKey: movement.id,
         type: "collect",
         sequence: allocation.collect_sequence || allocation.stop_sequence || 1,
@@ -1016,7 +1017,7 @@ async function loadAllocationsFromSupabase() {
         pallets: movement.pallets,
       });
 
-      runs[plannerRunNo].stops.push({
+      runs[runId].stops.push({
         movementKey: movement.id,
         type: "deliver",
         sequence:
