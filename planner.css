@@ -722,3 +722,24 @@ grid-template-columns:
   background: rgba(170, 120, 255, 0.15);
   color: #C7A6FF;
 }
+
+.mode-filter-group {
+  display: flex;
+  gap: 6px;
+}
+
+.mode-btn {
+  background: #1d2128;
+  border: 1px solid #2a2d33;
+  color: #ccc;
+  padding: 4px 8px;
+  font-size: 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.mode-btn.active {
+  background: #243044;
+  border-color: #5aa7ff;
+  color: #5aa7ff;
+}

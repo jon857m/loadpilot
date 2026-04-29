@@ -90,7 +90,12 @@ jobList.innerHTML = `
 
   const grouped = {};
 
-  movements.forEach((movement) => {
+movements
+  .filter(movement => {
+    if (activeModeFilter === "all") return true;
+    return movement.planningMode === activeModeFilter;
+  })
+  .forEach(movement => {
     if (!grouped[movement.jobId]) {
       grouped[movement.jobId] = [];
     }
@@ -249,6 +254,8 @@ let currentSearchTerm = "";
 let customDateFilter = "";
 
 let selectedMovements = new Set();
+
+let activeModeFilter = "all";
 
 let activeOrderId = null;
 
@@ -812,6 +819,17 @@ document.querySelectorAll(".date-btn").forEach((btn) => {
     btn.classList.add("active");
 
     applyJobPotFilters();
+  });
+});
+
+document.querySelectorAll(".mode-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".mode-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+
+    activeModeFilter = btn.dataset.mode;
+
+    renderJobPot();
   });
 });
 
