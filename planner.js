@@ -54,18 +54,32 @@ const jobs = {
   ],
 };
 
+function formatDateTime(date, time) {
+  const parts = [];
+
+  if (date) parts.push(date);
+  if (time) parts.push(time);
+
+  return parts.join(" ");
+}
+
 function renderJobPot() {
   const jobList = document.querySelector(".job-list");
-  jobList.innerHTML = `
+jobList.innerHTML = `
   <div class="job-header">
     <div></div>
     <div>Order</div>
+    <div>Mode</div>
 
     <div class="collect-head">C/D</div>
+    <div class="collect-head">Date</div>
+    <div class="collect-head">Time</div>
     <div class="collect-head">Depot</div>
     <div class="collect-head">Detail</div>
 
     <div class="deliver-head">C/D</div>
+    <div class="deliver-head">Date</div>
+    <div class="deliver-head">Time</div>
     <div class="deliver-head">Depot</div>
     <div class="deliver-head">Detail</div>
 
@@ -106,13 +120,25 @@ function renderJobPot() {
           <button class="order-link" data-order="${movement.orderId}">${movement.orderId}</button>
         </div>
 
-        <div class="col cd-col collect-col">C</div>
-        <div class="col location-col collect-col">${movement.collect.location}</div>
-        <div class="col detail-col collect-col">${movement.collect.detail}</div>
+        <div class="col mode-col">
+  <span class="mode-badge ${movement.planningMode === 'direct' ? 'mode-direct' : 'mode-depot'}">
+    ${movement.planningMode === 'direct' ? 'Direct' : 'Via Depot'}
+  </span>
+</div>
 
-        <div class="col cd-col deliver-col">D</div>
-        <div class="col location-col deliver-col">${movement.deliver.location}</div>
-        <div class="col detail-col deliver-col">${movement.deliver.detail}</div>
+<div class="col cd-col collect-col">C</div>
+<div class="col date-col collect-col">${movement.collect.date || ""}</div>
+<div class="col time-col collect-col">${movement.collect.time || ""}</div>
+<div class="col location-col collect-col">${movement.collect.location}</div>
+<div class="col detail-col collect-col">${movement.collect.detail}</div>
+
+
+
+<div class="col cd-col deliver-col">D</div>
+<div class="col date-col deliver-col">${movement.deliver.date || ""}</div>
+<div class="col time-col deliver-col">${movement.deliver.time || ""}</div>
+<div class="col location-col deliver-col">${movement.deliver.location}</div>
+<div class="col detail-col deliver-col">${movement.deliver.detail}</div>
 
         <div class="col pallets-col">${movement.pallets} pallets</div>
 
@@ -996,6 +1022,18 @@ document.getElementById("clearSelectionBtn").addEventListener("click", () => {
   updateSelectedCount();
 });
 
+function formatTime(value) {
+  if (!value) return "";
+  return value.slice(0, 5);
+}
+
+function formatDate(value) {
+  if (!value) return "";
+
+  const [year, month, day] = value.split("-");
+  return `${day}/${month}/${year}`;
+}
+
 function buildMovementDisplay(job, movement) {
   const originalCollect = job.collection_address?.name || "Collection";
   const originalDeliver = job.delivery_address?.name || "Delivery";
@@ -1005,16 +1043,25 @@ function buildMovementDisplay(job, movement) {
 
   const sharedDetail = `${originalDeliver} Ex ${originalCollect}`;
 
+    const collectionDate = formatDate(job.collection_date);
+    const collectionTime = formatTime(job.collection_time);
+    const deliveryDate = formatDate(job.delivery_date);
+    const deliveryTime = formatTime(job.delivery_time);
+
   if (movement.movement_type === "direct") {
     return {
       collect: {
         location: fromName,
         detail: `For ${originalDeliver}`,
+        date: collectionDate,
+        time: collectionTime,
         isDepot: false
       },
       deliver: {
         location: toName,
         detail: `Ex ${originalCollect}`,
+        date: deliveryDate,
+        time: deliveryTime,
         isDepot: false
       }
     };
@@ -1025,30 +1072,38 @@ function buildMovementDisplay(job, movement) {
       collect: {
         location: fromName,
         detail: `For ${originalDeliver}`,
+        date: collectionDate,
+        time: collectionTime,
         isDepot: false
       },
       deliver: {
         location: toName,
         detail: sharedDetail,
+        date: collectionDate,
+        time: "",
         isDepot: true
       }
     };
   }
 
-  if (movement.movement_type === "from_depot") {
-    return {
-      collect: {
-        location: fromName,
-        detail: sharedDetail,
-        isDepot: true
-      },
-      deliver: {
-        location: toName,
-        detail: `Ex ${originalCollect}`,
-        isDepot: false
-      }
-    };
-  }
+if (movement.movement_type === "from_depot") {
+  return {
+    collect: {
+      location: fromName,
+      detail: sharedDetail,
+      date: deliveryDate,
+      time: "",
+      isDepot: true
+    },
+    deliver: {
+      location: toName,
+      detail: `Ex ${originalCollect}`,
+      date: deliveryDate,
+      time: deliveryTime,
+      isDepot: false
+    }
+  };
+}
 
   return {
     collect: {
@@ -1073,6 +1128,10 @@ async function loadPlannerDataFromSupabase() {
     job_number,
     pallets,
     planning_mode,
+    collection_date,
+    collection_time,
+    delivery_date,
+    delivery_time,
     collection_address:addresses!jobs_collection_address_id_fkey (
       id,
       name,
@@ -1127,20 +1186,13 @@ async function loadPlannerDataFromSupabase() {
         customer: "Demo Customer",
         pallets: job.pallets || 1,
 
+        planningMode: job.planning_mode,
+
         jobCollect: job.collection_address,
         jobDeliver: job.delivery_address,
 
-        collect: {
-            ...display.collect,
-            date: "2026-04-27",
-            time: "09:00"
-        },
-
-        deliver: {
-            ...display.deliver,
-            date: "2026-04-27",
-            time: "17:00"
-        },
+        collect: display.collect,
+        deliver: display.deliver,
 
         runId: null
         });

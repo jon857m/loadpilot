@@ -184,13 +184,14 @@ body {
 
 .job-row {
   display: grid;
-  grid-template-columns:
-    30px
-    90px
-    28px 220px 1fr
-    28px 220px 1fr
-    90px
-    80px;
+grid-template-columns:
+  30px
+  90px
+  90px
+  28px 90px 60px 160px minmax(180px, 1fr)
+  28px 90px 60px 160px minmax(180px, 1fr)
+  80px
+  70px;
   gap: 8px;
   padding: 8px;
   background: #1d2128;
@@ -455,10 +456,11 @@ body {
   grid-template-columns:
     30px
     90px
-    28px 220px 1fr
-    28px 220px 1fr
     90px
-    80px;
+    28px 90px 60px 160px minmax(180px, 1fr)
+    28px 90px 60px 160px minmax(180px, 1fr)
+    80px
+    70px;
 
   gap: 8px;
   padding: 6px 8px;
@@ -482,9 +484,10 @@ body {
   grid-template-columns:
     30px
     90px
-    28px 220px 1fr
     90px
-    80px;
+    28px 90px 60px 160px minmax(180px, 1fr)
+    80px
+    70px;
 }
 
 .job-header div {
@@ -682,4 +685,40 @@ body {
 
 .job-link:hover {
   text-decoration: underline;
+}
+
+
+.date-time-line {
+  color: #9aa3ad;
+  font-size: 11px;
+}
+
+.job-pot.show-collect .job-header .deliver-head {
+  display: none;
+}
+
+.job-pot.show-deliver .job-header .collect-head {
+  display: none;
+}
+
+.mode-col {
+  display: flex;
+  align-items: center;
+}
+
+.mode-badge {
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-weight: 500;
+}
+
+.mode-direct {
+  background: rgba(80, 200, 120, 0.15);
+  color: #7CFFB2;
+}
+
+.mode-depot {
+  background: rgba(170, 120, 255, 0.15);
+  color: #C7A6FF;
 }
