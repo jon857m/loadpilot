@@ -268,7 +268,7 @@ let activeOrderId = null;
 
 let editingJobNumber = null;
 
-let currentRunDate = "2026-04-29";
+let currentRunDate = new Date().toISOString().split("T")[0];
 
 let includePreviousEveningRuns = false;
 
@@ -1887,14 +1887,15 @@ async function createJobFromWizard(orderNumber, wizardData) {
     }
 
     if (wizardData.planningMode === "via_depot") {
-      const { data: depotAddress, error: depotError } = await supabaseClient
-        .from("addresses")
-        .select("id")
-        .eq("account_id", accountId)
-        .eq("name", "Depot")
-        .eq("postcode", "DEP 001")
-        .limit(1)
-        .single();
+const { data: depotAddress, error: depotError } = await supabaseClient
+  .from("addresses")
+  .select("id")
+  .eq("account_id", accountId)
+  .eq("is_depot", true)
+  .eq("active", true)
+  .order("fast_lookup", { ascending: true })
+  .limit(1)
+  .single();
 
       if (depotError) throw depotError;
 
@@ -2039,14 +2040,15 @@ async function updateJobFromWizard(jobNumber, wizardData) {
     }
 
     if (wizardData.planningMode === "via_depot") {
-      const { data: depotAddress, error: depotError } = await supabaseClient
-        .from("addresses")
-        .select("id")
-        .eq("account_id", accountId)
-        .eq("name", "Depot")
-        .eq("postcode", "DEP 001")
-        .limit(1)
-        .single();
+const { data: depotAddress, error: depotError } = await supabaseClient
+  .from("addresses")
+  .select("id")
+  .eq("account_id", accountId)
+  .eq("is_depot", true)
+  .eq("active", true)
+  .order("fast_lookup", { ascending: true })
+  .limit(1)
+  .single();
 
       if (depotError) throw depotError;
 
@@ -2420,11 +2422,13 @@ document.querySelectorAll(".run-date-btn").forEach((btn) => {
     btn.classList.add("active");
 
     if (btn.dataset.runDate === "today") {
-      currentRunDate = getTodayIso();
+      currentRunDate = new Date().toISOString().split("T")[0];
     }
 
     if (btn.dataset.runDate === "tomorrow") {
-      currentRunDate = getTomorrowIso();
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      currentRunDate = tomorrow.toISOString().split("T")[0];
     }
 
     document.getElementById("runDatePicker").value = currentRunDate;
