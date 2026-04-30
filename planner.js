@@ -361,6 +361,97 @@ const routeList = document.querySelector(".route-list");
 const activeRouteHeader = document.querySelector(".bottom .panel-header h2");
 const jobPot = document.querySelector(".job-list");
 
+let boxSelectActive = false;
+let boxSelectStartX = 0;
+let boxSelectStartY = 0;
+let selectionBoxEl = null;
+
+function updateBoxSelection(e) {
+  if (!boxSelectActive || !selectionBoxEl) return;
+
+  const left = Math.min(boxSelectStartX, e.clientX);
+  const top = Math.min(boxSelectStartY, e.clientY);
+  const width = Math.abs(e.clientX - boxSelectStartX);
+  const height = Math.abs(e.clientY - boxSelectStartY);
+
+  selectionBoxEl.style.left = `${left}px`;
+  selectionBoxEl.style.top = `${top}px`;
+  selectionBoxEl.style.width = `${width}px`;
+  selectionBoxEl.style.height = `${height}px`;
+
+  const box = selectionBoxEl.getBoundingClientRect();
+
+  document.querySelectorAll(".job-row").forEach((row) => {
+    const group = row.closest(".job-group");
+
+    const isVisible =
+      row.style.display !== "none" &&
+      (!group || group.style.display !== "none");
+
+    if (!isVisible) return;
+
+    const rowBox = row.getBoundingClientRect();
+
+    const overlaps =
+      rowBox.left < box.right &&
+      rowBox.right > box.left &&
+      rowBox.top < box.bottom &&
+      rowBox.bottom > box.top;
+
+    row.classList.toggle("box-selecting", overlaps);
+  });
+}
+
+function finishBoxSelection() {
+  if (!boxSelectActive) return;
+
+  document.querySelectorAll(".job-row.box-selecting").forEach((row) => {
+    const checkbox = row.querySelector(".row-select");
+    const movementId = row.dataset.movementId;
+
+    if (!checkbox || !movementId) return;
+
+    checkbox.checked = true;
+    selectedMovements.add(movementId);
+
+    row.classList.remove("box-selecting");
+  });
+
+  if (selectionBoxEl) {
+    selectionBoxEl.remove();
+    selectionBoxEl = null;
+  }
+
+  boxSelectActive = false;
+  updateSelectedCount();
+}
+
+jobPot.addEventListener("mousedown", (e) => {
+  if (!e.shiftKey) return;
+
+  if (
+    e.target.closest("button") ||
+    e.target.closest("input") ||
+    e.target.closest(".run-input")
+  ) {
+    return;
+  }
+
+  e.preventDefault();
+
+  boxSelectActive = true;
+  boxSelectStartX = e.clientX;
+  boxSelectStartY = e.clientY;
+
+  selectionBoxEl = document.createElement("div");
+  selectionBoxEl.className = "selection-box";
+  document.body.appendChild(selectionBoxEl);
+});
+
+document.addEventListener("mousemove", updateBoxSelection);
+
+document.addEventListener("mouseup", finishBoxSelection);
+
 const unallocateDropzone = document.querySelector(".unallocate-dropzone");
 
 loadRunsFromDB();

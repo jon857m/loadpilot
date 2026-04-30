@@ -986,3 +986,15 @@ grid-template-columns:
 .job-row-stop-view:hover {
   background: #22302b;
 }
+
+.selection-box {
+  position: fixed;
+  border: 1px solid #5aa7ff;
+  background: rgba(90, 167, 255, 0.12);
+  pointer-events: none;
+  z-index: 9999;
+}
+
+.job-row.box-selecting {
+  outline: 1px solid #5aa7ff;
+}
