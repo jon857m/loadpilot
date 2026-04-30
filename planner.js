@@ -274,8 +274,8 @@ let includePreviousEveningRuns = false;
 
 const movementAllocations = {};
 
-renderJobPot();
-attachJobPotEvents();
+// renderJobPot();
+// attachJobPotEvents();
 
 
 document.getElementById("runDatePicker").value = currentRunDate;
@@ -636,18 +636,23 @@ closeOrderBtn.addEventListener("click", async () => {
   const hasJobs = movements.some((m) => m.orderId === activeOrderId);
 
   // 🔴 Soft delete if empty
-  if (!hasJobs && activeOrderId) {
-    try {
-      await supabaseClient
-        .from("orders")
-        .update({ status: "deleted" })
-        .eq("id", activeOrderId);
+if (!hasJobs && activeOrderId) {
+  try {
+    const { error } = await supabaseClient
+      .from("orders")
+      .update({ status: "deleted" })
+      await deleteOrderIfEmpty(activeOrderId);
 
+    if (error) {
+      console.error("Order delete failed:", error);
+    } else {
       console.log(`Order ${activeOrderId} marked as deleted`);
-    } catch (err) {
-      console.error("Failed to delete empty order:", err);
     }
+
+  } catch (err) {
+    console.error("Failed to delete empty order:", err);
   }
+}
 
   // 🧹 FULL UI RESET (this is the key bit you're missing)
 
@@ -2415,7 +2420,7 @@ async function softDeleteJob(jobNumber) {
         await supabaseClient
           .from("orders")
           .update({ status: "deleted" })
-          .eq("id", activeOrderId);
+          await deleteOrderIfEmpty(activeOrderId);
 
         console.log(`Order ${activeOrderId} marked as deleted`);
       } catch (err) {
@@ -2450,5 +2455,26 @@ function cleanupEmptyOrderView() {
     activeOrderId = null;
     routeList.innerHTML = "";
     routeEmpty.style.display = "block";
+  }
+}
+
+async function deleteOrderIfEmpty(orderNumber) {
+  const hasJobs = movements.some((m) => m.orderId === orderNumber);
+
+  if (hasJobs) return;
+
+  try {
+    const { error } = await supabaseClient
+      .from("orders")
+      .update({ status: "deleted" })
+      .eq("order_number", orderNumber);
+
+    if (error) {
+      console.error("Order delete failed:", error);
+    } else {
+      console.log(`Order ${orderNumber} marked as deleted`);
+    }
+  } catch (err) {
+    console.error("Failed to delete order:", err);
   }
 }
