@@ -109,7 +109,37 @@ function renderJobPot() {
     const group = document.createElement("div");
     group.className = "job-group";
 
-    grouped[jobId].forEach((movement, index) => {
+  grouped[jobId].forEach((movement, index) => {
+    const shouldSplitStops =
+      currentTypeFilter === "all" && includeDepot === false;
+
+    const stopsToRender = [];
+
+    if (shouldSplitStops) {
+      if (!movement.collect.isDepot) {
+        stopsToRender.push({
+          side: "collect",
+          cd: "C",
+          stop: movement.collect,
+        });
+      }
+
+      if (!movement.deliver.isDepot) {
+        stopsToRender.push({
+          side: "deliver",
+          cd: "D",
+          stop: movement.deliver,
+        });
+      }
+    } else {
+      stopsToRender.push({
+        side: "movement",
+        cd: null,
+        stop: null,
+      });
+    }
+
+    stopsToRender.forEach((stopView) => {
       const row = document.createElement("div");
       row.className = "job-row";
       row.setAttribute("draggable", "true");
@@ -117,46 +147,88 @@ function renderJobPot() {
       row.dataset.move = index;
       row.dataset.movementId = movement.id;
 
-      row.innerHTML = `
+      if (stopView.side !== "movement") {
+        row.dataset.stopSide = stopView.side;
+        row.classList.add("job-row-stop-view");
+      }
 
-        <div class="col select-col">
+      if (stopView.side === "movement") {
+        row.innerHTML = `
+          <div class="col select-col">
             <input type="checkbox" class="row-select" data-id="${movement.id}" />
-        </div>
+          </div>
 
-        <div class="col order-id">
-          <button class="order-link" data-order="${movement.orderId}">${movement.orderId}</button>
-        </div>
+          <div class="col order-id">
+            <button class="order-link" data-order="${movement.orderId}">${movement.orderId}</button>
+          </div>
 
-        <div class="col mode-col">
-  <span class="mode-badge ${movement.planningMode === "direct" ? "mode-direct" : "mode-depot"}">
-    ${movement.planningMode === "direct" ? "Direct" : "Via Depot"}
-  </span>
-</div>
+          <div class="col mode-col">
+            <span class="mode-badge ${movement.planningMode === "direct" ? "mode-direct" : "mode-depot"}">
+              ${movement.planningMode === "direct" ? "Direct" : "Via Depot"}
+            </span>
+          </div>
 
-<div class="col cd-col collect-col">C</div>
-<div class="col date-col collect-col">${movement.collect.date || ""}</div>
-<div class="col time-col collect-col">${movement.collect.time || ""}</div>
-<div class="col location-col collect-col">${movement.collect.location}</div>
-<div class="col detail-col collect-col">${movement.collect.detail}</div>
+          <div class="col cd-col collect-col">C</div>
+          <div class="col date-col collect-col">${movement.collect.date || ""}</div>
+          <div class="col time-col collect-col">${movement.collect.time || ""}</div>
+          <div class="col location-col collect-col">${movement.collect.location}</div>
+          <div class="col detail-col collect-col">${movement.collect.detail}</div>
 
+          <div class="col cd-col deliver-col">D</div>
+          <div class="col date-col deliver-col">${movement.deliver.date || ""}</div>
+          <div class="col time-col deliver-col">${movement.deliver.time || ""}</div>
+          <div class="col location-col deliver-col">${movement.deliver.location}</div>
+          <div class="col detail-col deliver-col">${movement.deliver.detail}</div>
 
+          <div class="col pallets-col">${movement.pallets} pallets</div>
 
-<div class="col cd-col deliver-col">D</div>
-<div class="col date-col deliver-col">${movement.deliver.date || ""}</div>
-<div class="col time-col deliver-col">${movement.deliver.time || ""}</div>
-<div class="col location-col deliver-col">${movement.deliver.location}</div>
-<div class="col detail-col deliver-col">${movement.deliver.detail}</div>
-
-        <div class="col pallets-col">${movement.pallets} pallets</div>
-
-        <div class="col run-assign">
+          <div class="col run-assign">
             <input class="run-input" type="text" placeholder="Run" />
             <button class="unassign-btn" title="Unallocate">×</button>
-        </div>
+          </div>
         `;
+      }
+
+      if (stopView.side !== "movement") {
+        row.innerHTML = `
+          <div class="col select-col">
+            <input type="checkbox" class="row-select" data-id="${movement.id}" />
+          </div>
+
+          <div class="col order-id">
+            <button class="order-link" data-order="${movement.orderId}">${movement.orderId}</button>
+          </div>
+
+          <div class="col mode-col">
+            <span class="mode-badge ${movement.planningMode === "direct" ? "mode-direct" : "mode-depot"}">
+              ${movement.planningMode === "direct" ? "Direct" : "Via Depot"}
+            </span>
+          </div>
+
+          <div class="col cd-col">${stopView.cd}</div>
+          <div class="col date-col">${stopView.stop.date || ""}</div>
+          <div class="col time-col">${stopView.stop.time || ""}</div>
+          <div class="col location-col">${stopView.stop.location || ""}</div>
+          <div class="col detail-col">${stopView.stop.detail || ""}</div>
+
+          <div class="col cd-col"></div>
+          <div class="col date-col"></div>
+          <div class="col time-col"></div>
+          <div class="col location-col"></div>
+          <div class="col detail-col"></div>
+
+          <div class="col pallets-col">${movement.pallets} pallets</div>
+
+          <div class="col run-assign">
+            <input class="run-input" type="text" placeholder="Run" />
+            <button class="unassign-btn" title="Unallocate">×</button>
+          </div>
+        `;
+      }
 
       group.appendChild(row);
     });
+  });
 
     jobList.appendChild(group);
   });
@@ -1048,6 +1120,12 @@ function updateNoJobsMessage() {
   );
 }
 
+function refreshJobPot() {
+  renderJobPot();
+  attachJobPotEvents();
+  updateJobPotAllocationDisplay();
+}
+
 function applyJobPotFilters() {
   const now = new Date();
 
@@ -1105,6 +1183,19 @@ function applyJobPotFilters() {
       const matchesCollectDate = !selectedDate || collectDate === selectedDate;
       const matchesDeliverDate = !selectedDate || deliverDate === selectedDate;
 
+      // Special stop-view rows:
+      // All + Include depot OFF creates separate C and D rows.
+      // These must filter by their own stop date, not the whole movement.
+      if (row.dataset.stopSide === "collect") {
+        if (movement.collect.isDepot) return false;
+        return matchesCollectDate;
+      }
+
+      if (row.dataset.stopSide === "deliver") {
+        if (movement.deliver.isDepot) return false;
+        return matchesDeliverDate;
+      }
+
       if (currentTypeFilter === "collect") {
         if (!includeDepot && movement.collect.isDepot) return false;
         return matchesCollectDate;
@@ -1122,7 +1213,8 @@ function applyJobPotFilters() {
         (includeDepot || !movement.deliver.isDepot) && matchesDeliverDate;
 
       return collectVisible || deliverVisible;
-    });
+
+         });
 
     if (currentView === "jobs") {
       const anyVisible = rowMatches.some(Boolean);
@@ -1188,6 +1280,7 @@ document.querySelectorAll(".mode-btn").forEach((btn) => {
 });
 
 // TYPE
+// TYPE
 document.querySelectorAll(".type-btn").forEach((btn) => {
   btn.addEventListener("click", () => {
     currentTypeFilter = btn.dataset.type;
@@ -1195,6 +1288,7 @@ document.querySelectorAll(".type-btn").forEach((btn) => {
     document
       .querySelectorAll(".type-btn")
       .forEach((b) => b.classList.remove("active"));
+
     btn.classList.add("active");
 
     const jobPotPanel = document.querySelector(".job-pot");
@@ -1208,14 +1302,14 @@ document.querySelectorAll(".type-btn").forEach((btn) => {
       jobPotPanel.classList.add("show-deliver");
     }
 
-    applyJobPotFilters();
+    refreshJobPot();
   });
 });
 
 // DEPOT
 document.getElementById("toggleDepot").addEventListener("change", (e) => {
   includeDepot = e.target.checked;
-  applyJobPotFilters();
+  refreshJobPot();
 });
 
 document.getElementById("jobDatePicker").addEventListener("change", (e) => {

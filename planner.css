@@ -978,3 +978,11 @@ grid-template-columns:
 .danger-btn:hover {
   background: #3a1d1d;
 }
+
+.job-row-stop-view {
+  background: #1b2220;
+}
+
+.job-row-stop-view:hover {
+  background: #22302b;
+}
