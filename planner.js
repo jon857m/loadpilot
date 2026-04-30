@@ -928,9 +928,31 @@ document.querySelectorAll(".view-btn").forEach((btn) => {
   });
 });
 
+function normaliseFilterDate(value) {
+  if (!value) return "";
+
+  // Already YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}/.test(value)) {
+    return value.slice(0, 10);
+  }
+
+  // Convert DD/MM/YYYY to YYYY-MM-DD
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(value)) {
+    const [day, month, year] = value.split("/");
+    return `${year}-${month}-${day}`;
+  }
+
+  return value;
+}
+
 function applyJobPotFilters() {
-  const today = "2026-04-27";
-  const tomorrow = "2026-04-28";
+  const now = new Date();
+
+  const today = now.toISOString().split("T")[0];
+
+  const tomorrowDate = new Date();
+  tomorrowDate.setDate(now.getDate() + 1);
+  const tomorrow = tomorrowDate.toISOString().split("T")[0];
 
   const selectedDate =
     currentDateFilter === "today"
@@ -948,41 +970,38 @@ function applyJobPotFilters() {
       const movementId = row.dataset.movementId;
       const movement = movements.find((m) => m.id === movementId);
 
+      if (!movement) return false;
+
       const isAllocated = !!movement.runId;
 
-      // Allocation filter
       if (currentFilter === "unallocated" && isAllocated) return false;
       if (currentFilter === "allocated" && !isAllocated) return false;
 
-      // COLLECTIONS MODE
+      const collectDate = normaliseFilterDate(movement.collect.date);
+      const deliverDate = normaliseFilterDate(movement.deliver.date);
+
+      const matchesCollectDate = !selectedDate || collectDate === selectedDate;
+      const matchesDeliverDate = !selectedDate || deliverDate === selectedDate;
+
       if (currentTypeFilter === "collect") {
         if (!includeDepot && movement.collect.isDepot) return false;
-        if (selectedDate && movement.collect.date !== selectedDate)
-          return false;
-        return true;
+        return matchesCollectDate;
       }
 
-      // DELIVERIES MODE
       if (currentTypeFilter === "deliver") {
         if (!includeDepot && movement.deliver.isDepot) return false;
-        if (selectedDate && movement.deliver.date !== selectedDate)
-          return false;
-        return true;
+        return matchesDeliverDate;
       }
 
-      // ALL MODE
       const collectVisible =
-        (includeDepot || !movement.collect.isDepot) &&
-        (!selectedDate || movement.collect.date === selectedDate);
+        (includeDepot || !movement.collect.isDepot) && matchesCollectDate;
 
       const deliverVisible =
-        (includeDepot || !movement.deliver.isDepot) &&
-        (!selectedDate || movement.deliver.date === selectedDate);
+        (includeDepot || !movement.deliver.isDepot) && matchesDeliverDate;
 
       return collectVisible || deliverVisible;
     });
 
-    // JOBS VIEW
     if (currentView === "jobs") {
       const anyVisible = rowMatches.some(Boolean);
 
@@ -995,7 +1014,6 @@ function applyJobPotFilters() {
       return;
     }
 
-    // LEGS VIEW
     if (currentView === "legs") {
       let anyVisible = false;
 
@@ -1976,7 +1994,7 @@ async function updateJobFromWizard(jobNumber, wizardData) {
       renderActiveRun();
     }
 
-    
+
   } catch (err) {
     console.error("Error updating job:", err);
     alert("Could not update job");
