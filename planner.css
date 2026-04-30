@@ -382,6 +382,22 @@ grid-template-columns:
   border-radius: 6px;
 }
 
+.date-step-btn {
+  background: #1d2128;
+  border: 1px solid #2a2d33;
+  color: #ccc;
+  padding: 4px 8px;
+  font-size: 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.date-step-btn:hover {
+  background: #243044;
+  border-color: #5aa7ff;
+  color: #5aa7ff;
+}
+
 .order-link {
   background: none;
   border: none;

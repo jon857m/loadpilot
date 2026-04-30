@@ -1104,6 +1104,43 @@ document.getElementById("jobDatePicker").addEventListener("change", (e) => {
   applyJobPotFilters();
 });
 
+function shiftDateInput(inputId, days) {
+  const picker = document.getElementById(inputId);
+  if (!picker) return;
+
+  const baseDate = picker.value || new Date().toISOString().split("T")[0];
+
+  const [year, month, day] = baseDate.split("-").map(Number);
+  const date = new Date(year, month - 1, day);
+
+  date.setDate(date.getDate() + days);
+
+  const nextValue = [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, "0"),
+    String(date.getDate()).padStart(2, "0"),
+  ].join("-");
+
+  picker.value = nextValue;
+  picker.dispatchEvent(new Event("change"));
+}
+
+document.getElementById("jobDatePrevBtn")?.addEventListener("click", () => {
+  shiftDateInput("jobDatePicker", -1);
+});
+
+document.getElementById("jobDateNextBtn")?.addEventListener("click", () => {
+  shiftDateInput("jobDatePicker", 1);
+});
+
+document.getElementById("runDatePrevBtn")?.addEventListener("click", () => {
+  shiftDateInput("runDatePicker", -1);
+});
+
+document.getElementById("runDateNextBtn")?.addEventListener("click", () => {
+  shiftDateInput("runDatePicker", 1);
+});
+
 document.getElementById("assignSelectedBtn").addEventListener("click", () => {
   const runId = document.getElementById("bulkRunInput").value.trim();
 

@@ -52,7 +52,9 @@
               <button class="date-btn active" data-date="all">All Dates</button>
               <button class="date-btn" data-date="today">Today</button>
               <button class="date-btn" data-date="tomorrow">Tomorrow</button>
+              <button id="jobDatePrevBtn" class="date-step-btn" title="Previous day">◀</button>
               <input id="jobDatePicker" class="date-picker" type="date" />
+              <button id="jobDateNextBtn" class="date-step-btn" title="Next day">▶</button>
             </div>
 
             <div class="mode-filter-group">
@@ -116,7 +118,9 @@
             <div class="run-controls">
                 <button class="run-date-btn active" data-run-date="today">Today</button>
                 <button class="run-date-btn" data-run-date="tomorrow">Tomorrow</button>
+                <button id="runDatePrevBtn" class="date-step-btn" title="Previous day">◀</button>
                 <input id="runDatePicker" class="date-picker" type="date" />
+                <button id="runDateNextBtn" class="date-step-btn" title="Next day">▶</button>
                 <label class="run-window-toggle">
                 <input type="checkbox" id="runWindowOffsetToggle" />
                 -4hrs
