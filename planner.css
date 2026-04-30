@@ -399,21 +399,19 @@ grid-template-columns:
 .order-detail-row {
   display: grid;
   grid-template-columns:
-    110px   /* Job (wider for readability) */
-    28px    /* C */
-    140px   /* Collection depot */
-    1fr     /* Collection detail */
-    28px    /* D */
-    140px   /* Delivery depot */
-    1fr     /* Delivery detail */
-    80px    /* Pallets */
-    80px;   /* Load */
+    110px
+    90px
+    28px 90px 60px 160px minmax(180px, 1fr)
+    28px 90px 60px 160px minmax(180px, 1fr)
+    80px
+    90px;
   gap: 8px;
   padding: 8px;
   background: #1d2128;
   border-radius: 6px;
   border: 1px solid #2a2d33;
   font-size: 12px;
+  align-items: center;
 }
 
 .job-pot,

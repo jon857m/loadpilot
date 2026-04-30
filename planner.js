@@ -542,58 +542,112 @@ function removeMovementFromAllRuns(movementKey) {
 
 function renderOrderDetail(orderId) {
   activeOrderId = orderId;
+
   const orderMovements = movements.filter((m) => m.orderId === orderId);
+
+  const jobsById = {};
+
+  orderMovements.forEach((movement) => {
+    if (!jobsById[movement.jobId]) {
+      jobsById[movement.jobId] = {
+        jobId: movement.jobId,
+        orderId: movement.orderId,
+        planningMode: movement.planningMode,
+        pallets: movement.pallets,
+        runIds: new Set(),
+        movements: [],
+      };
+    }
+
+    jobsById[movement.jobId].movements.push(movement);
+
+    if (movement.runId) {
+      jobsById[movement.jobId].runIds.add(movement.runId);
+    }
+  });
+
+  const orderJobs = Object.values(jobsById);
 
   activeRouteHeader.innerHTML = `
     Order Detail — ${orderId}
     <button id="addJobBtn" class="primary-btn" data-order="${orderId}">Add Job</button>
     <button id="closeOrderBtn" class="danger-btn" data-order="${orderId}">×</button>
- `;
+  `;
 
   routeEmpty.style.display = "none";
   routeList.style.display = "flex";
-  routeList.innerHTML = `
-  <div class="order-detail-header order-detail-row">
-    <div>Job</div>
-    <div>C/D</div>
-    <div>Depot</div>
-    <div>Detail</div>
-    <div>C/D</div>
-    <div>Depot</div>
-    <div>Detail</div>
-    <div>Pallets</div>
-    <div>Load</div>
-    <div></div>
-  </div>
- `;
 
-  orderMovements.forEach((movement) => {
+  routeList.innerHTML = `
+    <div class="order-detail-header order-detail-row">
+      <div>Job</div>
+      <div>Mode</div>
+      <div>C/D</div>
+      <div>Date</div>
+      <div>Time</div>
+      <div>From</div>
+      <div>Detail</div>
+      <div>C/D</div>
+      <div>Date</div>
+      <div>Time</div>
+      <div>To</div>
+      <div>Detail</div>
+      <div>Pallets</div>
+      <div>Load</div>
+    </div>
+  `;
+
+  orderJobs.forEach((job) => {
+    const firstMovement = job.movements[0];
+    const lastMovement = job.movements[job.movements.length - 1];
+
     const row = document.createElement("div");
     row.className = "order-detail-row";
 
-  row.innerHTML = `
-    <div class="order-row-inner">
-      <button class="job-delete-btn" data-job="${movement.jobId}">×</button>
-    <button class="job-link" data-job="${movement.jobId}">
-      ${movement.jobId}
-    </button>
-  </div>
-      <div>C</div>
-      <div>${movement.collect.location}</div>
-      <div>${movement.collect.detail}</div>
-      <div>D</div>
-      <div>${movement.deliver.location}</div>
-      <div>${movement.deliver.detail}</div>
-      <div>${movement.pallets} pallets</div>
-      <div>
-    ${
-      movement.runId && runs[movement.runId]?.plannerRunNo
-        ? `<button class="run-badge run-jump-btn" data-run-id="${movement.runId}">
-            ${String(Number(runs[movement.runId].plannerRunNo))}
-          </button>`
-        : `<span class="run-badge run-badge--empty">Unallocated</span>`
-    }
+    const modeLabel = job.planningMode === "direct" ? "Direct" : "Via Depot";
+    const modeClass = job.planningMode === "direct" ? "mode-direct" : "mode-depot";
 
+    const runBadges = Array.from(job.runIds)
+      .map((runId) => {
+        const plannerRunNo = runs[runId]?.plannerRunNo;
+
+        return `
+          <button class="run-badge run-jump-btn" data-run-id="${runId}">
+            ${plannerRunNo ? String(Number(plannerRunNo)) : runId}
+          </button>
+        `;
+      })
+      .join("");
+
+    row.innerHTML = `
+      <div class="order-row-inner">
+        <button class="job-delete-btn" data-job="${job.jobId}">×</button>
+        <button class="job-link" data-job="${job.jobId}">
+          ${job.jobId}
+        </button>
+      </div>
+
+      <div>
+        <span class="mode-badge ${modeClass}">
+          ${modeLabel}
+        </span>
+      </div>
+
+      <div>C</div>
+      <div>${firstMovement.collect.date || ""}</div>
+      <div>${firstMovement.collect.time || ""}</div>
+      <div>${firstMovement.collect.location || ""}</div>
+      <div>${firstMovement.collect.detail || ""}</div>
+
+      <div>D</div>
+      <div>${lastMovement.deliver.date || ""}</div>
+      <div>${lastMovement.deliver.time || ""}</div>
+      <div>${lastMovement.deliver.location || ""}</div>
+      <div>${lastMovement.deliver.detail || ""}</div>
+
+      <div>${job.pallets || ""} pallets</div>
+
+      <div>
+        ${runBadges || `<span class="run-badge run-badge--empty">Unallocated</span>`}
       </div>
     `;
 
@@ -623,11 +677,42 @@ function renderOrderDetail(orderId) {
   });
 
   document.querySelectorAll(".job-delete-btn").forEach((button) => {
-  button.addEventListener("click", async (e) => {
-    e.stopPropagation();
-    await softDeleteJob(button.dataset.job);
+    button.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      await softDeleteJob(button.dataset.job);
+    });
   });
-});
+
+  const closeOrderBtn = document.getElementById("closeOrderBtn");
+
+  if (closeOrderBtn) {
+    closeOrderBtn.addEventListener("click", async () => {
+      const hasJobs = movements.some((m) => m.orderId === activeOrderId);
+
+      if (!hasJobs && activeOrderId) {
+        await deleteOrderIfEmpty(activeOrderId);
+      }
+
+      activeOrderId = null;
+      activeRunId = null;
+
+      activeRouteHeader.innerHTML = "";
+      routeList.innerHTML = "";
+
+      routeEmpty.style.display = "block";
+      routeEmpty.innerText = "Select a run to begin planning";
+
+      document.querySelectorAll(".selected").forEach((el) => {
+        el.classList.remove("selected");
+      });
+
+      renderRuns();
+      renderJobPot();
+      attachJobPotEvents();
+      updateJobPotAllocationDisplay();
+    });
+  }
+}
 
 const closeOrderBtn = document.getElementById("closeOrderBtn");
 
@@ -679,7 +764,7 @@ if (!hasJobs && activeOrderId) {
 }
 
 
-}
+
 
 function renderActiveRun() {
   if (!activeRunId) return;
@@ -1799,6 +1884,23 @@ async function updateJobFromWizard(jobNumber, wizardData) {
         .delete()
         .in("movement_id", movementIds);
 
+      // Clear local allocation state immediately
+      movementIds.forEach((movementId) => {
+        delete movementAllocations[movementId];
+
+        const movement = movements.find((m) => m.id === movementId);
+        if (movement) {
+          movement.runId = null;
+        }
+      });
+
+      // Remove deleted movement stops from all visible runs
+      Object.values(runs).forEach((run) => {
+        run.stops = run.stops.filter(
+          (stop) => !movementIds.includes(stop.movementKey)
+        );
+      });
+
       await supabaseClient.from("movements").delete().eq("job_id", job.id);
     }
 
@@ -1862,7 +1964,19 @@ async function updateJobFromWizard(jobNumber, wizardData) {
     closeOrderWizard();
 
     await loadPlannerDataFromSupabase();
-    renderOrderDetail(activeOrderId);
+
+    renderRuns();
+    updateJobPotAllocationDisplay();
+
+    if (activeOrderId) {
+      renderOrderDetail(activeOrderId);
+    }
+
+    if (activeRunId) {
+      renderActiveRun();
+    }
+
+    
   } catch (err) {
     console.error("Error updating job:", err);
     alert("Could not update job");
