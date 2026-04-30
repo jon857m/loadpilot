@@ -66,8 +66,10 @@ function formatDateTime(date, time) {
 function renderJobPot() {
   const jobList = document.querySelector(".job-list");
   jobList.innerHTML = `
-  <div class="job-header">
-    <div></div>
+<div class="job-header">
+    <div>
+      <input type="checkbox" id="selectVisibleJobsCheckbox" title="Select visible jobs" />
+    </div>
     <div>Order</div>
     <div>Mode</div>
 
@@ -323,12 +325,21 @@ runCards.forEach((card) => {
 
 function attachJobPotEvents() {
   document.querySelectorAll(".job-row").forEach((row) => {
-    row.addEventListener("dragstart", () => {
+  row.addEventListener("dragstart", () => {
+    const movementId = row.dataset.movementId;
+
+    if (selectedMovements.has(movementId) && selectedMovements.size > 1) {
+      dragPayload = {
+        type: "jobMovementGroup",
+        movementIds: Array.from(selectedMovements),
+      };
+    } else {
       dragPayload = {
         type: "jobMovement",
-        movementId: row.dataset.movementId,
+        movementId,
       };
-    });
+    }
+  });
 
     row.addEventListener("dblclick", () => {
     const movementId = row.dataset.movementId;
@@ -354,6 +365,39 @@ function attachJobPotEvents() {
       updateSelectedCount();
     });
   });
+
+  const selectVisibleCheckbox = document.getElementById("selectVisibleJobsCheckbox");
+
+  if (selectVisibleCheckbox) {
+    selectVisibleCheckbox.addEventListener("change", (e) => {
+      const shouldSelect = e.target.checked;
+
+      document.querySelectorAll(".job-row").forEach((row) => {
+        const group = row.closest(".job-group");
+
+        const isVisible =
+          row.style.display !== "none" &&
+          (!group || group.style.display !== "none");
+
+        if (!isVisible) return;
+
+        const checkbox = row.querySelector(".row-select");
+        const movementId = row.dataset.movementId;
+
+        if (!checkbox || !movementId) return;
+
+        checkbox.checked = shouldSelect;
+
+        if (shouldSelect) {
+          selectedMovements.add(movementId);
+        } else {
+          selectedMovements.delete(movementId);
+        }
+      });
+
+      updateSelectedCount();
+    });
+  }
 
   document.querySelectorAll(".run-input").forEach((input) => {
     input.addEventListener("keydown", (e) => {
@@ -1036,6 +1080,25 @@ function applyJobPotFilters() {
       if (currentFilter === "unallocated" && isAllocated) return false;
       if (currentFilter === "allocated" && !isAllocated) return false;
 
+      const searchableText = [
+      movement.orderId,
+      movement.jobId,
+      movement.planningMode,
+      movement.collect?.location,
+      movement.collect?.detail,
+      movement.collect?.date,
+      movement.collect?.time,
+      movement.deliver?.location,
+      movement.deliver?.detail,
+      movement.deliver?.date,
+      movement.deliver?.time,
+      movement.pallets,
+    ].join(" ").toLowerCase();
+
+    if (currentSearchTerm && !searchableText.includes(currentSearchTerm)) {
+      return false;
+    }
+
       const collectDate = normaliseFilterDate(movement.collect.date);
       const deliverDate = normaliseFilterDate(movement.deliver.date);
 
@@ -1218,6 +1281,22 @@ document.getElementById("assignSelectedBtn").addEventListener("click", () => {
   selectedMovements.clear();
   updateSelectedCount();
 });
+
+function clearSelectedMovements() {
+  selectedMovements.clear();
+
+  document.querySelectorAll(".row-select").forEach((checkbox) => {
+    checkbox.checked = false;
+  });
+
+  const selectVisibleCheckbox = document.getElementById("selectVisibleJobsCheckbox");
+
+  if (selectVisibleCheckbox) {
+    selectVisibleCheckbox.checked = false;
+  }
+
+  updateSelectedCount();
+}
 
 function updateSelectedCount() {
   document.getElementById("selectedCount").textContent =
@@ -2387,13 +2466,21 @@ function renderRuns() {
 
       if (!dragPayload) return;
 
-      if (dragPayload.type === "jobMovement") {
-        assignMovementToRun(dragPayload.movementId, run.id);
-      }
+    if (dragPayload.type === "jobMovement") {
+      assignMovementToRun(dragPayload.movementId, run.id);
+    }
 
-      if (dragPayload.type === "routeMovement") {
-        moveMovementToRun(dragPayload.movementKey, run.id);
-      }
+    if (dragPayload.type === "jobMovementGroup") {
+      dragPayload.movementIds.forEach((movementId) => {
+        assignMovementToRun(movementId, run.id);
+      });
+
+      clearSelectedMovements();
+    }
+
+    if (dragPayload.type === "routeMovement") {
+      moveMovementToRun(dragPayload.movementKey, run.id);
+    }
 
       dragPayload = null;
       unallocateDropzone.classList.remove("visible", "drag-over");
