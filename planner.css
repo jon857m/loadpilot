@@ -382,6 +382,23 @@ grid-template-columns:
   border-radius: 6px;
 }
 
+.date-label {
+  color: #9aa3ad;
+  font-size: 12px;
+  padding-left: 6px;
+  white-space: nowrap;
+}
+
+.job-empty-message {
+  padding: 18px;
+  color: #9aa3ad;
+  font-size: 13px;
+  text-align: center;
+  background: #1d2128;
+  border: 1px dashed #2a2d33;
+  border-radius: 8px;
+}
+
 .date-step-btn {
   background: #1d2128;
   border: 1px solid #2a2d33;

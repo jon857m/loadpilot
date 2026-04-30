@@ -250,7 +250,7 @@ let dragPayload = null;
 let currentFilter = "all";
 let currentView = "jobs";
 
-let currentDateFilter = "all";
+let currentDateFilter = "today";
 let currentTypeFilter = "all";
 let includeDepot = true;
 
@@ -945,6 +945,65 @@ function normaliseFilterDate(value) {
   return value;
 }
 
+function formatDateLabel(value) {
+  if (!value) return "";
+
+  const [year, month, day] = value.split("-");
+  return `${day}/${month}/${year}`;
+}
+
+function updateActiveDateLabel(selectedDate) {
+  const label = document.getElementById("activeDateLabel");
+  if (!label) return;
+
+  if (!selectedDate) {
+    label.textContent = "Showing: All dates";
+    return;
+  }
+
+  label.textContent = `Showing: ${formatDateLabel(selectedDate)}`;
+}
+
+function updateActiveRunDateLabel(selectedDate) {
+  const label = document.getElementById("activeRunDateLabel");
+  if (!label) return;
+
+  if (!selectedDate) {
+    label.textContent = "";
+    return;
+  }
+
+  label.textContent = `Runs: ${formatDateLabel(selectedDate)}`;
+}
+
+function updateNoJobsMessage() {
+  const existingMessage = document.getElementById("jobPotEmptyMessage");
+
+  if (existingMessage) {
+    existingMessage.remove();
+  }
+
+  const hasVisibleRows = Array.from(document.querySelectorAll(".job-row")).some(
+    (row) => {
+      const group = row.closest(".job-group");
+
+      return (
+        row.style.display !== "none" &&
+        (!group || group.style.display !== "none")
+      );
+    }
+  );
+
+  if (hasVisibleRows) return;
+
+  jobPot.insertAdjacentHTML(
+    "beforeend",
+    `<div id="jobPotEmptyMessage" class="job-empty-message">
+      No jobs match this filter
+    </div>`
+  );
+}
+
 function applyJobPotFilters() {
   const now = new Date();
 
@@ -1027,6 +1086,9 @@ function applyJobPotFilters() {
       group.style.display = anyVisible ? "block" : "none";
     }
   });
+
+  updateActiveDateLabel(selectedDate);
+  updateNoJobsMessage();
 }
 
 // DATE
@@ -2337,6 +2399,8 @@ function renderRuns() {
 
     runList.appendChild(card);
   });
+
+    updateActiveRunDateLabel(currentRunDate);
 }
 
 function getTodayIso() {
