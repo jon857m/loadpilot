@@ -348,6 +348,44 @@ let includePreviousEveningRuns = false;
 
 const movementAllocations = {};
 
+let addressBook = [];
+
+async function loadAddressBookFromSupabase() {
+  const accountId = await getAccountId();
+
+  const { data, error } = await supabaseClient
+    .from("addresses")
+    .select("id, fast_lookup, name, town, postcode")
+    .eq("account_id", accountId)
+    .eq("active", true)
+    .order("fast_lookup", { ascending: true });
+
+  if (error) {
+    console.error("Error loading address book:", error);
+    return;
+  }
+
+  addressBook = data || [];
+
+  const list = document.getElementById("addressLookupList");
+  if (!list) return;
+
+  list.innerHTML = "";
+
+  addressBook.forEach((address) => {
+    const option = document.createElement("option");
+    option.value = address.name;
+    option.label = `${address.fast_lookup || ""} — ${address.town || ""} ${address.postcode || ""}`;
+    list.appendChild(option);
+  });
+}
+
+function findAddressByName(name) {
+  return addressBook.find(
+    (address) => address.name.toLowerCase() === name.toLowerCase()
+  );
+}
+
 // renderJobPot();
 // attachJobPotEvents();
 
@@ -1827,6 +1865,8 @@ async function loadPlannerDataFromSupabase() {
 
 loadPlannerDataFromSupabase();
 
+loadAddressBookFromSupabase();
+
 async function saveRunOrderToSupabase(runId) {
   try {
     const run = runs[runId];
@@ -1884,7 +1924,28 @@ cancelWizardBtn.addEventListener("click", closeOrderWizard);
 
 saveWizardBtn.addEventListener("click", (e) => {
   e.preventDefault();
+
+  const selectedCollectionAddress = findAddressByName(
+    document.getElementById("wizardCollectName").value.trim()
+  );
+
+  const selectedDeliveryAddress = findAddressByName(
+    document.getElementById("wizardDeliverName").value.trim()
+  );
+
+  if (!selectedCollectionAddress) {
+    alert("Please select a valid collection address from the address book.");
+    return;
+  }
+
+  if (!selectedDeliveryAddress) {
+    alert("Please select a valid delivery address from the address book.");
+    return;
+  }
+
   const wizardData = {
+    collectionAddressId: selectedCollectionAddress.id,
+    deliveryAddressId: selectedDeliveryAddress.id,
     customer: document.getElementById("wizardCustomer").value.trim(),
     orderNumber: document.getElementById("wizardOrderNumber").value.trim(),
     collectName: document.getElementById("wizardCollectName").value.trim(),
@@ -2066,6 +2127,11 @@ async function createJobFromWizard(orderNumber, wizardData) {
       return;
     }
 
+    if (!wizardData.collectionAddressId || !wizardData.deliveryAddressId) {
+      alert("Collection and delivery addresses must be selected from the address book.");
+      return;
+    }
+
     const accountId = await getAccountId();
 
     const { data: order, error: orderError } = await supabaseClient
@@ -2076,32 +2142,13 @@ async function createJobFromWizard(orderNumber, wizardData) {
 
     if (orderError) throw orderError;
 
-    const { data: collectionAddress, error: collectionError } =
-      await supabaseClient
-        .from("addresses")
-        .insert({
-          account_id: accountId,
-          name: wizardData.collectName,
-          town: wizardData.collectTown,
-          postcode: wizardData.collectPostcode,
-        })
-        .select()
-        .single();
+    const collectionAddress = {
+      id: wizardData.collectionAddressId,
+    };
 
-    if (collectionError) throw collectionError;
-
-    const { data: deliveryAddress, error: deliveryError } = await supabaseClient
-      .from("addresses")
-      .insert({
-        account_id: accountId,
-        name: wizardData.deliverName,
-        town: wizardData.deliverTown,
-        postcode: wizardData.deliverPostcode,
-      })
-      .select()
-      .single();
-
-    if (deliveryError) throw deliveryError;
+    const deliveryAddress = {
+      id: wizardData.deliveryAddressId,
+    };
 
     const { data: existingJobs, error: jobsError } = await supabaseClient
       .from("jobs")
@@ -2151,15 +2198,15 @@ async function createJobFromWizard(orderNumber, wizardData) {
     }
 
     if (wizardData.planningMode === "via_depot") {
-const { data: depotAddress, error: depotError } = await supabaseClient
-  .from("addresses")
-  .select("id")
-  .eq("account_id", accountId)
-  .eq("is_depot", true)
-  .eq("active", true)
-  .order("fast_lookup", { ascending: true })
-  .limit(1)
-  .single();
+      const { data: depotAddress, error: depotError } = await supabaseClient
+        .from("addresses")
+        .select("id")
+        .eq("account_id", accountId)
+        .eq("is_depot", true)
+        .eq("active", true)
+        .order("fast_lookup", { ascending: true })
+        .limit(1)
+        .single();
 
       if (depotError) throw depotError;
 
