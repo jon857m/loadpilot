@@ -362,6 +362,8 @@ let activeModeFilter = "all";
 
 let activeOrderId = null;
 
+let activeJobLegId = null;
+
 let editingJobNumber = null;
 
 let currentRunDate = new Date().toISOString().split("T")[0];
@@ -761,9 +763,15 @@ function assignMovementToRun(movementId, runId) {
   movement.runId = runId;
   movementAllocations[movement.id] = runId;
 
-  updateJobPotAllocationDisplay();
-  selectRun(runId);
-  saveAllocationToSupabase(movementId, runId);
+updateJobPotAllocationDisplay();
+
+if (activeOrderId) {
+  renderJobLegDetail(
+    movements.find((m) => m.id === movementId)?.jobId
+  );
+}
+
+saveAllocationToSupabase(movementId, runId);
 }
 
 function moveMovementToRun(movementKey, newRunId) {
@@ -785,12 +793,18 @@ function unallocateMovement(movementKey) {
   delete movementAllocations[movementKey];
 
   const movement = movements.find((m) => m.id === movementKey);
+
   if (movement) {
     movement.runId = null;
   }
 
   updateJobPotAllocationDisplay();
-  renderActiveRun();
+
+  if (activeJobLegId) {
+    renderJobLegDetail(activeJobLegId);
+  } else if (activeRunId) {
+    renderActiveRun();
+  }
 
   deleteAllocationFromSupabase(movementKey);
 }
@@ -817,6 +831,7 @@ function removeMovementFromAllRuns(movementKey) {
 }
 
 function renderOrderDetail(orderId) {
+  activeJobLegId = null;
   activeOrderId = orderId;
 
   const orderMovements = movements.filter((m) => m.orderId === orderId);
@@ -1061,7 +1076,7 @@ function renderActiveRun() {
   routeList.style.display = "flex";
 
   routeList.innerHTML = `
-    <div class="route-header route-stop-grid">
+    <div class="route-header job-leg-grid">
       <div>Seq</div>
       <div>Job</div>
       <div>C/D</div>
@@ -3059,6 +3074,8 @@ async function deleteOrderIfEmpty(orderNumber) {
 }
 
 function renderJobLegDetail(jobId) {
+  activeJobLegId = jobId;
+
   const jobMovements = movements.filter((m) => m.jobId === jobId);
 
   if (!jobMovements.length) {
@@ -3082,55 +3099,78 @@ function renderJobLegDetail(jobId) {
   routeList.style.display = "flex";
 
   routeList.innerHTML = `
-    <div class="route-header route-stop-grid">
+    <div class="route-header job-leg-grid">
       <div>Seq</div>
       <div>Job</div>
       <div>C/D</div>
+      <div>Date / Time</div>
       <div>Depot</div>
       <div>Detail</div>
-      <div>Pallets</div>
       <div>Load</div>
     </div>
   `;
 
-  jobMovements.forEach((movement) => {
+  jobMovements.forEach((movement, index) => {
     const runId = movement.runId || movementAllocations[movement.id];
-    const runLabel = runId && runs[runId]
-      ? String(Number(runs[runId].plannerRunNo))
-      : "Unallocated";
+    const runLabel =
+      runId && runs[runId]?.plannerRunNo
+        ? String(Number(runs[runId].plannerRunNo))
+        : runId && runs[runId]
+          ? runId
+          : "Unallocated";
 
-    const collectRow = document.createElement("div");
-    collectRow.className = "route-stop route-stop-grid";
+    const isAllocated = !!runId && !!runs[runId];
 
-    collectRow.innerHTML = `
-      <div>${movement.movement_type === "from_depot" ? "2" : "1"}</div>
-      <div>${shortJobFullLabel(movement.jobId)}</div>
-      <div>C</div>
-      <div>${movement.collect.location || ""}</div>
-      <div>${movement.collect.detail || ""}</div>
-      <div>${movement.pallets || ""}</div>
-      <div>
-        <span class="run-badge ${runId ? "" : "run-badge--empty"}">${runLabel}</span>
-      </div>
-    `;
+    const makeLegRow = (type, stop, seq) => {
+      const row = document.createElement("div");
+      row.className = `route-stop job-leg-grid job-leg-row ${isAllocated ? "allocated" : ""}`;
+      row.setAttribute("draggable", "true");
+      row.dataset.movementId = movement.id;
+      row.dataset.runId = runId || "";
 
-    const deliverRow = document.createElement("div");
-    deliverRow.className = "route-stop route-stop-grid";
+      row.innerHTML = `
+        <div>${seq}</div>
+        <div>${shortJobFullLabel(movement.jobId)}</div>
+        <div>${type === "collect" ? "C" : "D"}</div>
+        <div>${formatDateTime(stop.date, stop.time)}</div>
+        <div>${stop.location || ""}</div>
+        <div>${stop.detail || ""}</div>
+        <div class="leg-load-cell">
+          ${
+            isAllocated
+              ? `
+                <input class="run-input leg-run-input" type="text" value="${runLabel}" readonly />
+                <button class="unassign-btn leg-unassign-btn" title="Unallocate">×</button>
+              `
+              : `
+                <input class="run-input leg-run-input" type="text" placeholder="Run" readonly />
+              `
+          }
+        </div>
+      `;
 
-    deliverRow.innerHTML = `
-      <div>${movement.movement_type === "from_depot" ? "2" : "1"}</div>
-      <div>${shortJobFullLabel(movement.jobId)}</div>
-      <div>D</div>
-      <div>${movement.deliver.location || ""}</div>
-      <div>${movement.deliver.detail || ""}</div>
-      <div>${movement.pallets || ""}</div>
-      <div>
-        <span class="run-badge ${runId ? "" : "run-badge--empty"}">${runLabel}</span>
-      </div>
-    `;
+      row.addEventListener("dragstart", () => {
+        dragPayload = {
+          type: "jobMovement",
+          movementId: movement.id,
+        };
+      });
 
-    routeList.appendChild(collectRow);
-    routeList.appendChild(deliverRow);
+      row.addEventListener("dblclick", () => {
+        if (!isAllocated || !runId) return;
+        focusRun(runId);
+      });
+
+      row.querySelector(".leg-unassign-btn")?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        unallocateMovement(movement.id);
+      });
+
+      return row;
+    };
+
+    routeList.appendChild(makeLegRow("collect", movement.collect, index + 1));
+    routeList.appendChild(makeLegRow("deliver", movement.deliver, index + 1));
   });
 
   document.getElementById("backToOrderBtn")?.addEventListener("click", () => {

@@ -1027,3 +1027,63 @@ grid-template-columns:
 .order-job-separator {
   color: #555;
 }
+
+.job-leg-row {
+  cursor: grab;
+}
+
+.job-leg-row:active {
+  cursor: grabbing;
+}
+
+.job-leg-row.allocated {
+  border-color: #3f7f5f;
+  background: #1c2a24;
+}
+
+.job-leg-row.allocated .run-badge {
+  color: #7ee2a8;
+}
+
+.job-leg-grid {
+  display: grid;
+  grid-template-columns:
+    45px
+    90px
+    35px
+    130px
+    220px
+    minmax(260px, 1fr)
+    90px;
+  gap: 8px;
+  align-items: center;
+}
+
+.job-leg-grid > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.job-leg-row {
+  min-height: 34px;
+}
+
+.job-leg-row .run-badge {
+  justify-self: start;
+}
+
+.leg-load-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.leg-run-input {
+  width: 54px;
+}
+
+.leg-unassign-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
