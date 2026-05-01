@@ -63,6 +63,24 @@ function formatDateTime(date, time) {
   return parts.join(" ");
 }
 
+function shortOrderLabel(orderId) {
+  return String(orderId || "").replace(/^ORD-/, "");
+}
+
+function shortJobLabel(jobId) {
+  const value = String(jobId || "");
+
+  if (value.includes("-")) {
+    return value.split("-").pop();
+  }
+
+  return value;
+}
+
+function shortJobFullLabel(jobId) {
+  return String(jobId || "").replace(/^ORD-/, "");
+}
+
 function renderJobPot() {
   const jobList = document.querySelector(".job-list");
   jobList.innerHTML = `
@@ -159,9 +177,9 @@ function renderJobPot() {
           </div>
 
           <div class="col order-id">
-            <button class="order-link" data-order="${movement.orderId}">${movement.orderId}</button>
-            <span class="order-job-separator">|</span>
-            <button class="job-leg-link" data-job="${movement.jobId}">${movement.jobId}</button>
+          <button class="order-link" data-order="${movement.orderId}">${shortOrderLabel(movement.orderId)}</button>
+          <span class="order-job-separator">|</span>
+          <button class="job-leg-link" data-job="${movement.jobId}">${shortJobLabel(movement.jobId)}</button>
           </div>
 
           <div class="col mode-col">
@@ -198,9 +216,9 @@ function renderJobPot() {
           </div>
 
           <div class="col order-id">
-            <button class="order-link" data-order="${movement.orderId}">${movement.orderId}</button>
-            <span class="order-job-separator">|</span>
-            <button class="job-leg-link" data-job="${movement.jobId}">${movement.jobId}</button>
+          <button class="order-link" data-order="${movement.orderId}">${shortOrderLabel(movement.orderId)}</button>
+          <span class="order-job-separator">|</span>
+          <button class="job-leg-link" data-job="${movement.jobId}">${shortJobLabel(movement.jobId)}</button>
           </div>
 
           <div class="col mode-col">
@@ -3054,7 +3072,7 @@ function renderJobLegDetail(jobId) {
   activeRunId = null;
 
   activeRouteHeader.innerHTML = `
-    Job Legs — ${jobId}
+    Job Legs — ${shortJobFullLabel(jobId)}
     <button id="backToOrderBtn" class="primary-btn" data-order="${firstMovement.orderId}">
       Back to Order
     </button>
@@ -3086,7 +3104,7 @@ function renderJobLegDetail(jobId) {
 
     collectRow.innerHTML = `
       <div>${movement.movement_type === "from_depot" ? "2" : "1"}</div>
-      <div>${movement.jobId}</div>
+      <div>${shortJobFullLabel(movement.jobId)}</div>
       <div>C</div>
       <div>${movement.collect.location || ""}</div>
       <div>${movement.collect.detail || ""}</div>
@@ -3101,7 +3119,7 @@ function renderJobLegDetail(jobId) {
 
     deliverRow.innerHTML = `
       <div>${movement.movement_type === "from_depot" ? "2" : "1"}</div>
-      <div>${movement.jobId}</div>
+      <div>${shortJobFullLabel(movement.jobId)}</div>
       <div>D</div>
       <div>${movement.deliver.location || ""}</div>
       <div>${movement.deliver.detail || ""}</div>
