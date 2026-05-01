@@ -1003,3 +1003,27 @@ grid-template-columns:
 .job-row.box-selecting {
   outline: 1px solid #5aa7ff;
 }
+
+.order-id {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.job-leg-link {
+  background: none;
+  border: none;
+  color: #9be59b;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  font-size: 12px;
+}
+
+.job-leg-link:hover {
+  text-decoration: underline;
+}
+
+.order-job-separator {
+  color: #555;
+}

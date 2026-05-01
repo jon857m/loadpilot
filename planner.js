@@ -160,6 +160,8 @@ function renderJobPot() {
 
           <div class="col order-id">
             <button class="order-link" data-order="${movement.orderId}">${movement.orderId}</button>
+            <span class="order-job-separator">|</span>
+            <button class="job-leg-link" data-job="${movement.jobId}">${movement.jobId}</button>
           </div>
 
           <div class="col mode-col">
@@ -197,6 +199,8 @@ function renderJobPot() {
 
           <div class="col order-id">
             <button class="order-link" data-order="${movement.orderId}">${movement.orderId}</button>
+            <span class="order-job-separator">|</span>
+            <button class="job-leg-link" data-job="${movement.jobId}">${movement.jobId}</button>
           </div>
 
           <div class="col mode-col">
@@ -633,6 +637,15 @@ function attachJobPotEvents() {
       renderOrderDetail(button.dataset.order);
     });
   });
+
+  document.querySelectorAll(".job-leg-link").forEach((button) => {
+    button.addEventListener("click", (e) => {
+      e.stopPropagation();
+      renderJobLegDetail(button.dataset.job);
+    });
+  });
+
+
 }
 
 document.getElementById("jobSearchInput").addEventListener("input", (e) => {
@@ -3025,4 +3038,84 @@ async function deleteOrderIfEmpty(orderNumber) {
   } catch (err) {
     console.error("Failed to delete order:", err);
   }
+}
+
+function renderJobLegDetail(jobId) {
+  const jobMovements = movements.filter((m) => m.jobId === jobId);
+
+  if (!jobMovements.length) {
+    alert("No legs found for this job.");
+    return;
+  }
+
+  const firstMovement = jobMovements[0];
+
+  activeOrderId = firstMovement.orderId;
+  activeRunId = null;
+
+  activeRouteHeader.innerHTML = `
+    Job Legs — ${jobId}
+    <button id="backToOrderBtn" class="primary-btn" data-order="${firstMovement.orderId}">
+      Back to Order
+    </button>
+  `;
+
+  routeEmpty.style.display = "none";
+  routeList.style.display = "flex";
+
+  routeList.innerHTML = `
+    <div class="route-header route-stop-grid">
+      <div>Seq</div>
+      <div>Job</div>
+      <div>C/D</div>
+      <div>Depot</div>
+      <div>Detail</div>
+      <div>Pallets</div>
+      <div>Load</div>
+    </div>
+  `;
+
+  jobMovements.forEach((movement) => {
+    const runId = movement.runId || movementAllocations[movement.id];
+    const runLabel = runId && runs[runId]
+      ? String(Number(runs[runId].plannerRunNo))
+      : "Unallocated";
+
+    const collectRow = document.createElement("div");
+    collectRow.className = "route-stop route-stop-grid";
+
+    collectRow.innerHTML = `
+      <div>${movement.movement_type === "from_depot" ? "2" : "1"}</div>
+      <div>${movement.jobId}</div>
+      <div>C</div>
+      <div>${movement.collect.location || ""}</div>
+      <div>${movement.collect.detail || ""}</div>
+      <div>${movement.pallets || ""}</div>
+      <div>
+        <span class="run-badge ${runId ? "" : "run-badge--empty"}">${runLabel}</span>
+      </div>
+    `;
+
+    const deliverRow = document.createElement("div");
+    deliverRow.className = "route-stop route-stop-grid";
+
+    deliverRow.innerHTML = `
+      <div>${movement.movement_type === "from_depot" ? "2" : "1"}</div>
+      <div>${movement.jobId}</div>
+      <div>D</div>
+      <div>${movement.deliver.location || ""}</div>
+      <div>${movement.deliver.detail || ""}</div>
+      <div>${movement.pallets || ""}</div>
+      <div>
+        <span class="run-badge ${runId ? "" : "run-badge--empty"}">${runLabel}</span>
+      </div>
+    `;
+
+    routeList.appendChild(collectRow);
+    routeList.appendChild(deliverRow);
+  });
+
+  document.getElementById("backToOrderBtn")?.addEventListener("click", () => {
+    renderOrderDetail(firstMovement.orderId);
+  });
 }
