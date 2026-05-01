@@ -199,6 +199,15 @@ grid-template-columns:
   border: 1px solid #2a2d33;
 }
 
+.job-leg-row {
+  display: grid;
+  gap: 8px;
+  padding: 8px;
+  background: #1d2128;
+  border-radius: 6px;
+  border: 1px solid #2a2d33;
+}
+
 .job-row:hover {
   background: #242933;
 }
@@ -223,7 +232,8 @@ grid-template-columns:
   border-color: #2a2d33;
 }
 
-.job-row.allocated {
+.job-row.allocated,
+.job-leg-row.allocated {
   border-color: #3f7f5f;
   background: #1c2a24;
 }
@@ -245,7 +255,8 @@ grid-template-columns:
   text-align: center;
 }
 
-.job-row.allocated .run-input {
+.job-row.allocated .run-input,
+.job-leg-row.allocated .run-input {
   border-color: #3f7f5f;
   color: #7ee2a8;
   font-weight: 600;
@@ -1054,7 +1065,8 @@ grid-template-columns:
     130px
     220px
     minmax(260px, 1fr)
-    90px;
+    80px
+    70px;
   gap: 8px;
   align-items: center;
 }
@@ -1078,12 +1090,90 @@ grid-template-columns:
   gap: 6px;
 }
 
-.leg-run-input {
-  width: 54px;
+.leg-unassign-btn {
+  display: inline-flex;
 }
 
-.leg-unassign-btn {
+.job-row.allocated,
+.job-leg-row.allocated {
+  border: 1px solid #2f6f4f;
+  background: rgba(47, 111, 79, 0.15);
+}
+
+.job-leg-row .run-input {
+  width: 48px;
+  text-align: center;
+}
+
+.job-row.allocated,
+.job-leg-row.allocated {
+  transition: all 0.15s ease;
+}
+
+.job-leg-row.allocated .run-input {
+  border-color: #3f7f5f;
+  color: #7ee2a8;
+  font-weight: 600;
+}
+
+.job-leg-row.allocated .unassign-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+}
+
+/* Make Job Legs load cell match Job Pot load cell */
+.job-leg-row .run-assign {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+  opacity: 0.6;
+}
+
+.job-leg-row.allocated .run-assign {
+  opacity: 1;
+  color: #7ee2a8;
+  font-weight: 600;
+}
+
+.job-leg-row .run-input {
+  width: 54px;
+  background: #11141a;
+  border: 1px solid #2a2d33;
+  color: #e6e6e6;
+  border-radius: 5px;
+  padding: 4px 6px;
+  font-size: 12px;
+  text-align: center;
+}
+
+.job-leg-row.allocated .run-input {
+  border-color: #3f7f5f;
+  color: #7ee2a8;
+  font-weight: 600;
+}
+
+.job-leg-row .unassign-btn {
+  display: none;
+  width: 22px;
+  height: 22px;
+  border: 1px solid #5c2d2d;
+  border-radius: 50%;
+  background: #251616;
+  color: #ff8a8a;
+  font-size: 14px;
+  line-height: 18px;
+  cursor: pointer;
+}
+
+.job-leg-row.allocated .unassign-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.job-leg-row .unassign-btn:hover {
+  background: #3a1d1d;
+  color: #ffb0b0;
 }

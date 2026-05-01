@@ -3106,6 +3106,7 @@ function renderJobLegDetail(jobId) {
       <div>Date / Time</div>
       <div>Depot</div>
       <div>Detail</div>
+      <div>Pallets</div>
       <div>Load</div>
     </div>
   `;
@@ -3135,15 +3136,16 @@ function renderJobLegDetail(jobId) {
         <div>${formatDateTime(stop.date, stop.time)}</div>
         <div>${stop.location || ""}</div>
         <div>${stop.detail || ""}</div>
-        <div class="leg-load-cell">
+        <div class="pallets-col">${movement.pallets || ""} pallets</div>
+        <div class="col run-assign">
           ${
             isAllocated
               ? `
-                <input class="run-input leg-run-input" type="text" value="${runLabel}" readonly />
-                <button class="unassign-btn leg-unassign-btn" title="Unallocate">×</button>
+                <input class="run-input" type="text" value="${runLabel}" readonly />
+                <button class="unassign-btn" title="Unallocate">×</button>
               `
               : `
-                <input class="run-input leg-run-input" type="text" placeholder="Run" readonly />
+                <input class="run-input" type="text" placeholder="Run" readonly />
               `
           }
         </div>
@@ -3161,7 +3163,7 @@ function renderJobLegDetail(jobId) {
         focusRun(runId);
       });
 
-      row.querySelector(".leg-unassign-btn")?.addEventListener("click", (e) => {
+      row.querySelector(".unassign-btn")?.addEventListener("click", (e) => {
         e.stopPropagation();
         unallocateMovement(movement.id);
       });
