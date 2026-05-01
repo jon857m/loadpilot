@@ -218,6 +218,11 @@ grid-template-columns:
   opacity: 0.6;
 }
 
+.job-row:not(.allocated) {
+  background: #1d2128;
+  border-color: #2a2d33;
+}
+
 .job-row.allocated {
   border-color: #3f7f5f;
   background: #1c2a24;
@@ -980,11 +985,11 @@ grid-template-columns:
 }
 
 .job-row-stop-view {
-  background: #1b2220;
+  background: #1d2128;
 }
 
 .job-row-stop-view:hover {
-  background: #22302b;
+  background: #242933;
 }
 
 .selection-box {

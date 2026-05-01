@@ -1101,18 +1101,27 @@ function updateJobPotAllocationDisplay() {
   document.querySelectorAll(".job-row").forEach((row) => {
     const movementId = row.dataset.movementId;
     const input = row.querySelector(".run-input");
-    const runId = movementAllocations[movementId];
 
-    if (runId) {
+    if (!input) return;
+
+    const runId =
+      movementAllocations[movementId] ||
+      movements.find((m) => m.id === movementId)?.runId;
+
+    const hasValidRun = !!runId && !!runs[runId];
+
+    if (hasValidRun) {
       input.value = runs[runId]?.plannerRunNo
-      ? String(Number(runs[runId].plannerRunNo))
-      : "";
+        ? String(Number(runs[runId].plannerRunNo))
+        : "";
+
       row.classList.add("allocated");
     } else {
       input.value = "";
       row.classList.remove("allocated");
     }
   });
+
   applyJobPotFilters();
 }
 
@@ -2260,36 +2269,16 @@ async function updateJobFromWizard(jobNumber, wizardData) {
 
     if (jobError) throw jobError;
 
-    // 2. Update collection address
-    const { error: collectError } = await supabaseClient
-      .from("addresses")
-      .update({
-        name: wizardData.collectName,
-        town: wizardData.collectTown,
-        postcode: wizardData.collectPostcode,
-      })
-      .eq("id", job.collection_address_id);
-
-    if (collectError) throw collectError;
-
-    // 3. Update delivery address
-    const { error: deliverError } = await supabaseClient
-      .from("addresses")
-      .update({
-        name: wizardData.deliverName,
-        town: wizardData.deliverTown,
-        postcode: wizardData.deliverPostcode,
-      })
-      .eq("id", job.delivery_address_id);
-
-    if (deliverError) throw deliverError;
-
-    // 4. Update job core fields
+    // 2. Update job core fields (including address IDs)
     const { error: updateJobError } = await supabaseClient
       .from("jobs")
       .update({
         pallets: wizardData.pallets,
         planning_mode: wizardData.planningMode,
+
+        collection_address_id: wizardData.collectionAddressId,
+        delivery_address_id: wizardData.deliveryAddressId,
+
         collection_date: wizardData.collectionDate || null,
         collection_time: wizardData.collectionTime || null,
         delivery_date: wizardData.deliveryDate || null,
@@ -2299,7 +2288,7 @@ async function updateJobFromWizard(jobNumber, wizardData) {
 
     if (updateJobError) throw updateJobError;
 
-    // 5. Delete old movements + allocations
+    // 3. Delete old movements + allocations
     const { data: existingMovements } = await supabaseClient
       .from("movements")
       .select("id")
@@ -2308,12 +2297,13 @@ async function updateJobFromWizard(jobNumber, wizardData) {
     if (existingMovements && existingMovements.length) {
       const movementIds = existingMovements.map((m) => m.id);
 
+      // delete allocations
       await supabaseClient
         .from("run_allocations")
         .delete()
         .in("movement_id", movementIds);
 
-      // Clear local allocation state immediately
+      // clear local state
       movementIds.forEach((movementId) => {
         delete movementAllocations[movementId];
 
@@ -2323,17 +2313,21 @@ async function updateJobFromWizard(jobNumber, wizardData) {
         }
       });
 
-      // Remove deleted movement stops from all visible runs
+      // remove stops from runs
       Object.values(runs).forEach((run) => {
         run.stops = run.stops.filter(
           (stop) => !movementIds.includes(stop.movementKey)
         );
       });
 
-      await supabaseClient.from("movements").delete().eq("job_id", job.id);
+      // delete movements
+      await supabaseClient
+        .from("movements")
+        .delete()
+        .eq("job_id", job.id);
     }
 
-    // 6. Recreate movements
+    // 4. Recreate movements using NEW address IDs (THIS IS THE FIX)
     if (wizardData.planningMode === "direct") {
       const { error: movementError } = await supabaseClient
         .from("movements")
@@ -2341,8 +2335,8 @@ async function updateJobFromWizard(jobNumber, wizardData) {
           account_id: accountId,
           job_id: job.id,
           movement_type: "direct",
-          from_address_id: job.collection_address_id,
-          to_address_id: job.delivery_address_id,
+          from_address_id: wizardData.collectionAddressId,
+          to_address_id: wizardData.deliveryAddressId,
           sequence_no: 1,
           active: true,
         });
@@ -2351,15 +2345,15 @@ async function updateJobFromWizard(jobNumber, wizardData) {
     }
 
     if (wizardData.planningMode === "via_depot") {
-const { data: depotAddress, error: depotError } = await supabaseClient
-  .from("addresses")
-  .select("id")
-  .eq("account_id", accountId)
-  .eq("is_depot", true)
-  .eq("active", true)
-  .order("fast_lookup", { ascending: true })
-  .limit(1)
-  .single();
+      const { data: depotAddress, error: depotError } = await supabaseClient
+        .from("addresses")
+        .select("id")
+        .eq("account_id", accountId)
+        .eq("is_depot", true)
+        .eq("active", true)
+        .order("fast_lookup", { ascending: true })
+        .limit(1)
+        .single();
 
       if (depotError) throw depotError;
 
@@ -2370,7 +2364,7 @@ const { data: depotAddress, error: depotError } = await supabaseClient
             account_id: accountId,
             job_id: job.id,
             movement_type: "to_depot",
-            from_address_id: job.collection_address_id,
+            from_address_id: wizardData.collectionAddressId,
             to_address_id: depotAddress.id,
             sequence_no: 1,
             active: true,
@@ -2380,7 +2374,7 @@ const { data: depotAddress, error: depotError } = await supabaseClient
             job_id: job.id,
             movement_type: "from_depot",
             from_address_id: depotAddress.id,
-            to_address_id: job.delivery_address_id,
+            to_address_id: wizardData.deliveryAddressId,
             sequence_no: 2,
             active: true,
           },
@@ -2406,13 +2400,11 @@ const { data: depotAddress, error: depotError } = await supabaseClient
       renderActiveRun();
     }
 
-
   } catch (err) {
     console.error("Error updating job:", err);
     alert("Could not update job");
   }
 }
-
 async function createBlankOrder() {
   try {
     const accountId = await getAccountId();
