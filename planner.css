@@ -466,7 +466,8 @@ grid-template-columns:
 .job-pot,
 .runs,
 .bottom {
-  overflow: auto;
+  overflow: hidden;
+  min-height: 0;
 }
 
 .bulk-bar {
@@ -1262,4 +1263,110 @@ grid-template-columns:
 .app.layout-default .runs {
   grid-column: 2;
   grid-row: 1 / span 2;
+}
+
+/* Scroll only the data sections */
+.job-pot,
+.runs,
+.bottom {
+  min-height: 0;
+}
+
+.job-list,
+.run-list,
+.route-list {
+  max-height: 100%;
+  overflow-y: auto;
+  overflow-x: auto;
+}
+
+.job-list {
+  flex: 1 1 auto;
+}
+
+.run-list {
+  flex: 1 1 auto;
+}
+
+.route-list {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* Keep table headers visible inside the scrolling data areas */
+.job-header,
+.route-header,
+.order-detail-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #11131a;
+}
+
+/* FINAL scroll fix — panels stay fixed, rows scroll */
+.app > .job-pot,
+.app > .runs,
+.app > .bottom {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.app.layout-default .job-pot,
+.app.layout-default .runs,
+.app.layout-default .bottom,
+.app.layout-pot .job-pot,
+.app.layout-pot .runs,
+.app.layout-runs .bottom,
+.app.layout-runs .runs {
+  display: flex;
+  flex-direction: column;
+}
+
+.panel-header,
+.job-controls,
+.bulk-bar,
+.run-controls,
+.unallocate-dropzone,
+.route-empty {
+  flex: 0 0 auto;
+}
+
+.job-list,
+.run-list,
+.route-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: auto;
+}
+
+.job-header,
+.route-header,
+.order-detail-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: #11131a;
+}
+
+.job-list,
+.route-list {
+  scrollbar-gutter: stable;
+}
+
+.job-list::-webkit-scrollbar,
+.route-list::-webkit-scrollbar {
+  height: 10px;
+  width: 10px;
+}
+
+.job-list::-webkit-scrollbar-thumb,
+.route-list::-webkit-scrollbar-thumb {
+  background: #2a2d33;
+  border-radius: 6px;
+}
+
+.job-list::-webkit-scrollbar-thumb:hover,
+.route-list::-webkit-scrollbar-thumb:hover {
+  background: #3a3f47;
 }
