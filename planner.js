@@ -425,11 +425,25 @@ const activeRouteHeader = document.querySelector(".bottom .panel-header h2");
 const jobPot = document.querySelector(".job-list");
 
 let boxSelectActive = false;
+let boxSelectPending = false;
 let boxSelectStartX = 0;
 let boxSelectStartY = 0;
 let selectionBoxEl = null;
 
 function updateBoxSelection(e) {
+  if (boxSelectPending && !boxSelectActive) {
+    const movedEnough =
+      Math.abs(e.clientX - boxSelectStartX) > 6 ||
+      Math.abs(e.clientY - boxSelectStartY) > 6;
+
+    if (!movedEnough) return;
+
+    boxSelectActive = true;
+    selectionBoxEl = document.createElement("div");
+    selectionBoxEl.className = "selection-box";
+    document.body.appendChild(selectionBoxEl);
+  }
+
   if (!boxSelectActive || !selectionBoxEl) return;
 
   const left = Math.min(boxSelectStartX, e.clientX);
@@ -466,6 +480,22 @@ function updateBoxSelection(e) {
 }
 
 function finishBoxSelection() {
+  if (boxSelectPending && !boxSelectActive) {
+    const movementId = jobPot.dataset.shiftClickMovementId;
+
+    if (movementId) {
+      const row = document.querySelector(`.job-row[data-movement-id="${movementId}"]`);
+
+      if (row) {
+        toggleJobPotRowSelection(row);
+      }
+    }
+
+    jobPot.dataset.shiftClickMovementId = "";
+    boxSelectPending = false;
+    return;
+  }
+
   if (!boxSelectActive) return;
 
   document.querySelectorAll(".job-row.box-selecting").forEach((row) => {
@@ -486,6 +516,27 @@ function finishBoxSelection() {
   }
 
   boxSelectActive = false;
+  boxSelectPending = false;
+  updateSelectedCount();
+}
+
+function toggleJobPotRowSelection(row) {
+  const movementId = row.dataset.movementId;
+  if (!movementId) return;
+
+  const checkbox = row.querySelector(".row-select");
+  const shouldSelect = !selectedMovements.has(movementId);
+
+  if (checkbox) {
+    checkbox.checked = shouldSelect;
+  }
+
+  if (shouldSelect) {
+    selectedMovements.add(movementId);
+  } else {
+    selectedMovements.delete(movementId);
+  }
+
   updateSelectedCount();
 }
 
@@ -502,13 +553,16 @@ jobPot.addEventListener("mousedown", (e) => {
 
   e.preventDefault();
 
-  boxSelectActive = true;
+  boxSelectPending = true;
+  boxSelectActive = false;
   boxSelectStartX = e.clientX;
   boxSelectStartY = e.clientY;
 
-  selectionBoxEl = document.createElement("div");
-  selectionBoxEl.className = "selection-box";
-  document.body.appendChild(selectionBoxEl);
+  const clickedRow = e.target.closest(".job-row");
+
+  jobPot.dataset.shiftClickMovementId = clickedRow
+    ? clickedRow.dataset.movementId || ""
+    : "";
 });
 
 document.querySelectorAll(".layout-btn").forEach((btn) => {
@@ -615,6 +669,35 @@ function attachJobPotEvents() {
       const shouldSelect = e.target.checked;
 
       document.querySelectorAll(".job-row").forEach((row) => {
+            row.addEventListener("click", (e) => {
+      if (!e.shiftKey) return;
+
+      if (
+        e.target.closest("button") ||
+        e.target.closest("input") ||
+        e.target.closest(".run-input")
+      ) {
+        return;
+      }
+
+      const movementId = row.dataset.movementId;
+      if (!movementId) return;
+
+      const shouldSelect = !selectedMovements.has(movementId);
+
+      document.querySelectorAll(".row-select").forEach((checkbox) => {
+        if (checkbox.dataset.id !== movementId) return;
+        checkbox.checked = shouldSelect;
+      });
+
+      if (shouldSelect) {
+        selectedMovements.add(movementId);
+      } else {
+        selectedMovements.delete(movementId);
+      }
+
+      updateSelectedCount();
+    });
         const group = row.closest(".job-group");
 
         const isVisible =
