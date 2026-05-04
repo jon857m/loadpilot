@@ -1496,6 +1496,9 @@ unallocateDropzone.addEventListener("drop", (e) => {
   }
 
   dragPayload = null;
+
+  clearSelectedMovements();
+
   unallocateDropzone.classList.remove("visible", "drag-over");
 });
 
@@ -1870,9 +1873,19 @@ document.getElementById("assignSelectedBtn").addEventListener("click", () => {
 
 function clearSelectedMovements() {
   selectedMovements.clear();
+  selectedOrderMovements.clear();
 
   document.querySelectorAll(".row-select").forEach((checkbox) => {
     checkbox.checked = false;
+  });
+
+  document.querySelectorAll(".order-row-select").forEach((checkbox) => {
+    checkbox.checked = false;
+  });
+
+  document.querySelectorAll(".job-row, .job-leg-row").forEach((row) => {
+    row.classList.remove("selected");
+    row.classList.remove("box-selecting");
   });
 
   const selectVisibleCheckbox = document.getElementById(
@@ -1883,13 +1896,15 @@ function clearSelectedMovements() {
     selectVisibleCheckbox.checked = false;
   }
 
+  const orderSelectAll = document.getElementById("orderSelectAll");
+
+  if (orderSelectAll) {
+    orderSelectAll.checked = false;
+  }
+
   updateSelectedCount();
 }
 
-function updateSelectedCount() {
-  document.getElementById("selectedCount").textContent =
-    `${selectedMovements.size} selected`;
-}
 
 function updateSelectedCount() {
   const countEl = document.getElementById("selectedCount");
@@ -3069,6 +3084,7 @@ function renderRuns() {
 
     card.addEventListener("drop", (e) => {
       e.preventDefault();
+      e.stopPropagation();
 
       if (!dragPayload) return;
 
@@ -3080,8 +3096,6 @@ function renderRuns() {
         dragPayload.movementIds.forEach((movementId) => {
           assignMovementToRun(movementId, run.id);
         });
-
-        clearSelectedMovements();
       }
 
       if (dragPayload.type === "routeMovement") {
@@ -3089,6 +3103,7 @@ function renderRuns() {
       }
 
       dragPayload = null;
+      clearSelectedMovements();
       unallocateDropzone.classList.remove("visible", "drag-over");
     });
 
