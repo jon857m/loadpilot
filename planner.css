@@ -1484,3 +1484,7 @@ grid-template-columns:
   border-color: rgba(90, 167, 255, 0.8);
   background: rgba(90, 167, 255, 0.15);
 }
+
+.view-group {
+  display: none;
+}

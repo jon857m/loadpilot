@@ -348,7 +348,7 @@ let currentView = "jobs";
 
 let currentDateFilter = "today";
 let currentTypeFilter = "all";
-let includeDepot = true;
+let includeDepot = false;
 
 let currentSearchTerm = "";
 
@@ -1431,20 +1431,54 @@ function renderFullOrderMovementRows(orderMovements, orderId) {
     updateUnallocateDropzoneVisibility();
 }
 
+  function tidyActiveRunStops() {
+    if (!activeRunId) return;
+
+    const run = runs[activeRunId];
+    if (!run || !run.stops.length) return;
+
+    const collects = run.stops.filter((stop) => stop.type === "collect");
+    const delivers = run.stops.filter((stop) => stop.type === "deliver");
+
+    const alreadyCollectsThenDelivers = run.stops.every((stop, index) => {
+      if (index < collects.length) return stop.type === "collect";
+      return stop.type === "deliver";
+    });
+
+    if (!alreadyCollectsThenDelivers) {
+      run.stops = [...collects, ...delivers];
+    } else {
+      const deliveryMovementKeys = delivers.map((stop) => stop.movementKey);
+
+      const matchedCollects = [...collects].sort((a, b) => {
+        return (
+          deliveryMovementKeys.indexOf(b.movementKey) -
+          deliveryMovementKeys.indexOf(a.movementKey)
+        );
+      });
+
+      run.stops = [...matchedCollects, ...delivers];
+    }
+
+    saveRunOrderToSupabase(activeRunId);
+    renderActiveRun();
+  }
+
 function renderActiveRun() {
   if (!activeRunId) return;
 
   const run = runs[activeRunId];
 
   activeRouteHeader.innerHTML = `
-    Active Route — Run 
-    <input 
-      id="activeRunJumpInput" 
-      class="active-run-jump-input" 
-      value="${run.plannerRunNo ? String(Number(run.plannerRunNo)) : ""}" 
-    />
-    : ${run.name}
-  `;
+      Active Route — Run 
+      <input 
+        id="activeRunJumpInput" 
+        class="active-run-jump-input" 
+        value="${run.plannerRunNo ? String(Number(run.plannerRunNo)) : ""}" 
+      />
+      : ${run.name}
+      <button id="tidyRunBtn" class="primary-btn">Tidy</button>
+    `;
 
   const activeRunInput = document.getElementById("activeRunJumpInput");
 
@@ -1462,6 +1496,12 @@ function renderActiveRun() {
       e.target.blur();
       focusRun(runId);
     });
+  }
+
+  const tidyRunBtn = document.getElementById("tidyRunBtn");
+
+  if (tidyRunBtn) {
+    tidyRunBtn.addEventListener("click", tidyActiveRunStops);
   }
 
   routeList.innerHTML = "";
