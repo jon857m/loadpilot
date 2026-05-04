@@ -361,6 +361,7 @@ let runEditMode = false;
 let activeModeFilter = "all";
 
 let activeOrderId = null;
+let showFullOrderMovements = false;
 
 let activeJobLegId = null;
 
@@ -875,8 +876,14 @@ function renderOrderDetail(orderId) {
 
   const orderJobs = Object.values(jobsById);
 
-  activeRouteHeader.innerHTML = `
-    Order Detail — ${orderId}
+activeRouteHeader.innerHTML = `
+    <span>Order Detail — ${orderId}</span>
+
+    <label style="font-size: 12px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; margin-left: 12px;">
+      <input type="checkbox" id="fullOrderToggle" ${showFullOrderMovements ? "checked" : ""} />
+      Full order movements
+    </label>
+
     <button id="addJobBtn" class="primary-btn" data-order="${orderId}">Add Job</button>
     <button id="closeOrderBtn" class="danger-btn" data-order="${orderId}">×</button>
   `;
@@ -902,6 +909,10 @@ function renderOrderDetail(orderId) {
       <div>Load</div>
     </div>
   `;
+
+    if (showFullOrderMovements) {
+    renderFullOrderMovementRows(orderMovements);
+  } else {
 
   orderJobs.forEach((job) => {
     const firstMovement = job.movements[0];
@@ -960,6 +971,16 @@ function renderOrderDetail(orderId) {
 
     routeList.appendChild(row);
   });
+    }
+
+    const fullOrderToggle = document.getElementById("fullOrderToggle");
+
+  if (fullOrderToggle) {
+    fullOrderToggle.addEventListener("change", (e) => {
+      showFullOrderMovements = e.target.checked;
+      renderOrderDetail(orderId);
+    });
+  }
 
   const addJobBtn = document.getElementById("addJobBtn");
 
@@ -989,6 +1010,85 @@ function renderOrderDetail(orderId) {
       await softDeleteJob(button.dataset.job);
     });
   });
+
+  function renderFullOrderMovementRows(orderMovements) {
+  orderMovements.forEach((movement) => {
+    const stops = [
+      {
+        type: "collect",
+        label: "C",
+        stop: movement.collect,
+      },
+      {
+        type: "deliver",
+        label: "D",
+        stop: movement.deliver,
+      },
+    ];
+
+    stops.forEach((stopView) => {
+      const row = document.createElement("div");
+      row.className = "order-detail-row route-stop";
+      row.setAttribute("draggable", "true");
+
+      row.dataset.movementId = movement.id;
+      row.dataset.stopType = stopView.type;
+
+      const modeLabel = movement.planningMode === "direct" ? "Direct" : "Via Depot";
+      const modeClass = movement.planningMode === "direct" ? "mode-direct" : "mode-depot";
+
+      const runId = movementAllocations[movement.id] || movement.runId;
+      const runLabel = runId && runs[runId]
+        ? runs[runId]?.plannerRunNo
+          ? String(Number(runs[runId].plannerRunNo))
+          : runId
+        : "Unallocated";
+
+      row.innerHTML = `
+        <div>
+          <button class="job-link" data-job="${movement.jobId}">
+            ${movement.jobId}
+          </button>
+        </div>
+
+        <div>
+          <span class="mode-badge ${modeClass}">
+            ${modeLabel}
+          </span>
+        </div>
+
+        <div>${stopView.label}</div>
+        <div>${stopView.stop.date || ""}</div>
+        <div>${stopView.stop.time || ""}</div>
+        <div>${stopView.stop.location || ""}</div>
+        <div>${stopView.stop.detail || ""}</div>
+
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+
+        <div>${movement.pallets || ""} pallets</div>
+
+        <div>
+          <span class="run-badge ${runId ? "" : "run-badge--empty"}">
+            ${runLabel}
+          </span>
+        </div>
+      `;
+
+      row.addEventListener("dragstart", () => {
+        dragPayload = {
+          type: "jobMovement",
+          movementId: movement.id,
+        };
+      });
+
+      routeList.appendChild(row);
+    });
+  });
+}
 
   const closeOrderBtn = document.getElementById("closeOrderBtn");
 
