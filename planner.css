@@ -1060,7 +1060,7 @@ grid-template-columns:
 .job-leg-grid {
   display: grid;
   grid-template-columns:
-    45px
+    35px
     90px
     35px
     130px
@@ -1401,4 +1401,27 @@ grid-template-columns:
 .order-job-group-start {
   margin-top: 6px;
   border-top: 1px solid rgba(90, 167, 255, 0.35);
+}
+
+.order-row-select {
+  cursor: pointer;
+  transform: scale(1.1);
+}
+
+.job-leg-row.selected {
+  outline: 1px solid #5aa7ff;
+  background: rgba(90, 167, 255, 0.08);
+}
+
+/* Stop shift-click selecting page text in planner rows */
+.job-row,
+.job-leg-row,
+.route-stop,
+.route-list,
+.job-list {
+  user-select: none;
+}
+
+.job-leg-row.box-selecting {
+  outline: 1px solid #5aa7ff;
 }
