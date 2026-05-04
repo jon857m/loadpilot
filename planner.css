@@ -1466,3 +1466,21 @@ grid-template-columns:
   border-color: rgba(90, 167, 255, 0.8);
   background: rgba(90, 167, 255, 0.15);
 }
+
+.header-lookup-input {
+  width: 92px;
+  background: rgba(90, 167, 255, 0.08);
+  border: 1px solid rgba(90, 167, 255, 0.35);
+  color: #9fd1ff;
+  border-radius: 6px;
+  padding: 3px 7px;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+  outline: none;
+}
+
+.header-lookup-input:focus {
+  border-color: rgba(90, 167, 255, 0.8);
+  background: rgba(90, 167, 255, 0.15);
+}

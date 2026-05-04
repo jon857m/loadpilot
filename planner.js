@@ -1029,6 +1029,44 @@ function updateUnallocateDropzoneVisibility() {
   unallocateDropzone.style.display = shouldShow ? "block" : "none";
 }
 
+function normaliseOrderLookup(value) {
+  return String(value || "").trim().replace(/^ORD-/i, "");
+}
+
+function findOrderIdFromInput(value) {
+  const typed = normaliseOrderLookup(value);
+
+  if (!typed) return null;
+
+  const match = movements.find((movement) => {
+    return normaliseOrderLookup(movement.orderId) === typed;
+  });
+
+  return match ? match.orderId : null;
+}
+
+function normaliseJobLookup(value) {
+  return String(value || "")
+    .trim()
+    .toUpperCase()
+    .replace(/^ORD-/, "");
+}
+
+function findJobIdFromInput(value) {
+  const typed = normaliseJobLookup(value);
+
+  if (!typed) return null;
+
+  const match = movements.find((movement) => {
+    const fullJobId = normaliseJobLookup(movement.jobId);
+    const shortJobId = normaliseJobLookup(shortJobFullLabel(movement.jobId));
+
+    return fullJobId === typed || shortJobId === typed;
+  });
+
+  return match ? match.jobId : null;
+}
+
 function renderOrderDetail(orderId) {
   activeJobLegId = null;
   activeOrderId = orderId;
@@ -1059,7 +1097,14 @@ function renderOrderDetail(orderId) {
   const orderJobs = Object.values(jobsById);
 
   activeRouteHeader.innerHTML = `
-    <span>Order Detail — ${orderId}</span>
+    <span>
+      Order Detail —
+      <input
+        id="orderLookupInput"
+        class="header-lookup-input"
+        value="${normaliseOrderLookup(orderId)}"
+      />
+    </span>
 
     <label style="font-size: 12px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; margin-left: 12px;">
       <input type="checkbox" id="fullOrderToggle" ${showFullOrderMovements ? "checked" : ""} />
@@ -1069,6 +1114,24 @@ function renderOrderDetail(orderId) {
     <button id="addJobBtn" class="primary-btn" data-order="${orderId}">Add Job</button>
     <button id="closeOrderBtn" class="danger-btn" data-order="${orderId}">×</button>
   `;
+
+  const jobLookupInput = document.getElementById("jobLookupInput");
+
+  if (jobLookupInput) {
+    jobLookupInput.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter") return;
+
+      const foundJobId = findJobIdFromInput(e.target.value);
+
+      if (!foundJobId) {
+        alert("Job not found.");
+        return;
+      }
+
+      e.target.blur();
+      renderJobLegDetail(foundJobId);
+    });
+  }
 
   routeEmpty.style.display = "none";
   routeList.style.display = "flex";
@@ -1155,6 +1218,24 @@ function renderOrderDetail(orderId) {
     });
     updateUnallocateDropzoneVisibility();
   }
+
+  const orderLookupInput = document.getElementById("orderLookupInput");
+
+    if (orderLookupInput) {
+      orderLookupInput.addEventListener("keydown", (e) => {
+        if (e.key !== "Enter") return;
+
+        const foundOrderId = findOrderIdFromInput(e.target.value);
+
+        if (!foundOrderId) {
+          alert("Order not found.");
+          return;
+        }
+
+        e.target.blur();
+        renderOrderDetail(foundOrderId);
+      });
+    }
 
   const fullOrderToggle = document.getElementById("fullOrderToggle");
 
@@ -3462,12 +3543,35 @@ function renderJobLegDetail(jobId) {
   activeRunId = null;
 
   activeRouteHeader.innerHTML = `
-      Job Legs — ${shortJobFullLabel(jobId)}
+      Job Legs —
+      <input
+        id="jobLookupInput"
+        class="header-lookup-input"
+        value="${shortJobFullLabel(jobId)}"
+      />
       <button id="backToOrderBtn" class="primary-btn" data-order="${firstMovement.orderId}">
         Back to Order
       </button>
       <button id="closeLegBtn" class="danger-btn">×</button>
     `;
+
+    const jobLookupInput = document.getElementById("jobLookupInput");
+
+if (jobLookupInput) {
+  jobLookupInput.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter") return;
+
+    const foundJobId = findJobIdFromInput(e.target.value);
+
+    if (!foundJobId) {
+      alert("Job not found.");
+      return;
+    }
+
+    e.target.blur();
+    renderJobLegDetail(foundJobId);
+  });
+}
 
   routeEmpty.style.display = "none";
   routeList.style.display = "flex";
