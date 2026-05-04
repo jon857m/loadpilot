@@ -1009,6 +1009,30 @@ function removeMovementFromAllRuns(movementKey) {
   return removedStops;
 }
 
+function closeBottomPanel() {
+  activeOrderId = null;
+  activeJobLegId = null;
+  activeRunId = null;
+
+  selectedOrderMovements.clear();
+
+  activeRouteHeader.textContent = "Active Route";
+  routeList.innerHTML = "";
+  routeList.style.display = "none";
+
+  routeEmpty.style.display = "block";
+  routeEmpty.innerText = "Select a run to begin planning";
+
+  document.querySelectorAll(".selected").forEach((el) => {
+    el.classList.remove("selected");
+  });
+
+  renderRuns();
+  renderJobPot();
+  attachJobPotEvents();
+  updateJobPotAllocationDisplay();
+}
+
 function renderOrderDetail(orderId) {
   activeJobLegId = null;
   activeOrderId = orderId;
@@ -1173,6 +1197,12 @@ activeRouteHeader.innerHTML = `
     });
   });
 
+  const closeOrderBtn = document.getElementById("closeOrderBtn");
+
+  if (closeOrderBtn) {
+    closeOrderBtn.addEventListener("click", closeBottomPanel);
+  }
+
   }
 
 function renderFullOrderMovementRows(orderMovements, orderId) {
@@ -1329,57 +1359,6 @@ function renderFullOrderMovementRows(orderMovements, orderId) {
         routeList.appendChild(collectRow);
         routeList.appendChild(deliverRow);
                 });
-}
-
-
-
-const closeOrderBtn = document.getElementById("closeOrderBtn");
-
-if (closeOrderBtn) {
-closeOrderBtn.addEventListener("click", async () => {
-  const hasJobs = movements.some((m) => m.orderId === activeOrderId);
-
-  // 🔴 Soft delete if empty
-if (!hasJobs && activeOrderId) {
-  try {
-    const { error } = await supabaseClient
-      .from("orders")
-      .update({ status: "deleted" })
-      await deleteOrderIfEmpty(activeOrderId);
-
-    if (error) {
-      console.error("Order delete failed:", error);
-    } else {
-      console.log(`Order ${activeOrderId} marked as deleted`);
-    }
-
-  } catch (err) {
-    console.error("Failed to delete empty order:", err);
-  }
-}
-
-  // 🧹 FULL UI RESET (this is the key bit you're missing)
-
-  activeOrderId = null;
-  activeRunId = null;
-
-  // Clear order detail panel
-  activeRouteHeader.innerHTML = "";
-  routeList.innerHTML = "";
-
-  // Reset empty state properly
-  routeEmpty.style.display = "block";
-  routeEmpty.innerText = "Select a run to begin planning";
-
-  // Optional: clear any selection highlights
-  document.querySelectorAll(".selected").forEach(el => {
-    el.classList.remove("selected");
-  });
-
-  // Re-render everything clean
-  renderRuns();
-  renderJobPot();
-});
 }
 
 
@@ -3417,11 +3396,12 @@ function renderJobLegDetail(jobId) {
   activeRunId = null;
 
   activeRouteHeader.innerHTML = `
-    Job Legs — ${shortJobFullLabel(jobId)}
-    <button id="backToOrderBtn" class="primary-btn" data-order="${firstMovement.orderId}">
-      Back to Order
-    </button>
-  `;
+      Job Legs — ${shortJobFullLabel(jobId)}
+      <button id="backToOrderBtn" class="primary-btn" data-order="${firstMovement.orderId}">
+        Back to Order
+      </button>
+      <button id="closeLegBtn" class="danger-btn">×</button>
+    `;
 
   routeEmpty.style.display = "none";
   routeList.style.display = "flex";
@@ -3506,4 +3486,11 @@ function renderJobLegDetail(jobId) {
   document.getElementById("backToOrderBtn")?.addEventListener("click", () => {
     renderOrderDetail(firstMovement.orderId);
   });
+
+  const closeLegBtn = document.getElementById("closeLegBtn");
+
+  if (closeLegBtn) {
+    closeLegBtn.addEventListener("click", closeBottomPanel);
+  }
+
 }
