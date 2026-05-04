@@ -1177,3 +1177,89 @@ grid-template-columns:
   background: #3a1d1d;
   color: #ffb0b0;
 }
+
+.layout-toggle {
+  display: flex;
+  gap: 4px;
+}
+
+.layout-btn {
+  background: #1d2128;
+  border: 1px solid #2a2d33;
+  color: #ccc;
+  padding: 6px 9px;
+  font-size: 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.layout-btn.active {
+  background: #243044;
+  border-color: #5aa7ff;
+  color: #5aa7ff;
+}
+
+/* Full-height Job Pot + Runs */
+.app.layout-pot {
+  grid-template-columns: 70% 30%;
+  grid-template-rows: 100%;
+}
+
+.app.layout-pot .job-pot {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.app.layout-pot .bottom {
+  display: none;
+}
+
+.app.layout-pot .runs {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+/* Full-height Run/Order view + Runs */
+.app.layout-runs {
+  grid-template-columns: 70% 30%;
+  grid-template-rows: 100%;
+}
+
+.app.layout-runs .job-pot {
+  display: none;
+}
+
+.app.layout-runs .bottom {
+  display: block;
+  grid-column: 1;
+  grid-row: 1;
+  border-top: none;
+}
+
+.app.layout-runs .runs {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+/* Normal split view */
+.app.layout-default {
+  grid-template-columns: 70% 30%;
+  grid-template-rows: 55% 45%;
+}
+
+.app.layout-default .job-pot {
+  display: flex;
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.app.layout-default .bottom {
+  display: block;
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.app.layout-default .runs {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}

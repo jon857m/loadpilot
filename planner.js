@@ -510,6 +510,22 @@ jobPot.addEventListener("mousedown", (e) => {
   document.body.appendChild(selectionBoxEl);
 });
 
+document.querySelectorAll(".layout-btn").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const layout = btn.dataset.layout;
+    const app = document.querySelector(".app");
+
+    app.classList.remove("layout-pot", "layout-default", "layout-runs");
+    app.classList.add(`layout-${layout}`);
+
+    document
+      .querySelectorAll(".layout-btn")
+      .forEach((b) => b.classList.remove("active"));
+
+    btn.classList.add("active");
+  });
+});
+
 document.addEventListener("mousemove", updateBoxSelection);
 
 document.addEventListener("mouseup", finishBoxSelection);
