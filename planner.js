@@ -127,51 +127,51 @@ function renderJobPot() {
     const group = document.createElement("div");
     group.className = "job-group";
 
-  grouped[jobId].forEach((movement, index) => {
-    const shouldSplitStops =
-      currentTypeFilter === "all" && includeDepot === false;
+    grouped[jobId].forEach((movement, index) => {
+      const shouldSplitStops =
+        currentTypeFilter === "all" && includeDepot === false;
 
-    const stopsToRender = [];
+      const stopsToRender = [];
 
-    if (shouldSplitStops) {
-      if (!movement.collect.isDepot) {
+      if (shouldSplitStops) {
+        if (!movement.collect.isDepot) {
+          stopsToRender.push({
+            side: "collect",
+            cd: "C",
+            stop: movement.collect,
+          });
+        }
+
+        if (!movement.deliver.isDepot) {
+          stopsToRender.push({
+            side: "deliver",
+            cd: "D",
+            stop: movement.deliver,
+          });
+        }
+      } else {
         stopsToRender.push({
-          side: "collect",
-          cd: "C",
-          stop: movement.collect,
+          side: "movement",
+          cd: null,
+          stop: null,
         });
       }
 
-      if (!movement.deliver.isDepot) {
-        stopsToRender.push({
-          side: "deliver",
-          cd: "D",
-          stop: movement.deliver,
-        });
-      }
-    } else {
-      stopsToRender.push({
-        side: "movement",
-        cd: null,
-        stop: null,
-      });
-    }
+      stopsToRender.forEach((stopView) => {
+        const row = document.createElement("div");
+        row.className = "job-row";
+        row.setAttribute("draggable", "true");
+        row.dataset.job = movement.jobId;
+        row.dataset.move = index;
+        row.dataset.movementId = movement.id;
 
-    stopsToRender.forEach((stopView) => {
-      const row = document.createElement("div");
-      row.className = "job-row";
-      row.setAttribute("draggable", "true");
-      row.dataset.job = movement.jobId;
-      row.dataset.move = index;
-      row.dataset.movementId = movement.id;
+        if (stopView.side !== "movement") {
+          row.dataset.stopSide = stopView.side;
+          row.classList.add("job-row-stop-view");
+        }
 
-      if (stopView.side !== "movement") {
-        row.dataset.stopSide = stopView.side;
-        row.classList.add("job-row-stop-view");
-      }
-
-      if (stopView.side === "movement") {
-        row.innerHTML = `
+        if (stopView.side === "movement") {
+          row.innerHTML = `
           <div class="col select-col">
             <input type="checkbox" class="row-select" data-id="${movement.id}" />
           </div>
@@ -207,10 +207,10 @@ function renderJobPot() {
             <button class="unassign-btn" title="Unallocate">×</button>
           </div>
         `;
-      }
+        }
 
-      if (stopView.side !== "movement") {
-        row.innerHTML = `
+        if (stopView.side !== "movement") {
+          row.innerHTML = `
           <div class="col select-col">
             <input type="checkbox" class="row-select" data-id="${movement.id}" />
           </div>
@@ -246,11 +246,11 @@ function renderJobPot() {
             <button class="unassign-btn" title="Unallocate">×</button>
           </div>
         `;
-      }
+        }
 
-      group.appendChild(row);
+        group.appendChild(row);
+      });
     });
-  });
 
     jobList.appendChild(group);
   });
@@ -408,13 +408,12 @@ async function loadAddressBookFromSupabase() {
 
 function findAddressByName(name) {
   return addressBook.find(
-    (address) => address.name.toLowerCase() === name.toLowerCase()
+    (address) => address.name.toLowerCase() === name.toLowerCase(),
   );
 }
 
 // renderJobPot();
 // attachJobPotEvents();
-
 
 document.getElementById("runDatePicker").value = currentRunDate;
 
@@ -486,7 +485,9 @@ function finishBoxSelection() {
     const orderMovementId = routeList.dataset.shiftClickMovementId;
 
     if (jobPotMovementId) {
-      const row = document.querySelector(`.job-row[data-movement-id="${jobPotMovementId}"]`);
+      const row = document.querySelector(
+        `.job-row[data-movement-id="${jobPotMovementId}"]`,
+      );
 
       if (row) {
         toggleJobPotRowSelection(row);
@@ -563,32 +564,13 @@ function toggleOrderMovementSelection(movementId) {
 
   const shouldSelect = !selectedOrderMovements.has(movementId);
 
-  document
-    .querySelectorAll(`.order-row-select[data-movement-id="${movementId}"]`)
-    .forEach((checkbox) => {
-      checkbox.checked = shouldSelect;
-    });
+  setOrderMovementSelection(movementId, shouldSelect);
 
-  document
-    .querySelectorAll(`.job-leg-row[data-movement-id="${movementId}"]`)
-    .forEach((row) => {
-      row.classList.toggle("selected", shouldSelect);
-    });
-
-  if (shouldSelect) {
-    selectedOrderMovements.add(movementId);
-  } else {
-    selectedOrderMovements.delete(movementId);
-  }
+  updateSelectedCount();
 }
 
 function getCombinedSelectedMovementIds() {
-  return Array.from(
-    new Set([
-      ...selectedMovements,
-      ...selectedOrderMovements,
-    ])
-  );
+  return Array.from(new Set([...selectedMovements, ...selectedOrderMovements]));
 }
 
 function setOrderMovementSelection(movementId, shouldSelect) {
@@ -603,7 +585,7 @@ function setOrderMovementSelection(movementId, shouldSelect) {
   document
     .querySelectorAll(`.job-leg-row[data-movement-id="${movementId}"]`)
     .forEach((row) => {
-      row.classList.toggle("selected", shouldSelect);
+      row.classList.remove("selected");
       row.classList.remove("box-selecting");
     });
 
@@ -772,7 +754,9 @@ function attachJobPotEvents() {
     });
   });
 
-  const selectVisibleCheckbox = document.getElementById("selectVisibleJobsCheckbox");
+  const selectVisibleCheckbox = document.getElementById(
+    "selectVisibleJobsCheckbox",
+  );
 
   if (selectVisibleCheckbox) {
     selectVisibleCheckbox.addEventListener("change", (e) => {
@@ -852,7 +836,6 @@ document.getElementById("jobSearchInput").addEventListener("input", (e) => {
   applyJobPotFilters();
 });
 
-
 jobPot.addEventListener("dragover", (e) => {
   e.preventDefault();
 });
@@ -883,6 +866,7 @@ function selectRun(runId) {
     routeEmpty.textContent = "Select a run to begin planning";
     routeList.style.display = "none";
     routeList.innerHTML = "";
+    updateUnallocateDropzoneVisibility();
   }
 }
 
@@ -942,14 +926,18 @@ function assignMovementToRun(movementId, runId) {
   movement.runId = runId;
   movementAllocations[movement.id] = runId;
 
-updateJobPotAllocationDisplay();
+  updateJobPotAllocationDisplay();
 
-if (activeOrderId) {
-  renderOrderDetail(activeOrderId);
-}
+  if (activeRunId) {
+    renderActiveRun();
+  } else if (activeJobLegId) {
+    renderJobLegDetail(activeJobLegId);
+  } else if (activeOrderId) {
+    renderOrderDetail(activeOrderId);
+  }
 
-saveAllocationToSupabase(movementId, runId);
-}
+    saveAllocationToSupabase(movementId, runId);
+  }
 
 function moveMovementToRun(movementKey, newRunId) {
   const movementStops = removeMovementFromAllRuns(movementKey);
@@ -977,13 +965,13 @@ function unallocateMovement(movementKey) {
 
   updateJobPotAllocationDisplay();
 
-if (activeOrderId) {
-  renderOrderDetail(activeOrderId);
-} else if (activeJobLegId) {
-  renderJobLegDetail(activeJobLegId);
-} else if (activeRunId) {
-  renderActiveRun();
-}
+  if (activeRunId) {
+    renderActiveRun();
+  } else if (activeJobLegId) {
+    renderJobLegDetail(activeJobLegId);
+  } else if (activeOrderId) {
+    renderOrderDetail(activeOrderId);
+  }
 
   deleteAllocationFromSupabase(movementKey);
 }
@@ -1031,6 +1019,14 @@ function closeBottomPanel() {
   renderJobPot();
   attachJobPotEvents();
   updateJobPotAllocationDisplay();
+  updateUnallocateDropzoneVisibility();
+}
+
+function updateUnallocateDropzoneVisibility() {
+  const shouldShow =
+    activeRunId || activeJobLegId || (activeOrderId && showFullOrderMovements);
+
+  unallocateDropzone.style.display = shouldShow ? "block" : "none";
 }
 
 function renderOrderDetail(orderId) {
@@ -1062,7 +1058,7 @@ function renderOrderDetail(orderId) {
 
   const orderJobs = Object.values(jobsById);
 
-activeRouteHeader.innerHTML = `
+  activeRouteHeader.innerHTML = `
     <span>Order Detail — ${orderId}</span>
 
     <label style="font-size: 12px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; margin-left: 12px;">
@@ -1096,33 +1092,33 @@ activeRouteHeader.innerHTML = `
     </div>
   `;
 
-    if (showFullOrderMovements) {
+  if (showFullOrderMovements) {
     renderFullOrderMovementRows(orderMovements, orderId);
   } else {
+    orderJobs.forEach((job) => {
+      const firstMovement = job.movements[0];
+      const lastMovement = job.movements[job.movements.length - 1];
 
-  orderJobs.forEach((job) => {
-    const firstMovement = job.movements[0];
-    const lastMovement = job.movements[job.movements.length - 1];
+      const row = document.createElement("div");
+      row.className = "order-detail-row";
 
-    const row = document.createElement("div");
-    row.className = "order-detail-row";
+      const modeLabel = job.planningMode === "direct" ? "Direct" : "Via Depot";
+      const modeClass =
+        job.planningMode === "direct" ? "mode-direct" : "mode-depot";
 
-    const modeLabel = job.planningMode === "direct" ? "Direct" : "Via Depot";
-    const modeClass = job.planningMode === "direct" ? "mode-direct" : "mode-depot";
+      const runBadges = Array.from(job.runIds)
+        .map((runId) => {
+          const plannerRunNo = runs[runId]?.plannerRunNo;
 
-    const runBadges = Array.from(job.runIds)
-      .map((runId) => {
-        const plannerRunNo = runs[runId]?.plannerRunNo;
-
-        return `
+          return `
           <button class="run-badge run-jump-btn" data-run-id="${runId}">
             ${plannerRunNo ? String(Number(plannerRunNo)) : runId}
           </button>
         `;
-      })
-      .join("");
+        })
+        .join("");
 
-    row.innerHTML = `
+      row.innerHTML = `
       <div class="order-row-inner">
         <button class="job-delete-btn" data-job="${job.jobId}">×</button>
         <button class="job-link" data-job="${job.jobId}">
@@ -1155,11 +1151,12 @@ activeRouteHeader.innerHTML = `
       </div>
     `;
 
-    routeList.appendChild(row);
-  });
-    }
+      routeList.appendChild(row);
+    });
+    updateUnallocateDropzoneVisibility();
+  }
 
-    const fullOrderToggle = document.getElementById("fullOrderToggle");
+  const fullOrderToggle = document.getElementById("fullOrderToggle");
 
   if (fullOrderToggle) {
     fullOrderToggle.addEventListener("change", (e) => {
@@ -1202,8 +1199,7 @@ activeRouteHeader.innerHTML = `
   if (closeOrderBtn) {
     closeOrderBtn.addEventListener("click", closeBottomPanel);
   }
-
-  }
+}
 
 function renderFullOrderMovementRows(orderMovements, orderId) {
   routeList.innerHTML = `
@@ -1268,46 +1264,38 @@ function renderFullOrderMovementRows(orderMovements, orderId) {
         </div>
       `;
 
-
-
       const checkbox = row.querySelector(".order-row-select");
 
-      if (checkbox) {
-        checkbox.addEventListener("change", (e) => {
-          const movementId = checkbox.dataset.movementId;
-          const isChecked = checkbox.checked;
+        if (checkbox) {
+          checkbox.addEventListener("change", () => {
+            const movementId = checkbox.dataset.movementId;
+            const isChecked = checkbox.checked;
 
-          document.querySelectorAll(`.order-row-select[data-movement-id="${movementId}"]`)
-            .forEach(cb => cb.checked = isChecked);
+            setOrderMovementSelection(movementId, isChecked);
+            updateSelectedCount();
+          });
+        }
 
-          if (isChecked) {
-            selectedOrderMovements.add(movementId);
+      if (showFullOrderMovements) {
+        row.addEventListener("dragstart", () => {
+          const combinedSelected = getCombinedSelectedMovementIds();
+
+          if (
+            combinedSelected.includes(movement.id) &&
+            combinedSelected.length > 1
+          ) {
+            dragPayload = {
+              type: "jobMovementGroup",
+              movementIds: combinedSelected,
+            };
           } else {
-            selectedOrderMovements.delete(movementId);
+            dragPayload = {
+              type: "jobMovement",
+              movementId: movement.id,
+            };
           }
         });
       }
-
-        if (showFullOrderMovements) {
-          row.addEventListener("dragstart", () => {
-      const combinedSelected = getCombinedSelectedMovementIds();
-
-      if (
-        combinedSelected.includes(movement.id) &&
-        combinedSelected.length > 1
-      ) {
-        dragPayload = {
-          type: "jobMovementGroup",
-          movementIds: combinedSelected,
-        };
-      } else {
-        dragPayload = {
-          type: "jobMovement",
-          movementId: movement.id,
-        };
-      }
-          });
-        }
 
       row.addEventListener("dblclick", () => {
         if (!isAllocated || !runId) return;
@@ -1320,49 +1308,47 @@ function renderFullOrderMovementRows(orderMovements, orderId) {
       });
 
       row.querySelector(".run-input")?.addEventListener("keydown", (e) => {
-      if (e.key !== "Enter") return;
+        if (e.key !== "Enter") return;
 
-      const runValue = e.target.value.trim();
+        const runValue = e.target.value.trim();
 
-      if (!runs[runValue]) {
-        alert("That run does not exist.");
-        e.target.value = "";
-        return;
-      }
+        if (!runs[runValue]) {
+          alert("That run does not exist.");
+          e.target.value = "";
+          return;
+        }
 
-      assignMovementToRun(movement.id, runValue);
-    });
+        assignMovementToRun(movement.id, runValue);
+      });
 
       return row;
     };
 
-        const previousMovement = orderMovements[index - 1];
-        const nextMovement = orderMovements[index + 1];
+    const previousMovement = orderMovements[index - 1];
+    const nextMovement = orderMovements[index + 1];
 
-        const isFirstMovementForJob =
-          !previousMovement || previousMovement.jobId !== movement.jobId;
+    const isFirstMovementForJob =
+      !previousMovement || previousMovement.jobId !== movement.jobId;
 
-        const isLastMovementForJob =
-          !nextMovement || nextMovement.jobId !== movement.jobId;
+    const isLastMovementForJob =
+      !nextMovement || nextMovement.jobId !== movement.jobId;
 
-        const collectRow = makeOrderLegRow("collect", movement.collect, index + 1);
-        const deliverRow = makeOrderLegRow("deliver", movement.deliver, index + 1);
+    const collectRow = makeOrderLegRow("collect", movement.collect, index + 1);
+    const deliverRow = makeOrderLegRow("deliver", movement.deliver, index + 1);
 
-        if (isFirstMovementForJob) {
-          collectRow.classList.add("order-job-group-start");
-        }
+    if (isFirstMovementForJob) {
+      collectRow.classList.add("order-job-group-start");
+    }
 
-        if (isLastMovementForJob) {
-          deliverRow.classList.add("order-job-group-end");
-        }
+    if (isLastMovementForJob) {
+      deliverRow.classList.add("order-job-group-end");
+    }
 
-        routeList.appendChild(collectRow);
-        routeList.appendChild(deliverRow);
-                });
+    routeList.appendChild(collectRow);
+    routeList.appendChild(deliverRow);
+  });
+    updateUnallocateDropzoneVisibility();
 }
-
-
-
 
 function renderActiveRun() {
   if (!activeRunId) return;
@@ -1376,6 +1362,7 @@ function renderActiveRun() {
     routeEmpty.style.display = "block";
     routeEmpty.textContent = "No stops planned yet";
     routeList.style.display = "none";
+    updateUnallocateDropzoneVisibility();
     return;
   }
 
@@ -1448,6 +1435,8 @@ function renderActiveRun() {
 
     routeList.appendChild(stopRow);
   });
+
+    updateUnallocateDropzoneVisibility();
 }
 
 function updateJobPotAllocationDisplay() {
@@ -1490,9 +1479,21 @@ unallocateDropzone.addEventListener("dragleave", () => {
 unallocateDropzone.addEventListener("drop", (e) => {
   e.preventDefault();
 
-  if (!dragPayload || dragPayload.type !== "routeMovement") return;
+  if (!dragPayload) return;
 
-  unallocateMovement(dragPayload.movementKey);
+  if (dragPayload.type === "routeMovement") {
+    unallocateMovement(dragPayload.movementKey);
+  }
+
+  if (dragPayload.type === "jobMovement") {
+    unallocateMovement(dragPayload.movementId);
+  }
+
+  if (dragPayload.type === "jobMovementGroup") {
+    dragPayload.movementIds.forEach((movementId) => {
+      unallocateMovement(movementId);
+    });
+  }
 
   dragPayload = null;
   unallocateDropzone.classList.remove("visible", "drag-over");
@@ -1598,7 +1599,7 @@ function updateNoJobsMessage() {
         row.style.display !== "none" &&
         (!group || group.style.display !== "none")
       );
-    }
+    },
   );
 
   if (hasVisibleRows) return;
@@ -1607,7 +1608,7 @@ function updateNoJobsMessage() {
     "beforeend",
     `<div id="jobPotEmptyMessage" class="job-empty-message">
       No jobs match this filter
-    </div>`
+    </div>`,
   );
 }
 
@@ -1650,23 +1651,25 @@ function applyJobPotFilters() {
       if (currentFilter === "allocated" && !isAllocated) return false;
 
       const searchableText = [
-      movement.orderId,
-      movement.jobId,
-      movement.planningMode,
-      movement.collect?.location,
-      movement.collect?.detail,
-      movement.collect?.date,
-      movement.collect?.time,
-      movement.deliver?.location,
-      movement.deliver?.detail,
-      movement.deliver?.date,
-      movement.deliver?.time,
-      movement.pallets,
-    ].join(" ").toLowerCase();
+        movement.orderId,
+        movement.jobId,
+        movement.planningMode,
+        movement.collect?.location,
+        movement.collect?.detail,
+        movement.collect?.date,
+        movement.collect?.time,
+        movement.deliver?.location,
+        movement.deliver?.detail,
+        movement.deliver?.date,
+        movement.deliver?.time,
+        movement.pallets,
+      ]
+        .join(" ")
+        .toLowerCase();
 
-    if (currentSearchTerm && !searchableText.includes(currentSearchTerm)) {
-      return false;
-    }
+      if (currentSearchTerm && !searchableText.includes(currentSearchTerm)) {
+        return false;
+      }
 
       const collectDate = normaliseFilterDate(movement.collect.date);
       const deliverDate = normaliseFilterDate(movement.deliver.date);
@@ -1704,8 +1707,7 @@ function applyJobPotFilters() {
         (includeDepot || !movement.deliver.isDepot) && matchesDeliverDate;
 
       return collectVisible || deliverVisible;
-
-         });
+    });
 
     if (currentView === "jobs") {
       const anyVisible = rowMatches.some(Boolean);
@@ -1859,12 +1861,11 @@ document.getElementById("assignSelectedBtn").addEventListener("click", () => {
     return;
   }
 
-  selectedMovements.forEach((movementId) => {
+  getCombinedSelectedMovementIds().forEach((movementId) => {
     assignMovementToRun(movementId, runId);
   });
 
-  selectedMovements.clear();
-  updateSelectedCount();
+  clearAllSelectedMovements();
 });
 
 function clearSelectedMovements() {
@@ -1874,7 +1875,9 @@ function clearSelectedMovements() {
     checkbox.checked = false;
   });
 
-  const selectVisibleCheckbox = document.getElementById("selectVisibleJobsCheckbox");
+  const selectVisibleCheckbox = document.getElementById(
+    "selectVisibleJobsCheckbox",
+  );
 
   if (selectVisibleCheckbox) {
     selectVisibleCheckbox.checked = false;
@@ -1892,7 +1895,9 @@ function updateSelectedCount() {
   const countEl = document.getElementById("selectedCount");
   if (!countEl) return;
 
-  countEl.textContent = `${selectedMovements.size} selected`;
+  const totalSelected = getCombinedSelectedMovementIds().length;
+
+  countEl.textContent = `${totalSelected} selected`;
 }
 
 async function saveAllocationToSupabase(movementId, runId) {
@@ -1917,7 +1922,7 @@ async function saveAllocationToSupabase(movementId, runId) {
         },
         {
           onConflict: "movement_id",
-        }
+        },
       );
 
     if (upsertError) throw upsertError;
@@ -2023,14 +2028,38 @@ async function deleteAllocationFromSupabase(movementId) {
   console.log("Deleted allocation:", movementId);
 }
 
-document.getElementById("clearSelectionBtn").addEventListener("click", () => {
+function clearAllSelectedMovements() {
   selectedMovements.clear();
+  selectedOrderMovements.clear();
 
   document.querySelectorAll(".row-select").forEach((checkbox) => {
     checkbox.checked = false;
   });
 
+  document.querySelectorAll(".order-row-select").forEach((checkbox) => {
+    checkbox.checked = false;
+  });
+
+  document.querySelectorAll(".job-row, .job-leg-row").forEach((row) => {
+    row.classList.remove("selected");
+    row.classList.remove("box-selecting");
+  });
+
+  const selectVisibleCheckbox = document.getElementById("selectVisibleJobsCheckbox");
+  if (selectVisibleCheckbox) {
+    selectVisibleCheckbox.checked = false;
+  }
+
+  const orderSelectAll = document.getElementById("orderSelectAll");
+  if (orderSelectAll) {
+    orderSelectAll.checked = false;
+  }
+
   updateSelectedCount();
+}
+
+document.getElementById("clearSelectionBtn").addEventListener("click", () => {
+  clearAllSelectedMovements();
 });
 
 function formatTime(value) {
@@ -2288,11 +2317,11 @@ saveWizardBtn.addEventListener("click", (e) => {
   e.preventDefault();
 
   const selectedCollectionAddress = findAddressByName(
-    document.getElementById("wizardCollectName").value.trim()
+    document.getElementById("wizardCollectName").value.trim(),
   );
 
   const selectedDeliveryAddress = findAddressByName(
-    document.getElementById("wizardDeliverName").value.trim()
+    document.getElementById("wizardDeliverName").value.trim(),
   );
 
   if (!selectedCollectionAddress) {
@@ -2490,7 +2519,9 @@ async function createJobFromWizard(orderNumber, wizardData) {
     }
 
     if (!wizardData.collectionAddressId || !wizardData.deliveryAddressId) {
-      alert("Collection and delivery addresses must be selected from the address book.");
+      alert(
+        "Collection and delivery addresses must be selected from the address book.",
+      );
       return;
     }
 
@@ -2669,15 +2700,12 @@ async function updateJobFromWizard(jobNumber, wizardData) {
       // remove stops from runs
       Object.values(runs).forEach((run) => {
         run.stops = run.stops.filter(
-          (stop) => !movementIds.includes(stop.movementKey)
+          (stop) => !movementIds.includes(stop.movementKey),
         );
       });
 
       // delete movements
-      await supabaseClient
-        .from("movements")
-        .delete()
-        .eq("job_id", job.id);
+      await supabaseClient.from("movements").delete().eq("job_id", job.id);
     }
 
     // 4. Recreate movements using NEW address IDs (THIS IS THE FIX)
@@ -2752,7 +2780,6 @@ async function updateJobFromWizard(jobNumber, wizardData) {
     if (activeRunId) {
       renderActiveRun();
     }
-
   } catch (err) {
     console.error("Error updating job:", err);
     alert("Could not update job");
@@ -3029,10 +3056,12 @@ function renderRuns() {
       renderRuns();
     });
 
-    card.querySelector(".run-delete-btn")?.addEventListener("click", async (e) => {
-      e.stopPropagation();
-      await softDeleteRun(run.id);
-    });
+    card
+      .querySelector(".run-delete-btn")
+      ?.addEventListener("click", async (e) => {
+        e.stopPropagation();
+        await softDeleteRun(run.id);
+      });
 
     card.addEventListener("dragover", (e) => {
       e.preventDefault();
@@ -3043,21 +3072,21 @@ function renderRuns() {
 
       if (!dragPayload) return;
 
-    if (dragPayload.type === "jobMovement") {
-      assignMovementToRun(dragPayload.movementId, run.id);
-    }
+      if (dragPayload.type === "jobMovement") {
+        assignMovementToRun(dragPayload.movementId, run.id);
+      }
 
-    if (dragPayload.type === "jobMovementGroup") {
-      dragPayload.movementIds.forEach((movementId) => {
-        assignMovementToRun(movementId, run.id);
-      });
+      if (dragPayload.type === "jobMovementGroup") {
+        dragPayload.movementIds.forEach((movementId) => {
+          assignMovementToRun(movementId, run.id);
+        });
 
-      clearSelectedMovements();
-    }
+        clearSelectedMovements();
+      }
 
-    if (dragPayload.type === "routeMovement") {
-      moveMovementToRun(dragPayload.movementKey, run.id);
-    }
+      if (dragPayload.type === "routeMovement") {
+        moveMovementToRun(dragPayload.movementKey, run.id);
+      }
 
       dragPayload = null;
       unallocateDropzone.classList.remove("visible", "drag-over");
@@ -3066,7 +3095,7 @@ function renderRuns() {
     runList.appendChild(card);
   });
 
-    updateActiveRunDateLabel(currentRunDate);
+  updateActiveRunDateLabel(currentRunDate);
 }
 
 function getTodayIso() {
@@ -3116,16 +3145,14 @@ document.getElementById("runDatePicker").addEventListener("change", (e) => {
 });
 
 document.getElementById("addRunBtn").addEventListener("click", async () => {
-    const accountId = await getAccountId();
+  const accountId = await getAccountId();
 
-    const existingRunNumbers = Object.values(runs)
+  const existingRunNumbers = Object.values(runs)
     .map((run) => Number(run.plannerRunNo))
     .filter((number) => Number.isFinite(number));
 
   const nextRunNumber =
-    existingRunNumbers.length > 0
-      ? Math.max(...existingRunNumbers) + 1
-      : 1;
+    existingRunNumbers.length > 0 ? Math.max(...existingRunNumbers) + 1 : 1;
 
   const plannerRunNo = String(nextRunNumber).padStart(7, "0");
 
@@ -3138,8 +3165,8 @@ document.getElementById("addRunBtn").addEventListener("click", async () => {
         run_date: currentRunDate,
         start_time: null,
         planner_run_no: plannerRunNo,
-        status: "active"
-      }
+        status: "active",
+      },
     ])
     .select()
     .single();
@@ -3156,7 +3183,7 @@ document.getElementById("addRunBtn").addEventListener("click", async () => {
     date: data.run_date,
     startTime: data.start_time ? data.start_time.slice(0, 5) : "",
     plannerRunNo: data.planner_run_no,
-    stops: []
+    stops: [],
   };
 
   activeRunId = data.id;
@@ -3172,7 +3199,7 @@ document
     activeRunId = null;
     renderRuns();
     renderActiveRun();
-});
+  });
 
 document.getElementById("runEditModeToggle").addEventListener("change", (e) => {
   runEditMode = e.target.checked;
@@ -3204,7 +3231,7 @@ async function loadRunsFromDB() {
       date: row.run_date,
       startTime: row.start_time ? row.start_time.slice(0, 5) : "",
       plannerRunNo: row.planner_run_no,
-      stops: []
+      stops: [],
     };
   });
 
@@ -3220,7 +3247,7 @@ async function softDeleteRun(runId) {
 
   if (hasStops) {
     const proceed = confirm(
-      "This run has jobs allocated to it. Delete the run and return all jobs to the pot?"
+      "This run has jobs allocated to it. Delete the run and return all jobs to the pot?",
     );
 
     if (!proceed) return;
@@ -3276,7 +3303,7 @@ async function softDeleteRun(runId) {
 
 async function softDeleteJob(jobNumber) {
   const confirmDelete = confirm(
-    `Delete job ${jobNumber}? It will be removed from runs and hidden from the planner.`
+    `Delete job ${jobNumber}? It will be removed from runs and hidden from the planner.`,
   );
 
   if (!confirmDelete) return;
@@ -3296,7 +3323,7 @@ async function softDeleteJob(jobNumber) {
 
     Object.values(runs).forEach((run) => {
       run.stops = run.stops.filter(
-        (stop) => !movementIds.includes(stop.movementKey)
+        (stop) => !movementIds.includes(stop.movementKey),
       );
     });
 
@@ -3318,10 +3345,8 @@ async function softDeleteJob(jobNumber) {
 
     if (!hasJobsLeft && activeOrderId) {
       try {
-        await supabaseClient
-          .from("orders")
-          .update({ status: "deleted" })
-          await deleteOrderIfEmpty(activeOrderId);
+        await supabaseClient.from("orders").update({ status: "deleted" });
+        await deleteOrderIfEmpty(activeOrderId);
 
         console.log(`Order ${activeOrderId} marked as deleted`);
       } catch (err) {
@@ -3330,7 +3355,6 @@ async function softDeleteJob(jobNumber) {
     }
 
     cleanupEmptyOrderView();
-
 
     renderJobPot();
     attachJobPotEvents();
@@ -3492,5 +3516,4 @@ function renderJobLegDetail(jobId) {
   if (closeLegBtn) {
     closeLegBtn.addEventListener("click", closeBottomPanel);
   }
-
 }
