@@ -1370,3 +1370,35 @@ grid-template-columns:
 .route-list::-webkit-scrollbar-thumb:hover {
   background: #3a3f47;
 }
+
+.order-detail-header {
+  display: none;
+}
+
+/* Group full order movement rows by job */
+.route-list .order-job-group-start {
+  margin-top: 5px;
+  border-top: 1px solid rgba(90, 167, 255, 0.22);
+  border-top-left-radius: 7px;
+  border-top-right-radius: 7px;
+}
+
+.route-list .order-job-group-end {
+  border-bottom-left-radius: 7px;
+  border-bottom-right-radius: 7px;
+  margin-bottom: 2px;
+}
+
+.route-list .order-job-group-start + .order-job-group-end {
+  margin-top: -4px;
+}
+
+.route-list .job-leg-row {
+  position: relative;
+  border-color: rgba(42, 45, 51, 0.6);
+}
+
+.order-job-group-start {
+  margin-top: 6px;
+  border-top: 1px solid rgba(90, 167, 255, 0.35);
+}

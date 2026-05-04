@@ -911,7 +911,7 @@ activeRouteHeader.innerHTML = `
   `;
 
     if (showFullOrderMovements) {
-    renderFullOrderMovementRows(orderMovements);
+    renderFullOrderMovementRows(orderMovements, orderId);
   } else {
 
   orderJobs.forEach((job) => {
@@ -1011,70 +1011,60 @@ activeRouteHeader.innerHTML = `
     });
   });
 
-  function renderFullOrderMovementRows(orderMovements) {
-  orderMovements.forEach((movement) => {
-    const stops = [
-      {
-        type: "collect",
-        label: "C",
-        stop: movement.collect,
-      },
-      {
-        type: "deliver",
-        label: "D",
-        stop: movement.deliver,
-      },
-    ];
+function renderFullOrderMovementRows(orderMovements, orderId) {
+  routeList.innerHTML = `
+    <div class="route-header job-leg-grid">
+      <div>Seq</div>
+      <div>Job</div>
+      <div>C/D</div>
+      <div>Date / Time</div>
+      <div>Depot</div>
+      <div>Detail</div>
+      <div>Pallets</div>
+      <div>Load</div>
+    </div>
+  `;
 
-    stops.forEach((stopView) => {
+  orderMovements.forEach((movement, index) => {
+    const runId = movement.runId || movementAllocations[movement.id];
+
+    const runLabel =
+      runId && runs[runId]?.plannerRunNo
+        ? String(Number(runs[runId].plannerRunNo))
+        : runId && runs[runId]
+          ? runId
+          : "Unallocated";
+
+    const isAllocated = !!runId && !!runs[runId];
+
+    const makeOrderLegRow = (type, stop, seq) => {
       const row = document.createElement("div");
-      row.className = "order-detail-row route-stop";
+      row.className = `route-stop job-leg-grid job-leg-row ${isAllocated ? "allocated" : ""}`;
       row.setAttribute("draggable", "true");
 
       row.dataset.movementId = movement.id;
-      row.dataset.stopType = stopView.type;
-
-      const modeLabel = movement.planningMode === "direct" ? "Direct" : "Via Depot";
-      const modeClass = movement.planningMode === "direct" ? "mode-direct" : "mode-depot";
-
-      const runId = movementAllocations[movement.id] || movement.runId;
-      const runLabel = runId && runs[runId]
-        ? runs[runId]?.plannerRunNo
-          ? String(Number(runs[runId].plannerRunNo))
-          : runId
-        : "Unallocated";
+      row.dataset.orderId = orderId;
+      row.dataset.runId = runId || "";
 
       row.innerHTML = `
-        <div>
-          <button class="job-link" data-job="${movement.jobId}">
-            ${movement.jobId}
-          </button>
-        </div>
-
-        <div>
-          <span class="mode-badge ${modeClass}">
-            ${modeLabel}
-          </span>
-        </div>
-
-        <div>${stopView.label}</div>
-        <div>${stopView.stop.date || ""}</div>
-        <div>${stopView.stop.time || ""}</div>
-        <div>${stopView.stop.location || ""}</div>
-        <div>${stopView.stop.detail || ""}</div>
-
-        <div></div>
-        <div></div>
-        <div></div>
-        <div></div>
-        <div></div>
-
-        <div>${movement.pallets || ""} pallets</div>
-
-        <div>
-          <span class="run-badge ${runId ? "" : "run-badge--empty"}">
-            ${runLabel}
-          </span>
+        <div>${seq}</div>
+        <div>${shortJobFullLabel(movement.jobId)}</div>
+        <div>${type === "collect" ? "C" : "D"}</div>
+        <div>${formatDateTime(stop.date, stop.time)}</div>
+        <div>${stop.location || ""}</div>
+        <div>${stop.detail || ""}</div>
+        <div class="pallets-col">${movement.pallets || ""} pallets</div>
+        <div class="col run-assign">
+          ${
+            isAllocated
+              ? `
+                <input class="run-input" type="text" value="${runLabel}" readonly />
+                <button class="unassign-btn" title="Unallocate">×</button>
+              `
+              : `
+                <input class="run-input" type="text" placeholder="Run" readonly />
+              `
+          }
         </div>
       `;
 
@@ -1085,9 +1075,42 @@ activeRouteHeader.innerHTML = `
         };
       });
 
-      routeList.appendChild(row);
-    });
-  });
+      row.addEventListener("dblclick", () => {
+        if (!isAllocated || !runId) return;
+        focusRun(runId);
+      });
+
+      row.querySelector(".unassign-btn")?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        unallocateMovement(movement.id);
+      });
+
+      return row;
+    };
+
+        const previousMovement = orderMovements[index - 1];
+        const nextMovement = orderMovements[index + 1];
+
+        const isFirstMovementForJob =
+          !previousMovement || previousMovement.jobId !== movement.jobId;
+
+        const isLastMovementForJob =
+          !nextMovement || nextMovement.jobId !== movement.jobId;
+
+        const collectRow = makeOrderLegRow("collect", movement.collect, index + 1);
+        const deliverRow = makeOrderLegRow("deliver", movement.deliver, index + 1);
+
+        if (isFirstMovementForJob) {
+          collectRow.classList.add("order-job-group-start");
+        }
+
+        if (isLastMovementForJob) {
+          deliverRow.classList.add("order-job-group-end");
+        }
+
+        routeList.appendChild(collectRow);
+        routeList.appendChild(deliverRow);
+                });
 }
 
   const closeOrderBtn = document.getElementById("closeOrderBtn");
