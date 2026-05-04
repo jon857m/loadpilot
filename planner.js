@@ -1355,7 +1355,34 @@ function renderActiveRun() {
 
   const run = runs[activeRunId];
 
-  activeRouteHeader.textContent = `Active Route — Run ${run.plannerRunNo ? String(Number(run.plannerRunNo)) : ""}: ${run.name}`;
+  activeRouteHeader.innerHTML = `
+    Active Route — Run 
+    <input 
+      id="activeRunJumpInput" 
+      class="active-run-jump-input" 
+      value="${run.plannerRunNo ? String(Number(run.plannerRunNo)) : ""}" 
+    />
+    : ${run.name}
+  `;
+
+  const activeRunInput = document.getElementById("activeRunJumpInput");
+
+  if (activeRunInput) {
+    activeRunInput.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter") return;
+
+      const runId = resolveRunIdFromInput(e.target.value);
+
+      if (!runId) {
+        alert("That run does not exist.");
+        return;
+      }
+
+      e.target.blur();
+      focusRun(runId);
+    });
+  }
+
   routeList.innerHTML = "";
 
   if (!run.stops.length) {

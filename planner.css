@@ -1448,3 +1448,21 @@ grid-template-columns:
   min-width: 84px;
   justify-content: flex-start;
 }
+
+.active-run-jump-input {
+  width: 54px;
+  background: rgba(90, 167, 255, 0.08);
+  border: 1px solid rgba(90, 167, 255, 0.35);
+  color: #9fd1ff;
+  border-radius: 6px;
+  padding: 3px 6px;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+  outline: none;
+}
+
+.active-run-jump-input:focus {
+  border-color: rgba(90, 167, 255, 0.8);
+  background: rgba(90, 167, 255, 0.15);
+}
