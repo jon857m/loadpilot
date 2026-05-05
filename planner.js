@@ -356,6 +356,9 @@ let customDateFilter = "";
 
 let selectedMovements = new Set();
 let selectedOrderMovements = new Set();
+let selectedRouteStops = new Set();
+
+let lastRouteSelectedIndex = null;
 
 let runEditMode = false;
 
@@ -1566,11 +1569,14 @@ function renderActiveRun() {
   routeList.style.display = "flex";
 
   routeList.innerHTML = `
-    <div class="route-header job-leg-grid">
+    <div class="route-header route-stop-grid">
+      <div>
+        <input type="checkbox" id="selectRouteStopsCheckbox" />
+      </div>
       <div>Seq</div>
       <div>Job</div>
       <div>C/D</div>
-      <div>Depot</div>
+      <div>Location</div>
       <div>Detail</div>
       <div>Pallets</div>
       <div>Order</div>
@@ -1582,15 +1588,22 @@ function renderActiveRun() {
     stopRow.className = "route-stop route-stop-grid";
     stopRow.setAttribute("draggable", "true");
 
-    stopRow.innerHTML = `
-      <div>${index + 1}</div>
-      <div>${stop.jobId}</div>
-      <div>${stop.type === "collect" ? "C" : "D"}</div>
-      <div>${stop.location}</div>
-      <div>${stop.detail}</div>
-      <div>${stop.pallets || ""}</div>
-      <div>${stop.orderId || ""}</div>
-    `;
+  stopRow.innerHTML = `
+        <div>
+          <input 
+            type="checkbox" 
+            class="route-row-select" 
+            data-stop-key="${stop.movementKey}-${stop.type}-${index}" 
+          />
+        </div>
+        <div>${index + 1}</div>
+        <div>${stop.jobId}</div>
+        <div>${stop.type === "collect" ? "C" : "D"}</div>
+        <div>${stop.location}</div>
+        <div>${stop.detail}</div>
+        <div>${stop.pallets || ""}</div>
+        <div>${stop.orderId || ""}</div>
+      `;
 
     stopRow.addEventListener("dragstart", () => {
       dragPayload = {
@@ -1630,9 +1643,80 @@ function renderActiveRun() {
     });
 
     routeList.appendChild(stopRow);
+
+        const routeCheckbox = stopRow.querySelector(".route-row-select");
+
+    if (routeCheckbox) {
+    routeCheckbox.addEventListener("click", (e) => {
+      e.stopPropagation();
+
+      const allCheckboxes = Array.from(
+        document.querySelectorAll(".route-row-select")
+      );
+
+      const currentIndex = allCheckboxes.indexOf(routeCheckbox);
+
+      if (e.shiftKey && lastRouteSelectedIndex !== null) {
+        const start = Math.min(lastRouteSelectedIndex, currentIndex);
+        const end = Math.max(lastRouteSelectedIndex, currentIndex);
+
+        for (let i = start; i <= end; i++) {
+          const cb = allCheckboxes[i];
+          const key = cb.dataset.stopKey;
+          const row = cb.closest(".route-stop");
+
+          cb.checked = true;
+          selectedRouteStops.add(key);
+          row?.classList.add("selected");
+        }
+
+        lastRouteSelectedIndex = currentIndex;
+        return;
+      }
+
+      const stopKey = routeCheckbox.dataset.stopKey;
+      if (!stopKey) return;
+
+      if (routeCheckbox.checked) {
+        selectedRouteStops.add(stopKey);
+        stopRow.classList.add("selected");
+      } else {
+        selectedRouteStops.delete(stopKey);
+        stopRow.classList.remove("selected");
+      }
+
+      lastRouteSelectedIndex = currentIndex;
+    });
+    }
   });
 
     updateUnallocateDropzoneVisibility();
+
+    const selectAllRouteCheckbox = document.getElementById("selectRouteStopsCheckbox");
+
+if (selectAllRouteCheckbox) {
+  selectAllRouteCheckbox.addEventListener("change", (e) => {
+    const shouldSelect = e.target.checked;
+
+    selectedRouteStops.clear();
+
+    document.querySelectorAll(".route-row-select").forEach((checkbox) => {
+      const stopKey = checkbox.dataset.stopKey;
+      if (!stopKey) return;
+
+      checkbox.checked = shouldSelect;
+
+      const row = checkbox.closest(".route-stop");
+
+      if (shouldSelect) {
+        selectedRouteStops.add(stopKey);
+        row?.classList.add("selected");
+      } else {
+        row?.classList.remove("selected");
+      }
+    });
+  });
+}
 }
 
 function updateJobPotAllocationDisplay() {
