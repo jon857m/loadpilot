@@ -461,7 +461,7 @@ function updateBoxSelection(e) {
 
   const box = selectionBoxEl.getBoundingClientRect();
 
-  document.querySelectorAll(".job-row, .job-leg-row").forEach((row) => {
+  document.querySelectorAll(".job-row, .job-leg-row, .route-stop-grid").forEach((row) => {
     const group = row.closest(".job-group");
 
     const isVisible =
@@ -529,6 +529,19 @@ function finishBoxSelection() {
     setOrderMovementSelection(movementId, true);
   });
 
+    document.querySelectorAll(".route-stop-grid.box-selecting").forEach((row) => {
+    const checkbox = row.querySelector(".route-row-select");
+    const stopKey = checkbox?.dataset.stopKey;
+
+    if (!checkbox || !stopKey) return;
+
+    checkbox.checked = true;
+    selectedRouteStops.add(stopKey);
+
+    row.classList.add("selected");
+    row.classList.remove("box-selecting");
+  });
+
   if (selectionBoxEl) {
     selectionBoxEl.remove();
     selectionBoxEl = null;
@@ -536,6 +549,7 @@ function finishBoxSelection() {
 
   jobPot.dataset.shiftClickMovementId = "";
   routeList.dataset.shiftClickMovementId = "";
+  routeList.dataset.shiftClickRouteStopKey = "";
 
   boxSelectActive = false;
   boxSelectPending = false;
@@ -636,8 +650,9 @@ routeList.addEventListener("mousedown", (e) => {
   }
 
   const clickedOrderRow = e.target.closest(".job-leg-row");
+  const clickedRouteRow = e.target.closest(".route-stop-grid");
 
-  if (!clickedOrderRow) return;
+  if (!clickedOrderRow && !clickedRouteRow) return;
 
   e.preventDefault();
 
@@ -646,8 +661,13 @@ routeList.addEventListener("mousedown", (e) => {
   boxSelectStartX = e.clientX;
   boxSelectStartY = e.clientY;
 
-  routeList.dataset.shiftClickMovementId =
-    clickedOrderRow.dataset.movementId || "";
+  routeList.dataset.shiftClickMovementId = clickedOrderRow
+    ? clickedOrderRow.dataset.movementId || ""
+    : "";
+
+  routeList.dataset.shiftClickRouteStopKey = clickedRouteRow
+    ? clickedRouteRow.querySelector(".route-row-select")?.dataset.stopKey || ""
+    : "";
 });
 
 document.querySelectorAll(".layout-btn").forEach((btn) => {
