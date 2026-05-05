@@ -1718,7 +1718,7 @@ function renderActiveRun() {
         const routeCheckbox = stopRow.querySelector(".route-row-select");
 
     if (routeCheckbox) {
-    routeCheckbox.addEventListener("click", (e) => {
+      routeCheckbox.addEventListener("click", (e) => {
       e.stopPropagation();
 
       const allCheckboxes = Array.from(
@@ -1757,8 +1757,38 @@ function renderActiveRun() {
       }
 
       lastRouteSelectedIndex = currentIndex;
-    });
+     });
     }
+
+    stopRow.addEventListener("click", (e) => {
+    if (
+      e.target.closest("button") ||
+      e.target.closest("input") ||
+      e.target.closest(".run-input")
+    ) {
+      return;
+    }
+
+    if (!e.shiftKey) return;
+
+    const routeCheckbox = stopRow.querySelector(".route-row-select");
+    if (!routeCheckbox) return;
+
+    const stopKey = routeCheckbox.dataset.stopKey;
+    if (!stopKey) return;
+
+    const shouldSelect = !selectedRouteStops.has(stopKey);
+
+    routeCheckbox.checked = shouldSelect;
+
+    if (shouldSelect) {
+      selectedRouteStops.add(stopKey);
+      stopRow.classList.add("selected");
+    } else {
+      selectedRouteStops.delete(stopKey);
+      stopRow.classList.remove("selected");
+    }
+  });
   });
 
     updateUnallocateDropzoneVisibility();
