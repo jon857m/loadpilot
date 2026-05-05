@@ -1451,38 +1451,64 @@ function renderFullOrderMovementRows(orderMovements, orderId) {
     updateUnallocateDropzoneVisibility();
 }
 
-  function tidyActiveRunStops() {
-    if (!activeRunId) return;
+function tidyActiveRunStops() {
+  if (!activeRunId) return;
 
-    const run = runs[activeRunId];
-    if (!run || !run.stops.length) return;
+  const run = runs[activeRunId];
+  if (!run || !run.stops.length) return;
 
-    const collects = run.stops.filter((stop) => stop.type === "collect");
-    const delivers = run.stops.filter((stop) => stop.type === "deliver");
+  const collectFromDepot = run.stops.filter(
+    (stop) => stop.type === "collect" && stop.location === "Depot"
+  );
 
-    const alreadyCollectsThenDelivers = run.stops.every((stop, index) => {
-      if (index < collects.length) return stop.type === "collect";
-      return stop.type === "deliver";
+  const deliverToNonDepot = run.stops.filter(
+    (stop) => stop.type === "deliver" && stop.location !== "Depot"
+  );
+
+  const collectFromNonDepot = run.stops.filter(
+    (stop) => stop.type === "collect" && stop.location !== "Depot"
+  );
+
+  const deliverToDepot = run.stops.filter(
+    (stop) => stop.type === "deliver" && stop.location === "Depot"
+  );
+
+  const firstPassOrder = [
+    ...collectFromDepot,
+    ...deliverToNonDepot,
+    ...collectFromNonDepot,
+    ...deliverToDepot,
+  ];
+
+  const alreadyInFirstPassOrder = run.stops.every((stop, index) => {
+    return stop === firstPassOrder[index];
+  });
+
+  if (!alreadyInFirstPassOrder) {
+    run.stops = firstPassOrder;
+  } else {
+    const deliveryMovementKeys = deliverToNonDepot.map(
+      (stop) => stop.movementKey
+    );
+
+    const reorderedCollectFromDepot = [...collectFromDepot].sort((a, b) => {
+      return (
+        deliveryMovementKeys.indexOf(b.movementKey) -
+        deliveryMovementKeys.indexOf(a.movementKey)
+      );
     });
 
-    if (!alreadyCollectsThenDelivers) {
-      run.stops = [...collects, ...delivers];
-    } else {
-      const deliveryMovementKeys = delivers.map((stop) => stop.movementKey);
-
-      const matchedCollects = [...collects].sort((a, b) => {
-        return (
-          deliveryMovementKeys.indexOf(b.movementKey) -
-          deliveryMovementKeys.indexOf(a.movementKey)
-        );
-      });
-
-      run.stops = [...matchedCollects, ...delivers];
-    }
-
-    saveRunOrderToSupabase(activeRunId);
-    renderActiveRun();
+    run.stops = [
+      ...reorderedCollectFromDepot,
+      ...deliverToNonDepot,
+      ...collectFromNonDepot,
+      ...deliverToDepot,
+    ];
   }
+
+  saveRunOrderToSupabase(activeRunId);
+  renderActiveRun();
+}
 
 function renderActiveRun() {
   if (!activeRunId) return;
