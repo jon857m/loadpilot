@@ -368,6 +368,7 @@ let activeOrderId = null;
 let showFullOrderMovements = false;
 
 let activeJobLegId = null;
+let returnToRunId = null;
 
 let editingJobNumber = null;
 
@@ -1109,7 +1110,10 @@ function findJobIdFromInput(value) {
 }
 
 function renderOrderDetail(orderId) {
-  activeRunId = null;
+  if (!returnToRunId) {
+    activeRunId = null;
+  }
+
   activeJobLegId = null;
   activeOrderId = orderId;
 
@@ -1157,7 +1161,11 @@ function renderOrderDetail(orderId) {
       Full order movements
     </label>
 
-    <button id="addJobBtn" class="primary-btn" data-order="${orderId}">Add Job</button>
+    ${
+    returnToRunId
+      ? `<button id="backToRunBtn" class="primary-btn">Back to Run</button>`
+      : `<button id="addJobBtn" class="primary-btn" data-order="${orderId}">Add Job</button>`
+  }
     <button id="closeOrderBtn" class="danger-btn" data-order="${orderId}">×</button>
   `;
 
@@ -1298,6 +1306,16 @@ function renderOrderDetail(orderId) {
     addJobBtn.addEventListener("click", () => {
       editingJobNumber = null;
       openOrderWizard(orderId);
+    });
+  }
+
+  const backToRunBtn = document.getElementById("backToRunBtn");
+
+  if (backToRunBtn) {
+    backToRunBtn.addEventListener("click", () => {
+      const runId = returnToRunId;
+      returnToRunId = null;
+      focusRun(runId);
     });
   }
 
@@ -1543,15 +1561,16 @@ function renderActiveRun() {
   const run = runs[activeRunId];
 
   activeRouteHeader.innerHTML = `
-      Active Route — Run 
-      <input 
-        id="activeRunJumpInput" 
-        class="active-run-jump-input" 
-        value="${run.plannerRunNo ? String(Number(run.plannerRunNo)) : ""}" 
-      />
-      : ${run.name}
-      <button id="tidyRunBtn" class="primary-btn">Tidy</button>
-    `;
+        Active Route — Run 
+        <input 
+          id="activeRunJumpInput" 
+          class="active-run-jump-input" 
+          value="${run.plannerRunNo ? String(Number(run.plannerRunNo)) : ""}" 
+        />
+        : ${run.name}
+        <button id="tidyRunBtn" class="primary-btn">Tidy</button>
+        <button id="closeRunBtn" class="danger-btn">×</button>
+      `;
 
   const activeRunInput = document.getElementById("activeRunJumpInput");
 
@@ -1577,6 +1596,12 @@ function renderActiveRun() {
 
   if (tidyRunBtn) {
     tidyRunBtn.addEventListener("click", tidyActiveRunStops);
+  }
+
+  const closeRunBtn = document.getElementById("closeRunBtn");
+
+  if (closeRunBtn) {
+    closeRunBtn.addEventListener("click", closeBottomPanel);
   }
 
   routeList.innerHTML = "";
@@ -1745,6 +1770,18 @@ function renderActiveRun() {
       e.target.blur();
       moveMovementToRun(stop.movementKey, runId);
       focusRun(runId);
+    });
+
+    stopRow.querySelector(".order-link")?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      returnToRunId = activeRunId;
+      renderOrderDetail(stop.orderId);
+    });
+
+    stopRow.querySelector(".job-leg-link")?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      returnToRunId = activeRunId;
+      renderJobLegDetail(stop.jobId);
     });
 
     routeList.appendChild(stopRow);
@@ -3864,8 +3901,11 @@ function renderJobLegDetail(jobId) {
 
   const firstMovement = jobMovements[0];
 
-  activeOrderId = firstMovement.orderId;
-  activeRunId = null;
+    activeOrderId = firstMovement.orderId;
+
+    if (!returnToRunId) {
+      activeRunId = null;
+    }
 
   activeRouteHeader.innerHTML = `
       Job Legs —
@@ -3874,9 +3914,9 @@ function renderJobLegDetail(jobId) {
         class="header-lookup-input"
         value="${shortJobFullLabel(jobId)}"
       />
-      <button id="backToOrderBtn" class="primary-btn" data-order="${firstMovement.orderId}">
-        Back to Order
-      </button>
+    <button id="backToOrderBtn" class="primary-btn" data-order="${firstMovement.orderId}">
+      ${returnToRunId ? "Back to Run" : "Back to Order"}
+    </button>
       <button id="closeLegBtn" class="danger-btn">×</button>
     `;
 
@@ -3979,6 +4019,13 @@ if (jobLookupInput) {
   });
 
   document.getElementById("backToOrderBtn")?.addEventListener("click", () => {
+    if (returnToRunId) {
+      const runId = returnToRunId;
+      returnToRunId = null;
+      focusRun(runId);
+      return;
+    }
+
     renderOrderDetail(firstMovement.orderId);
   });
 
