@@ -1771,3 +1771,73 @@ grid-template-columns:
 .job-leg-row:hover {
   transform: translateY(-1px);
 }
+
+/* Selection should be blue, allocation should stay green */
+
+/* Job Pot selected rows */
+.job-row:has(.row-select:checked) {
+background: rgba(90, 167, 255, 0.06);
+border-color: rgba(90, 167, 255, 0.45);
+box-shadow: inset 2px 0 0 rgba(90, 167, 255, 0.85);
+}
+
+/* Active Run selected rows */
+.route-stop.selected,
+.active-run-row.selected,
+.job-leg-row.selected {
+background: rgba(90, 167, 255, 0.06);
+border-color: rgba(90, 167, 255, 0.45);
+box-shadow: inset 2px 0 0 rgba(90, 167, 255, 0.85);
+}
+
+/* Box-drag preview also blue */
+.job-row.box-selecting,
+.job-leg-row.box-selecting,
+.route-stop-grid.box-selecting {
+  background: rgba(90, 167, 255, 0.06) !important;
+  outline: 1px solid rgba(90, 167, 255, 0.7);
+}
+
+.job-row.selected,
+.job-leg-row.selected {
+  background: rgba(90, 167, 255, 0.08) !important;
+  border-color: rgba(90, 167, 255, 0.45) !important;
+  box-shadow: inset 2px 0 0 rgba(90, 167, 255, 0.9);
+}
+
+.active-run-row.selected {
+  background: rgba(90, 167, 255, 0.14);
+  border-color: rgba(90, 167, 255, 0.65);
+  box-shadow: inset 3px 0 0 rgba(90, 167, 255, 1);
+}
+
+.job-row,
+.job-leg-row,
+.active-run-row {
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+/* Order Detail - Full Order Movements selection */
+.job-leg-row:has(.order-row-select:checked) {
+  background: rgba(90, 167, 255, 0.08) !important;
+  border-color: rgba(90, 167, 255, 0.55) !important;
+  box-shadow: inset 3px 0 0 rgba(90, 167, 255, 0.9);
+}
+
+/* ===== ORDER DETAIL: FORCE SELECTION TO BLUE ===== */
+
+/* Covers all variants (allocated + unallocated) */
+.job-leg-row.selected,
+.job-leg-row:has(.order-row-select:checked) {
+  background: rgba(90, 167, 255, 0.08) !important;
+  border-color: rgba(90, 167, 255, 0.55) !important;
+  box-shadow: inset 3px 0 0 rgba(90, 167, 255, 0.9);
+}
+
+/* Kill green when selected */
+.job-leg-row.selected.allocated,
+.job-leg-row.allocated:has(.order-row-select:checked) {
+  background: rgba(90, 167, 255, 0.08) !important;
+  border-color: rgba(90, 167, 255, 0.55) !important;
+  box-shadow: inset 3px 0 0 rgba(90, 167, 255, 0.9);
+}
