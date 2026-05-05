@@ -1694,7 +1694,6 @@ function renderActiveRun() {
         <div>Detail</div>
         <div>Pallets</div>
         <div>Load</div>
-        <div>Load</div>
       </div>
     `;
 
