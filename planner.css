@@ -302,7 +302,9 @@ grid-template-columns:
   cursor: pointer;
 }
 
-.job-row.allocated .unassign-btn {
+.job-row.allocated .unassign-btn,
+.job-leg-row.allocated .unassign-btn,
+.route-stop.allocated .unassign-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1098,8 +1100,8 @@ grid-template-columns:
 
 .job-row.allocated,
 .job-leg-row.allocated {
-  border: 1px solid #2f6f4f;
-  background: rgba(47, 111, 79, 0.15);
+  border-color: #3f7f5f;
+  background: #1c2a24;
 }
 
 .job-leg-row .run-input {
@@ -1493,4 +1495,90 @@ grid-template-columns:
 .route-stop.selected {
   background: rgba(90, 167, 255, 0.08);
   box-shadow: inset 0 0 0 1px rgba(90, 167, 255, 0.4);
+}
+
+.route-stop .unassign-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Active Run rows: use Full Order Movement layout without allocated green row */
+.route-list .active-run-row {
+  background: #1d2128;
+  border-color: rgba(42, 45, 51, 0.6);
+}
+
+.route-list .active-run-row .run-assign {
+  opacity: 1;
+  color: #7ee2a8;
+  font-weight: 600;
+  min-width: 84px;
+  justify-content: flex-start;
+}
+
+.route-list .active-run-row .run-input {
+  width: 54px;
+  min-height: 26px;
+  border-radius: 6px;
+  font-size: 12px;
+  border-color: #3f7f5f;
+  color: #7ee2a8;
+  font-weight: 600;
+}
+
+.route-list .active-run-row .unassign-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+}
+
+/* Active Run layout: match Full Order Movements / Job Pot right-hand format */
+.active-run-grid {
+  display: grid;
+  grid-template-columns:
+    35px
+    90px
+    35px
+    220px
+    minmax(260px, 1fr)
+    80px
+    70px;
+  gap: 8px;
+  align-items: center;
+}
+
+.active-run-grid > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.active-run-row {
+  background: #1d2128;
+  border-color: rgba(42, 45, 51, 0.6);
+}
+
+.active-run-row .run-assign {
+  opacity: 1;
+  color: #7ee2a8;
+  font-weight: 600;
+  min-width: 84px;
+  justify-content: flex-start;
+}
+
+.active-run-row .run-input {
+  width: 54px;
+  min-height: 26px;
+  border-color: #3f7f5f;
+  color: #7ee2a8;
+  font-weight: 600;
+}
+
+.active-run-row .unassign-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }

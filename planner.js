@@ -1593,23 +1593,22 @@ function renderActiveRun() {
   routeList.style.display = "flex";
 
   routeList.innerHTML = `
-    <div class="route-header route-stop-grid">
-      <div>
-        <input type="checkbox" id="selectRouteStopsCheckbox" />
-      </div>
-      <div>Seq</div>
-      <div>Job</div>
-      <div>C/D</div>
-      <div>Location</div>
-      <div>Detail</div>
-      <div>Pallets</div>
-      <div>Order</div>
-    </div>
-  `;
+        <div class="route-header active-run-grid">
+          <div>
+            <input type="checkbox" id="selectRouteStopsCheckbox" />
+          </div>
+          <div>Order</div>
+          <div>C/D</div>
+          <div>Location</div>
+          <div>Detail</div>
+          <div>Pallets</div>
+          <div>Load</div>
+        </div>
+      `;
 
   run.stops.forEach((stop, index) => {
     const stopRow = document.createElement("div");
-    stopRow.className = "route-stop route-stop-grid";
+    stopRow.className = "route-stop active-run-grid job-leg-row active-run-row route-stop-grid";
     stopRow.setAttribute("draggable", "true");
 
   stopRow.innerHTML = `
@@ -1620,13 +1619,27 @@ function renderActiveRun() {
             data-stop-key="${stop.movementKey}-${stop.type}-${index}" 
           />
         </div>
-        <div>${index + 1}</div>
-        <div>${stop.jobId}</div>
-        <div>${stop.type === "collect" ? "C" : "D"}</div>
-        <div>${stop.location}</div>
-        <div>${stop.detail}</div>
-        <div>${stop.pallets || ""}</div>
-        <div>${stop.orderId || ""}</div>
+      <div class="col order-id">
+        <button class="order-link" data-order="${stop.orderId}">
+          ${shortOrderLabel(stop.orderId)}
+        </button>
+        <span class="order-job-separator">|</span>
+        <button class="job-leg-link" data-job="${stop.jobId}">
+          ${shortJobLabel(stop.jobId)}
+        </button>
+      </div>
+      <div>${stop.type === "collect" ? "C" : "D"}</div>
+      <div>${stop.location}</div>
+      <div>${stop.detail}</div>
+        <div class="pallets-col">${stop.pallets || ""} pallets</div>
+        <div class="col run-assign">
+          <input 
+            class="run-input" 
+            type="text" 
+            value="${run.plannerRunNo ? String(Number(run.plannerRunNo)) : ""}" 
+          />
+          <button class="unassign-btn" title="Unallocate">×</button>
+        </div>
       `;
 
     stopRow.addEventListener("dragstart", () => {
@@ -1711,6 +1724,27 @@ function renderActiveRun() {
       saveRunOrderToSupabase(activeRunId);
 
       renderActiveRun();
+    });
+
+    stopRow.querySelector(".unassign-btn")?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      unallocateMovement(stop.movementKey);
+    });
+
+    stopRow.querySelector(".run-input")?.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter") return;
+
+      const runId = getRunIdFromPlannerNo(e.target.value);
+
+      if (!runId) {
+        alert("That run does not exist.");
+        e.target.value = "";
+        return;
+      }
+
+      e.target.blur();
+      moveMovementToRun(stop.movementKey, runId);
+      focusRun(runId);
     });
 
     routeList.appendChild(stopRow);
