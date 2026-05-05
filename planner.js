@@ -1769,7 +1769,6 @@ function renderActiveRun() {
 
       e.target.blur();
       moveMovementToRun(stop.movementKey, runId);
-      focusRun(runId);
     });
 
     stopRow.querySelector(".order-link")?.addEventListener("click", (e) => {
