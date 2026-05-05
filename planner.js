@@ -434,6 +434,24 @@ let boxSelectStartX = 0;
 let boxSelectStartY = 0;
 let selectionBoxEl = null;
 
+function updateActiveRunTotalsPreview() {
+  if (!activeRunId || !runs[activeRunId]) return;
+
+  const run = runs[activeRunId];
+  const previewSelectedStops = new Set(selectedRouteStops);
+
+  document.querySelectorAll(".route-stop-grid.box-selecting").forEach((row) => {
+    const checkbox = row.querySelector(".route-row-select");
+    const stopKey = checkbox?.dataset.stopKey;
+
+    if (stopKey) {
+      previewSelectedStops.add(stopKey);
+    }
+  });
+
+  updateActiveRunTotals(run, previewSelectedStops);
+}
+
 function updateBoxSelection(e) {
   if (boxSelectPending && !boxSelectActive) {
     const movedEnough =
@@ -481,6 +499,8 @@ function updateBoxSelection(e) {
 
     row.classList.toggle("box-selecting", overlaps);
   });
+
+  updateActiveRunTotalsPreview();
 }
 
 function finishBoxSelection() {
@@ -1555,13 +1575,13 @@ function tidyActiveRunStops() {
   renderActiveRun();
 }
 
-function updateActiveRunTotals(run) {
+  function updateActiveRunTotals(run, previewSelectedStops = null) {
   const totalsEl = document.getElementById("activeRunTotals");
   if (!totalsEl || !run) return;
 
   const selectedStops = run.stops.filter((stop, index) => {
     const stopKey = `${stop.movementKey}-${stop.type}-${index}`;
-    return selectedRouteStops.has(stopKey);
+    return (previewSelectedStops || selectedRouteStops).has(stopKey);
   });
 
   const sourceStops = selectedStops.length > 0 ? selectedStops : run.stops;
@@ -1584,9 +1604,9 @@ function updateActiveRunTotals(run) {
   const label = selectedStops.length > 0 ? "Selected" : "Total";
 
   totalsEl.innerHTML = `
-    <span style="color:#7ee2a8">C ${collectTotal}</span>
+    <span class="total-collect">C ${collectTotal}</span>
     /
-    <span style="color:#7fb3ff">D ${deliverTotal}</span>
+    <span class="total-deliver">D ${deliverTotal}</span>
     ${
       selectedStops.length > 0
         ? `<button id="clearRouteSelection" class="secondary-btn">Clear</button>`
@@ -1700,7 +1720,9 @@ function renderActiveRun() {
           ${shortJobLabel(stop.jobId)}
         </button>
       </div>
-      <div>${stop.type === "collect" ? "C" : "D"}</div>
+      <div class="cd-badge ${stop.type === "collect" ? "cd-collect" : "cd-deliver"}">
+        ${stop.type === "collect" ? "C" : "D"}
+      </div>
       <div>${stop.location}</div>
       <div>${stop.detail}</div>
         <div class="pallets-col">${stop.pallets || ""} pallets</div>

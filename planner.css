@@ -1110,8 +1110,8 @@ grid-template-columns:
 
 .job-row.allocated,
 .job-leg-row.allocated {
-  border-color: #3f7f5f;
-  background: #1c2a24;
+  background: rgba(126, 226, 168, 0.06);   /* much lighter */
+  border-color: rgba(126, 226, 168, 0.25); /* softer edge */
 }
 
 .job-leg-row .run-input {
@@ -1615,4 +1615,159 @@ grid-template-columns:
 .active-run-totals .secondary-btn {
   padding: 2px 6px;
   font-size: 11px;
+}
+
+.cd-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 20px;
+  border-radius: 5px;
+  font-weight: 700;
+  font-size: 11px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+/* COLLECTION = subtle */
+.cd-collect {
+  color: #7ee2a8;
+}
+
+/* DELIVERY = standout */
+.cd-deliver {
+  color: #ffb86b;
+  border-color: rgba(255,184,107,0.4);
+  background: rgba(255,184,107,0.08);
+}
+
+.total-collect {
+  color: #7ee2a8;
+  font-weight: 700;
+}
+
+.total-deliver {
+  color: #ffb86b;
+  font-weight: 700;
+}
+
+/* TEST — softer selected / allocated rows */
+
+/* Make rows able to show the left edge marker */
+.job-row,
+.job-leg-row,
+.route-stop,
+.active-run-row {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Soften allocated rows in the Job Pot / Full Order Movement view */
+.job-row.allocated,
+.job-leg-row.allocated {
+  background: rgba(126, 226, 168, 0.045);
+  border-color: rgba(126, 226, 168, 0.22);
+}
+
+/* Keep the run input green, but less shouty */
+.job-row.allocated .run-input,
+.job-leg-row.allocated .run-input,
+.active-run-row .run-input {
+  border-color: rgba(126, 226, 168, 0.45);
+  color: #7ee2a8;
+  font-weight: 700;
+}
+
+/* Softer selected rows */
+.job-leg-row.selected,
+.route-stop.selected,
+.active-run-row.selected {
+  background: rgba(126, 226, 168, 0.055);
+  outline: none;
+  box-shadow: inset 0 0 0 1px rgba(126, 226, 168, 0.18);
+}
+
+/* Premium left-edge selected marker */
+.job-leg-row.selected::before,
+.route-stop.selected::before,
+.active-run-row.selected::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 4px;
+  bottom: 4px;
+  width: 3px;
+  background: #7ee2a8;
+  border-radius: 3px;
+}
+
+/* Softer box-drag preview */
+.job-row.box-selecting,
+.job-leg-row.box-selecting,
+.route-stop-grid.box-selecting {
+  outline: none;
+  box-shadow: inset 0 0 0 1px rgba(90, 167, 255, 0.45);
+  background: rgba(90, 167, 255, 0.055);
+}
+
+/* Polish: subtle hover */
+.job-row:hover,
+.job-leg-row:hover,
+.route-stop:hover,
+.active-run-row:hover {
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.job-row:hover,
+.active-run-row:hover {
+  background: rgba(255,255,255,0.03);
+}
+
+/* Make selection more intentional */
+.job-leg-row.selected,
+.route-stop.selected {
+  background: rgba(126, 226, 168, 0.08); /* slightly stronger */
+  box-shadow: inset 0 0 0 1px rgba(126, 226, 168, 0.35);
+}
+
+/* Keep allocated subtle */
+.job-row.allocated,
+.job-leg-row.allocated {
+  background: rgba(126, 226, 168, 0.035);
+}
+
+.job-leg-row.selected::before,
+.route-stop.selected::before {
+  width: 4px;
+  background: linear-gradient(
+    to bottom,
+    #7ee2a8,
+    #5aa7ff
+  );
+}
+
+.active-run-totals {
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: rgba(0,0,0,0.25);
+}
+
+/* Hover polish for allocated rows */
+.job-row.allocated:hover,
+.job-leg-row.allocated:hover {
+  background: rgba(126, 226, 168, 0.075);
+  border-color: rgba(126, 226, 168, 0.32);
+}
+
+/* Stronger hover for unallocated rows */
+.job-row:not(.allocated):hover,
+.job-leg-row:not(.allocated):hover {
+  background: rgba(255, 255, 255, 0.035);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.job-row:hover,
+.job-leg-row:hover {
+  transform: translateY(-1px);
 }
