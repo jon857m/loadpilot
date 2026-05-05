@@ -1082,8 +1082,13 @@ function findJobIdFromInput(value) {
 }
 
 function renderOrderDetail(orderId) {
+  activeRunId = null;
   activeJobLegId = null;
   activeOrderId = orderId;
+
+  document.querySelectorAll(".run-card").forEach((card) => {
+    card.classList.remove("active");
+  });
 
   const orderMovements = movements.filter((m) => m.orderId === orderId);
 
@@ -1415,7 +1420,6 @@ function renderFullOrderMovementRows(orderMovements, orderId) {
 
       e.target.blur();
       assignMovementToRun(movement.id, runId);
-      focusRun(runId);
       });
 
       return row;
