@@ -1606,6 +1606,27 @@ function renderActiveRun() {
       `;
 
     stopRow.addEventListener("dragstart", () => {
+      const thisStopKey = `${stop.movementKey}-${stop.type}-${index}`;
+
+      const selectedStopIndexes = run.stops
+        .map((routeStop, routeIndex) => {
+          return {
+            key: `${routeStop.movementKey}-${routeStop.type}-${routeIndex}`,
+            index: routeIndex,
+          };
+        })
+        .filter((item) => selectedRouteStops.has(item.key))
+        .map((item) => item.index);
+
+      if (selectedRouteStops.has(thisStopKey) && selectedStopIndexes.length > 1) {
+        dragPayload = {
+          type: "routeStopGroup",
+          runId: activeRunId,
+          stopIndexes: selectedStopIndexes,
+        };
+        return;
+      }
+
       dragPayload = {
         type: "routeMovement",
         runId: activeRunId,
@@ -1626,14 +1647,40 @@ function renderActiveRun() {
     stopRow.addEventListener("drop", (e) => {
       e.preventDefault();
 
-      if (!dragPayload || dragPayload.type !== "routeMovement") return;
+      if (!dragPayload) return;
       if (dragPayload.runId !== activeRunId) return;
 
-      const fromIndex = dragPayload.stopIndex;
       const toIndex = index;
 
-      const movedStop = run.stops.splice(fromIndex, 1)[0];
-      run.stops.splice(toIndex, 0, movedStop);
+      if (dragPayload.type === "routeStopGroup") {
+        const fromIndexes = [...dragPayload.stopIndexes].sort((a, b) => a - b);
+
+        const movingStops = fromIndexes.map((fromIndex) => run.stops[fromIndex]);
+
+        const remainingStops = run.stops.filter((_, routeIndex) => {
+          return !fromIndexes.includes(routeIndex);
+        });
+
+        const removedBeforeTarget = fromIndexes.filter((fromIndex) => {
+          return fromIndex < toIndex;
+        }).length;
+
+        const insertIndex = Math.max(0, toIndex - removedBeforeTarget);
+
+        remainingStops.splice(insertIndex, 0, ...movingStops);
+
+        run.stops = remainingStops;
+
+        selectedRouteStops.clear();
+        lastRouteSelectedIndex = null;
+      }
+
+      if (dragPayload.type === "routeMovement") {
+        const fromIndex = dragPayload.stopIndex;
+
+        const movedStop = run.stops.splice(fromIndex, 1)[0];
+        run.stops.splice(toIndex, 0, movedStop);
+      }
 
       stopRow.classList.remove("drag-over");
 
