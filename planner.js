@@ -795,15 +795,19 @@ function attachJobPotEvents() {
 
       const row = input.closest(".job-row");
       const movementId = row.dataset.movementId;
-      const runId = input.value.trim();
+      const typedRunNo = input.value.trim();
 
-      if (!runs[runId]) {
+      const runId = getRunIdFromPlannerNo(typedRunNo);
+
+      if (!runId) {
         alert("That run does not exist.");
         input.value = "";
         return;
       }
 
+      input.blur();
       assignMovementToRun(movementId, runId);
+      focusRun(runId);
     });
   });
 
@@ -869,6 +873,16 @@ function selectRun(runId) {
     updateUnallocateDropzoneVisibility();
   }
 }
+
+  function getRunIdFromPlannerNo(value) {
+    const typedRunNo = String(value || "").trim();
+
+    if (!typedRunNo) return null;
+
+    return Object.keys(runs).find((id) => {
+      return String(Number(runs[id].plannerRunNo)) === String(Number(typedRunNo));
+    });
+  }
 
 function focusRun(runId) {
   const run = runs[runId];
@@ -1486,15 +1500,17 @@ function renderActiveRun() {
     activeRunInput.addEventListener("keydown", (e) => {
       if (e.key !== "Enter") return;
 
-      const runId = resolveRunIdFromInput(e.target.value);
+    e.preventDefault();
 
-      if (!runId) {
-        alert("That run does not exist.");
-        return;
-      }
+    const runId = getRunIdFromPlannerNo(e.target.value);
 
-      e.target.blur();
-      focusRun(runId);
+    if (!runId) {
+      alert("That run does not exist.");
+      return;
+    }
+
+    e.target.blur();
+    focusRun(runId);
     });
   }
 
