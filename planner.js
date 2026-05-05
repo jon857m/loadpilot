@@ -966,9 +966,13 @@ function moveMovementToRun(movementKey, newRunId) {
   movementAllocations[movementKey] = newRunId;
 
   updateJobPotAllocationDisplay();
-  selectRun(newRunId);
+
+  if (activeRunId) {
+    renderActiveRun();
+  }
+
   saveAllocationToSupabase(movementKey, newRunId);
-}
+  }
 
 function unallocateMovement(movementKey) {
   removeMovementFromAllRuns(movementKey);
@@ -3315,10 +3319,8 @@ function renderRuns() {
       };
     })
     .filter((run) => {
-      // normal runs for selected day
       if (run.date === selectedDate) return true;
 
-      // previous evening window
       if (
         includePreviousEveningRuns &&
         run.date === previousDate &&
@@ -3433,7 +3435,23 @@ function renderRuns() {
         moveMovementToRun(dragPayload.movementKey, run.id);
       }
 
+      if (dragPayload.type === "routeStopGroup") {
+        const movementKeys = [
+          ...new Set(
+            dragPayload.stopIndexes.map(
+              (i) => runs[dragPayload.runId].stops[i].movementKey
+            )
+          ),
+        ];
+
+        movementKeys.forEach((movementKey) => {
+          moveMovementToRun(movementKey, run.id);
+        });
+      }
+
       dragPayload = null;
+      selectedRouteStops.clear();
+      lastRouteSelectedIndex = null;
       clearSelectedMovements();
       unallocateDropzone.classList.remove("visible", "drag-over");
     });
