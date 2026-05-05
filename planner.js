@@ -1618,21 +1618,21 @@ function renderActiveRun() {
         .filter((item) => selectedRouteStops.has(item.key))
         .map((item) => item.index);
 
-      if (selectedRouteStops.has(thisStopKey) && selectedStopIndexes.length > 1) {
-        dragPayload = {
-          type: "routeStopGroup",
-          runId: activeRunId,
-          stopIndexes: selectedStopIndexes,
-        };
-        return;
-      }
-
+    if (selectedRouteStops.has(thisStopKey) && selectedStopIndexes.length > 1) {
       dragPayload = {
-        type: "routeMovement",
+        type: "routeStopGroup",
         runId: activeRunId,
-        movementKey: stop.movementKey,
-        stopIndex: index,
+        stopIndexes: selectedStopIndexes,
       };
+      return;
+    }
+
+    dragPayload = {
+      type: "routeMovement",
+      runId: activeRunId,
+      movementKey: stop.movementKey,
+      stopIndex: index,
+    };
     });
 
     stopRow.addEventListener("dragover", (e) => {
