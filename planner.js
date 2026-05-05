@@ -1555,6 +1555,51 @@ function tidyActiveRunStops() {
   renderActiveRun();
 }
 
+function updateActiveRunTotals(run) {
+  const totalsEl = document.getElementById("activeRunTotals");
+  if (!totalsEl || !run) return;
+
+  const selectedStops = run.stops.filter((stop, index) => {
+    const stopKey = `${stop.movementKey}-${stop.type}-${index}`;
+    return selectedRouteStops.has(stopKey);
+  });
+
+  const sourceStops = selectedStops.length > 0 ? selectedStops : run.stops;
+
+  let collectTotal = 0;
+  let deliverTotal = 0;
+
+  sourceStops.forEach((stop) => {
+    const pallets = Number(stop.pallets) || 0;
+
+    if (stop.type === "collect") {
+      collectTotal += pallets;
+    }
+
+    if (stop.type === "deliver") {
+      deliverTotal += pallets;
+    }
+  });
+
+  const label = selectedStops.length > 0 ? "Selected" : "Total";
+
+  totalsEl.innerHTML = `
+    <span style="color:#7ee2a8">C ${collectTotal}</span>
+    /
+    <span style="color:#7fb3ff">D ${deliverTotal}</span>
+    ${
+      selectedStops.length > 0
+        ? `<button id="clearRouteSelection" class="secondary-btn">Clear</button>`
+        : ""
+    }
+  `;
+
+  document.getElementById("clearRouteSelection")?.addEventListener("click", () => {
+    selectedRouteStops.clear();
+    renderActiveRun();
+  });
+}
+
 function renderActiveRun() {
   if (!activeRunId) return;
 
@@ -1570,6 +1615,7 @@ function renderActiveRun() {
         : ${run.name}
         <button id="tidyRunBtn" class="primary-btn">Tidy</button>
         <button id="closeRunBtn" class="danger-btn">×</button>
+        <div class="active-run-totals" id="activeRunTotals">C 0 / D 0</div>
       `;
 
   const activeRunInput = document.getElementById("activeRunJumpInput");
@@ -1618,18 +1664,19 @@ function renderActiveRun() {
   routeList.style.display = "flex";
 
   routeList.innerHTML = `
-        <div class="route-header active-run-grid">
-          <div>
-            <input type="checkbox" id="selectRouteStopsCheckbox" />
-          </div>
-          <div>Order</div>
-          <div>C/D</div>
-          <div>Location</div>
-          <div>Detail</div>
-          <div>Pallets</div>
-          <div>Load</div>
+      <div class="route-header active-run-grid">
+        <div>
+          <input type="checkbox" id="selectRouteStopsCheckbox" />
         </div>
-      `;
+        <div>Order</div>
+        <div>C/D</div>
+        <div>Location</div>
+        <div>Detail</div>
+        <div>Pallets</div>
+        <div>Load</div>
+        <div>Load</div>
+      </div>
+    `;
 
   run.stops.forEach((stop, index) => {
     const stopRow = document.createElement("div");
@@ -1808,6 +1855,7 @@ function renderActiveRun() {
 
           cb.checked = true;
           selectedRouteStops.add(key);
+          updateActiveRunTotals(run);
           row?.classList.add("selected");
         }
 
@@ -1820,9 +1868,11 @@ function renderActiveRun() {
 
       if (routeCheckbox.checked) {
         selectedRouteStops.add(stopKey);
+        updateActiveRunTotals(run);
         stopRow.classList.add("selected");
       } else {
         selectedRouteStops.delete(stopKey);
+        updateActiveRunTotals(run);
         stopRow.classList.remove("selected");
       }
 
@@ -1853,9 +1903,11 @@ function renderActiveRun() {
 
     if (shouldSelect) {
       selectedRouteStops.add(stopKey);
+      updateActiveRunTotals(run);
       stopRow.classList.add("selected");
     } else {
       selectedRouteStops.delete(stopKey);
+      updateActiveRunTotals(run);
       stopRow.classList.remove("selected");
     }
   });
@@ -1881,6 +1933,7 @@ if (selectAllRouteCheckbox) {
 
       if (shouldSelect) {
         selectedRouteStops.add(stopKey);
+        updateActiveRunTotals(run);
         row?.classList.add("selected");
       } else {
         row?.classList.remove("selected");
@@ -1888,6 +1941,7 @@ if (selectAllRouteCheckbox) {
     });
   });
 }
+updateActiveRunTotals(run);
 }
 
 function updateJobPotAllocationDisplay() {

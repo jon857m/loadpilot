@@ -263,14 +263,21 @@ grid-template-columns:
 }
 
 .unallocate-dropzone {
-  margin-bottom: 10px;
-  padding: 10px;
+  margin-bottom: 6px;
+  padding: 4px 8px;
   border: 1px dashed #2a2d33;
-  border-radius: 8px;
+  border-radius: 6px;
   text-align: center;
-  color: #888;
-  background: #15181e;
-  font-size: 12px;
+  color: #666;
+  background: #11131a;
+  font-size: 11px;
+  line-height: 1;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.4;
+  transition: all 0.15s ease;
 }
 
 .unallocate-dropzone.visible {
@@ -281,6 +288,9 @@ grid-template-columns:
   border-color: #ffb86b;
   color: #ffb86b;
   background: #241b12;
+  height: 36px;           /* expands when active */
+  font-size: 12px;
+  opacity: 1;
 }
 
 .run-assign {
@@ -1581,4 +1591,28 @@ grid-template-columns:
   display: inline-flex;
   align-items: center;
   justify-content: center;
+}
+
+.active-run-totals {
+  position: absolute;
+  right: 115px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 15px;
+  font-weight: 800;
+  color: #7ee2a8;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bottom .panel-header {
+  position: relative;
+}
+
+.active-run-totals .secondary-btn {
+  padding: 2px 6px;
+  font-size: 11px;
 }
