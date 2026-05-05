@@ -1405,15 +1405,17 @@ function renderFullOrderMovementRows(orderMovements, orderId) {
       row.querySelector(".run-input")?.addEventListener("keydown", (e) => {
         if (e.key !== "Enter") return;
 
-        const runValue = e.target.value.trim();
+      const runId = getRunIdFromPlannerNo(e.target.value);
 
-        if (!runs[runValue]) {
-          alert("That run does not exist.");
-          e.target.value = "";
-          return;
-        }
+      if (!runId) {
+        alert("That run does not exist.");
+        e.target.value = "";
+        return;
+      }
 
-        assignMovementToRun(movement.id, runValue);
+      e.target.blur();
+      assignMovementToRun(movement.id, runId);
+      focusRun(runId);
       });
 
       return row;
@@ -2021,10 +2023,12 @@ document.getElementById("runDateNextBtn")?.addEventListener("click", () => {
 });
 
 document.getElementById("assignSelectedBtn").addEventListener("click", () => {
-  const runId = document.getElementById("bulkRunInput").value.trim();
+  const runInput = document.getElementById("bulkRunInput");
+  const runId = getRunIdFromPlannerNo(runInput.value);
 
-  if (!runs[runId]) {
+  if (!runId) {
     alert("Invalid run");
+    runInput.value = "";
     return;
   }
 
@@ -2032,7 +2036,9 @@ document.getElementById("assignSelectedBtn").addEventListener("click", () => {
     assignMovementToRun(movementId, runId);
   });
 
+  runInput.value = "";
   clearAllSelectedMovements();
+  focusRun(runId);
 });
 
 function clearSelectedMovements() {
