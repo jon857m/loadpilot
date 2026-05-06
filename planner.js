@@ -717,6 +717,58 @@ document.addEventListener("mousemove", updateBoxSelection);
 
 document.addEventListener("mouseup", finishBoxSelection);
 
+function clearAllSelections() {
+  selectedMovements.clear();
+  selectedOrderMovements.clear();
+  selectedRouteStops.clear();
+
+  document.querySelectorAll(
+    ".row-select, .order-row-select, .route-row-select"
+  ).forEach((checkbox) => {
+    checkbox.checked = false;
+  });
+
+  document.querySelectorAll(".selected, .box-selecting").forEach((row) => {
+    row.classList.remove("selected", "box-selecting");
+  });
+
+  if (selectionBoxEl) {
+    selectionBoxEl.remove();
+    selectionBoxEl = null;
+  }
+
+  boxSelectActive = false;
+  boxSelectPending = false;
+
+  updateSelectedCount();
+
+  if (activeRunId && runs[activeRunId]) {
+    updateActiveRunTotals(runs[activeRunId], selectedRouteStops);
+  }
+}
+
+document.addEventListener("keydown", (e) => {
+  if (e.code !== "Space") return;
+
+  const isTyping =
+    e.target.tagName === "INPUT" ||
+    e.target.tagName === "TEXTAREA" ||
+    e.target.isContentEditable;
+
+  if (isTyping) return;
+
+  const hasSelection =
+    selectedMovements.size > 0 ||
+    selectedOrderMovements.size > 0 ||
+    selectedRouteStops.size > 0 ||
+    document.querySelector(".box-selecting");
+
+  if (!hasSelection) return;
+
+  e.preventDefault();
+  clearAllSelections();
+});
+
 const unallocateDropzone = document.querySelector(".unallocate-dropzone");
 
 loadRunsFromDB();
