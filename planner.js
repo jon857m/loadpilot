@@ -3857,6 +3857,24 @@ document.getElementById("runDatePicker").addEventListener("change", (e) => {
 });
 
 document.getElementById("addRunBtn").addEventListener("click", async () => {
+  const inputDateEl = document.getElementById("newRunDateInput");
+  const inputTimeEl = document.getElementById("newRunTimeInput");
+  const inputNameEl = document.getElementById("newRunNameInput");
+
+  const inputDate = inputDateEl.value;
+  const inputTime = inputTimeEl.value;
+  const inputName = inputNameEl.value.trim();
+
+  if (!inputTime) {
+    alert("Please enter a run start time.");
+    inputTimeEl.focus();
+    return;
+  }
+
+  const runDate = inputDate || currentRunDate;
+  const runTime = inputTime;
+  const runName = inputName || "New Run";
+
   const accountId = await getAccountId();
 
   const existingRunNumbers = Object.values(runs)
@@ -3868,22 +3886,14 @@ document.getElementById("addRunBtn").addEventListener("click", async () => {
 
   const plannerRunNo = String(nextRunNumber).padStart(7, "0");
 
-  const inputDate = document.getElementById("newRunDateInput").value;
-  const inputTime = document.getElementById("newRunTimeInput").value;
-  const inputName = document.getElementById("newRunNameInput").value.trim();
-
-  const runDate = inputDate || currentRunDate;
-  const runTime = inputTime || "00:01";
-  const runName = inputName || "New Run";
-
   const { data, error } = await supabaseClient
     .from("runs")
     .insert([
       {
         account_id: accountId,
+        run_name: runName,
         run_date: runDate,
         start_time: runTime,
-        run_name: runName,
         planner_run_no: plannerRunNo,
         status: "active",
       },
@@ -3905,6 +3915,8 @@ document.getElementById("addRunBtn").addEventListener("click", async () => {
     plannerRunNo: data.planner_run_no,
     stops: [],
   };
+
+  inputDateEl.value = currentRunDate;
 
   activeRunId = data.id;
 
