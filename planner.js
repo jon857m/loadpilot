@@ -3861,9 +3861,13 @@ document.getElementById("addRunBtn").addEventListener("click", async () => {
   const inputTimeEl = document.getElementById("newRunTimeInput");
   const inputNameEl = document.getElementById("newRunNameInput");
 
+  const inputVehicleTypeEl = document.getElementById("newRunVehicleTypeInput");
+
   const inputDate = inputDateEl.value;
   const inputTime = inputTimeEl.value;
   const inputName = inputNameEl.value.trim();
+
+  const inputVehicleType = inputVehicleTypeEl.value;
 
   if (!inputTime) {
     alert("Please enter a run start time.");
@@ -3895,6 +3899,7 @@ document.getElementById("addRunBtn").addEventListener("click", async () => {
         run_date: runDate,
         start_time: runTime,
         planner_run_no: plannerRunNo,
+        required_vehicle_type: inputVehicleType,
         status: "active",
       },
     ])
