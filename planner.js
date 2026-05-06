@@ -3705,10 +3705,15 @@ function renderRuns() {
       <div class="run-edit-row">
         <input class="run-time-input" type="time" value="${run.startTime}" ${runEditMode ? "" : "readonly"} />
         <input class="run-name-input" type="text" value="${run.name || "Unknown"}" ${runEditMode ? "" : "readonly"} />
+        <select class="run-vehicle-type-input" ${runEditMode ? "" : "disabled"}>
+        <option value="C1 ARTIC" ${run.requiredVehicleType === "C1 ARTIC" ? "selected" : ""}>C1 ARTIC</option>
+        <option value="C2 RIGID" ${run.requiredVehicleType === "C2 RIGID" ? "selected" : ""}>C2 RIGID</option>
+        <option value="VAN" ${run.requiredVehicleType === "VAN" ? "selected" : ""}>VAN</option>
+      </select>
       </div>
       <div class="run-ref">
         #${run.plannerRunNo ? String(Number(run.plannerRunNo)) : ""}
-        ${runEditMode ? `<button class="run-delete-btn" data-run-id="${run.id}">×</button>` : ""}
+        <button class="run-delete-btn ${runEditMode ? "" : "run-delete-btn-hidden"}" data-run-id="${run.id}">×</button>
       </div>
     `;
 
@@ -3918,6 +3923,7 @@ document.getElementById("addRunBtn").addEventListener("click", async () => {
     date: data.run_date,
     startTime: data.start_time ? data.start_time.slice(0, 5) : "",
     plannerRunNo: data.planner_run_no,
+    requiredVehicleType: data.required_vehicle_type || "",
     stops: [],
   };
 
@@ -3968,6 +3974,7 @@ async function loadRunsFromDB() {
       date: row.run_date,
       startTime: row.start_time ? row.start_time.slice(0, 5) : "00:00",
       plannerRunNo: row.planner_run_no,
+      requiredVehicleType: row.required_vehicle_type || "",
       stops: [],
     };
   });

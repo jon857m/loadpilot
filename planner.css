@@ -1871,3 +1871,65 @@ box-shadow: inset 2px 0 0 rgba(90, 167, 255, 0.85);
   -webkit-text-fill-color: #e6e6e6;
 }
 
+.run-vehicle-type {
+  font-size: 12px;
+  color: #9aa3ad;
+  margin-left: auto;
+  padding-left: 12px;
+  white-space: nowrap;
+}
+
+.run-card {
+  min-height: 64px;
+}
+
+.run-edit-row {
+  min-height: 26px;
+  align-items: center;
+}
+
+.run-delete-btn-hidden {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.run-vehicle-type-input {
+  background: #262b33;            /* slightly lighter than card */
+  border: 1px solid #3a3f47;
+  color: #ffffff;                 /* stronger contrast */
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 600;              /* key change */
+  border-radius: 14px;
+  cursor: pointer;
+
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%239aa3ad' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+  padding-right: 18px;
+}
+
+.run-vehicle-type-input:disabled {
+  background: #2a2f37;
+  color: #d0d6dc;                 /* brighter than before */
+  opacity: 1;                    /* remove fade-out */
+}
+
+.run-vehicle-type-input:focus {
+  outline: none;
+  border-color: #5aa7ff;
+  background: #11141a;
+  margin-left: auto;
+}
+
+.add-run-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
