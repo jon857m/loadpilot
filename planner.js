@@ -480,7 +480,13 @@ function updateBoxSelection(e) {
 
   const box = selectionBoxEl.getBoundingClientRect();
 
-  document.querySelectorAll(".job-row, .job-leg-row, .route-stop-grid").forEach((row) => {
+  const selectionScope = routeList.dataset.shiftClickRouteStopKey
+      ? routeList.querySelectorAll(".route-stop-grid")
+      : jobPot.dataset.shiftClickMovementId
+        ? jobPot.querySelectorAll(".job-row")
+        : routeList.querySelectorAll(".job-leg-row");
+
+    selectionScope.forEach((row) => {
     const group = row.closest(".job-group");
 
     const isVisible =
