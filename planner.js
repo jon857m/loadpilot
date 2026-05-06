@@ -4296,28 +4296,78 @@ if (jobLookupInput) {
 }
 
 document.addEventListener("keydown", (e) => {
-  // ignore if typing in an input
   const activeTag = document.activeElement.tagName;
-  if (activeTag === "INPUT" || activeTag === "SELECT" || activeTag === "TEXTAREA") return;
 
-  const visibleRunIds = Object.values(runs)
-    .filter(run => run.date === currentRunDate)
-    .sort((a, b) => (a.startTime || "99:99").localeCompare(b.startTime || "99:99"))
-    .map(run => run.id);
+  if (
+    activeTag === "INPUT" ||
+    activeTag === "SELECT" ||
+    activeTag === "TEXTAREA"
+  ) {
+    return;
+  }
+
+  if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+
+  const selectedDate = normaliseDate(currentRunDate);
+  const previousDate = addDaysIso(selectedDate, -1);
+
+  const visibleRunIds = Object.keys(runs)
+    .map((runId) => {
+      const run = runs[runId];
+
+      return {
+        id: String(runId),
+        ...run,
+        date: normaliseDate(run.date),
+        startTime: run.startTime || "",
+      };
+    })
+    .filter((run) => {
+      if (run.date === selectedDate) return true;
+
+      if (
+        includePreviousEveningRuns &&
+        run.date === previousDate &&
+        run.startTime >= "20:00"
+      ) {
+        return true;
+      }
+
+      return false;
+    })
+    .sort((a, b) => {
+      const aPrevious = a.date === previousDate ? 0 : 1;
+      const bPrevious = b.date === previousDate ? 0 : 1;
+
+      if (aPrevious !== bPrevious) return aPrevious - bPrevious;
+
+      return (a.startTime || "99:99").localeCompare(b.startTime || "99:99");
+    })
+    .map((run) => run.id);
 
   if (!visibleRunIds.length) return;
 
-  let currentIndex = visibleRunIds.indexOf(activeRunId);
+  const currentIndex = visibleRunIds.indexOf(String(activeRunId));
 
   if (e.key === "ArrowDown") {
     e.preventDefault();
-    const nextIndex = Math.min(currentIndex + 1, visibleRunIds.length - 1);
+
+    const nextIndex =
+      currentIndex === -1
+        ? 0
+        : Math.min(currentIndex + 1, visibleRunIds.length - 1);
+
     selectRun(visibleRunIds[nextIndex]);
   }
 
   if (e.key === "ArrowUp") {
     e.preventDefault();
-    const prevIndex = Math.max(currentIndex - 1, 0);
+
+    const prevIndex =
+      currentIndex === -1
+        ? visibleRunIds.length - 1
+        : Math.max(currentIndex - 1, 0);
+
     selectRun(visibleRunIds[prevIndex]);
   }
 });
