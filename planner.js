@@ -3723,9 +3723,31 @@ function renderRuns() {
 
     const timeInput = card.querySelector(".run-time-input");
     const nameInput = card.querySelector(".run-name-input");
+    const vehicleTypeInput = card.querySelector(".run-vehicle-type-input");
 
     timeInput.addEventListener("click", (e) => e.stopPropagation());
     nameInput.addEventListener("click", (e) => e.stopPropagation());
+
+    vehicleTypeInput?.addEventListener("click", (e) => e.stopPropagation());
+
+    vehicleTypeInput?.addEventListener("change", async (e) => {
+      const value = e.target.value;
+
+      runs[run.id].requiredVehicleType = value;
+
+      const { error } = await supabaseClient
+        .from("runs")
+        .update({ required_vehicle_type: value })
+        .eq("id", run.id);
+
+    if (error) {
+      console.error("Could not update vehicle type:", error);
+      alert("Could not update vehicle type. Check console.");
+      return;
+    }
+
+    e.target.blur();
+    });
 
     timeInput.addEventListener("input", async (e) => {
       const value = e.target.value || "";
