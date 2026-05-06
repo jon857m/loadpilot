@@ -1881,6 +1881,10 @@ box-shadow: inset 2px 0 0 rgba(90, 167, 255, 0.85);
 
 .run-card {
   min-height: 64px;
+    transition:
+    transform 0.18s ease,
+    background 0.18s ease,
+    border-color 0.18s ease;
 }
 
 .run-edit-row {
