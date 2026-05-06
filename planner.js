@@ -3868,14 +3868,22 @@ document.getElementById("addRunBtn").addEventListener("click", async () => {
 
   const plannerRunNo = String(nextRunNumber).padStart(7, "0");
 
+  const inputDate = document.getElementById("newRunDateInput").value;
+  const inputTime = document.getElementById("newRunTimeInput").value;
+  const inputName = document.getElementById("newRunNameInput").value.trim();
+
+  const runDate = inputDate || currentRunDate;
+  const runTime = inputTime || "00:01";
+  const runName = inputName || "New Run";
+
   const { data, error } = await supabaseClient
     .from("runs")
     .insert([
       {
         account_id: accountId,
-        run_name: "New Run",
-        run_date: currentRunDate,
-        start_time: "00:01",
+        run_date: runDate,
+        start_time: runTime,
+        run_name: runName,
         planner_run_no: plannerRunNo,
         status: "active",
       },
