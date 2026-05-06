@@ -1841,3 +1841,33 @@ box-shadow: inset 2px 0 0 rgba(90, 167, 255, 0.85);
   border-color: rgba(90, 167, 255, 0.55) !important;
   box-shadow: inset 3px 0 0 rgba(90, 167, 255, 0.9);
 }
+
+/* --- Safari-safe unified date picker styling --- */
+.date-group .date-picker,
+.run-controls .date-picker {
+  width: 112px;
+  height: 26px;
+  padding: 4px 10px;
+
+  background: #1d2128;
+  border: 1px solid #2a2d33;
+  border-radius: 8px;
+
+  font-size: 13px;
+  color: #e6e6e6;
+  -webkit-text-fill-color: #e6e6e6;
+}
+
+.date-group .date-picker::-webkit-datetime-edit,
+.run-controls .date-picker::-webkit-datetime-edit,
+.date-group .date-picker::-webkit-datetime-edit-text,
+.run-controls .date-picker::-webkit-datetime-edit-text,
+.date-group .date-picker::-webkit-datetime-edit-day-field,
+.run-controls .date-picker::-webkit-datetime-edit-day-field,
+.date-group .date-picker::-webkit-datetime-edit-month-field,
+.run-controls .date-picker::-webkit-datetime-edit-month-field,
+.date-group .date-picker::-webkit-datetime-edit-year-field,
+.run-controls .date-picker::-webkit-datetime-edit-year-field {
+  -webkit-text-fill-color: #e6e6e6;
+}
+

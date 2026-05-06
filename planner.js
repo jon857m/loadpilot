@@ -420,6 +420,8 @@ function findAddressByName(name) {
 // attachJobPotEvents();
 
 document.getElementById("runDatePicker").value = currentRunDate;
+document.getElementById("jobDatePicker").value =
+  new Date().toISOString().split("T")[0];
 
 const runCards = document.querySelectorAll(".run-card");
 const jobRows = document.querySelectorAll(".job-row");
