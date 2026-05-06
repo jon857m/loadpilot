@@ -4294,3 +4294,30 @@ if (jobLookupInput) {
     closeLegBtn.addEventListener("click", closeBottomPanel);
   }
 }
+
+document.addEventListener("keydown", (e) => {
+  // ignore if typing in an input
+  const activeTag = document.activeElement.tagName;
+  if (activeTag === "INPUT" || activeTag === "SELECT" || activeTag === "TEXTAREA") return;
+
+  const visibleRunIds = Object.values(runs)
+    .filter(run => run.date === currentRunDate)
+    .sort((a, b) => (a.startTime || "99:99").localeCompare(b.startTime || "99:99"))
+    .map(run => run.id);
+
+  if (!visibleRunIds.length) return;
+
+  let currentIndex = visibleRunIds.indexOf(activeRunId);
+
+  if (e.key === "ArrowDown") {
+    e.preventDefault();
+    const nextIndex = Math.min(currentIndex + 1, visibleRunIds.length - 1);
+    selectRun(visibleRunIds[nextIndex]);
+  }
+
+  if (e.key === "ArrowUp") {
+    e.preventDefault();
+    const prevIndex = Math.max(currentIndex - 1, 0);
+    selectRun(visibleRunIds[prevIndex]);
+  }
+});
