@@ -3875,7 +3875,7 @@ document.getElementById("addRunBtn").addEventListener("click", async () => {
         account_id: accountId,
         run_name: "New Run",
         run_date: currentRunDate,
-        start_time: null,
+        start_time: "00:01",
         planner_run_no: plannerRunNo,
         status: "active",
       },
@@ -3941,7 +3941,7 @@ async function loadRunsFromDB() {
       id: row.id,
       name: row.run_name || "Unknown",
       date: row.run_date,
-      startTime: row.start_time ? row.start_time.slice(0, 5) : "",
+      startTime: row.start_time ? row.start_time.slice(0, 5) : "00:00",
       plannerRunNo: row.planner_run_no,
       stops: [],
     };
