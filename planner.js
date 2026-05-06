@@ -747,6 +747,83 @@ function clearAllSelections() {
   }
 }
 
+function openSelectedStopsInGoogleMaps() {
+  let selectedStops = [];
+
+  // ===== ROUTE SELECTION =====
+  if (selectedRouteStops.size && activeRunId && runs[activeRunId]) {
+    const run = runs[activeRunId];
+
+    selectedStops = run.stops.filter((stop, index) => {
+      const stopKey = `${stop.movementKey}-${stop.type}-${index}`;
+      return selectedRouteStops.has(stopKey);
+    });
+  }
+
+  // ===== JOB POT / ORDER SELECTION =====
+  else {
+    const selectedIds = getCombinedSelectedMovementIds();
+
+    selectedStops = movements.flatMap((m) => {
+      if (!selectedIds.includes(m.id)) return [];
+
+      const stops = [];
+
+      // detect if row is split view (C or D)
+      const rows = document.querySelectorAll(
+        `.job-row[data-movement-id="${m.id}"], .job-leg-row[data-movement-id="${m.id}"]`
+      );
+
+      rows.forEach((row) => {
+        const side = row.dataset.stopSide;
+
+        if (side === "collect") {
+          stops.push({ ...m.collect });
+        } else if (side === "deliver") {
+          stops.push({ ...m.deliver });
+        } else {
+          // full movement selected
+          stops.push({ ...m.collect });
+          stops.push({ ...m.deliver });
+        }
+      });
+
+      return stops;
+    });
+  }
+
+  // ===== BUILD DESTINATIONS =====
+  const destinations = selectedStops
+    .map((s) => s.postcode || s.location)
+    .filter(Boolean);
+
+  if (!destinations.length) {
+    alert("No postcode or location found for selected stops.");
+    return;
+  }
+
+  const url =
+    "https://www.google.com/maps/dir/" +
+    destinations.map((d) => encodeURIComponent(d)).join("/");
+
+  window.open(url, "_blank", "noopener,noreferrer");
+}
+
+document.addEventListener("keydown", (e) => {
+  if (e.key.toLowerCase() !== "m") return;
+
+  const isTyping =
+    e.target.tagName === "INPUT" ||
+    e.target.tagName === "TEXTAREA" ||
+    e.target.isContentEditable;
+
+  if (isTyping) return;
+
+  e.preventDefault();
+
+  openSelectedStopsInGoogleMaps();
+});
+
 document.addEventListener("keydown", (e) => {
   if (e.code !== "Space") return;
 
@@ -772,57 +849,7 @@ document.addEventListener("keydown", (e) => {
   clearAllSelections();
 });
 
-function clearAllSelections() {
-  selectedMovements.clear();
-  selectedOrderMovements.clear();
-  selectedRouteStops.clear();
 
-  document.querySelectorAll(
-    ".row-select, .order-row-select, .route-row-select"
-  ).forEach((checkbox) => {
-    checkbox.checked = false;
-  });
-
-  document.querySelectorAll(".selected, .box-selecting").forEach((row) => {
-    row.classList.remove("selected", "box-selecting");
-  });
-
-  if (selectionBoxEl) {
-    selectionBoxEl.remove();
-    selectionBoxEl = null;
-  }
-
-  boxSelectActive = false;
-  boxSelectPending = false;
-
-  updateSelectedCount();
-
-  if (activeRunId && runs[activeRunId]) {
-    updateActiveRunTotals(runs[activeRunId], selectedRouteStops);
-  }
-}
-
-document.addEventListener("keydown", (e) => {
-  if (e.code !== "Space") return;
-
-  const isTyping =
-    e.target.tagName === "INPUT" ||
-    e.target.tagName === "TEXTAREA" ||
-    e.target.isContentEditable;
-
-  if (isTyping) return;
-
-  const hasSelection =
-    selectedMovements.size > 0 ||
-    selectedOrderMovements.size > 0 ||
-    selectedRouteStops.size > 0 ||
-    document.querySelector(".box-selecting");
-
-  if (!hasSelection) return;
-
-  e.preventDefault();
-  clearAllSelections();
-});
 
 const unallocateDropzone = document.querySelector(".unallocate-dropzone");
 
@@ -2739,6 +2766,9 @@ function buildMovementDisplay(job, movement) {
   const fromName = movement.from_address?.name || "From";
   const toName = movement.to_address?.name || "To";
 
+  const fromPostcode = movement.from_address?.postcode || "";
+  const toPostcode = movement.to_address?.postcode || "";
+
   const sharedDetail = `${originalDeliver} Ex ${originalCollect}`;
 
   const collectionDate = formatDate(job.collection_date);
@@ -2750,6 +2780,7 @@ function buildMovementDisplay(job, movement) {
     return {
       collect: {
         location: fromName,
+        postcode: fromPostcode,
         detail: `For ${originalDeliver}`,
         date: collectionDate,
         time: collectionTime,
@@ -2757,6 +2788,7 @@ function buildMovementDisplay(job, movement) {
       },
       deliver: {
         location: toName,
+        postcode: toPostcode,
         detail: `Ex ${originalCollect}`,
         date: deliveryDate,
         time: deliveryTime,
@@ -2769,6 +2801,7 @@ function buildMovementDisplay(job, movement) {
     return {
       collect: {
         location: fromName,
+        postcode: fromPostcode,
         detail: `For ${originalDeliver}`,
         date: collectionDate,
         time: collectionTime,
@@ -2776,6 +2809,7 @@ function buildMovementDisplay(job, movement) {
       },
       deliver: {
         location: toName,
+        postcode: toPostcode,
         detail: sharedDetail,
         date: collectionDate,
         time: "",
@@ -2788,6 +2822,7 @@ function buildMovementDisplay(job, movement) {
     return {
       collect: {
         location: fromName,
+        postcode: fromPostcode,
         detail: sharedDetail,
         date: deliveryDate,
         time: "",
@@ -2795,6 +2830,7 @@ function buildMovementDisplay(job, movement) {
       },
       deliver: {
         location: toName,
+        postcode: toPostcode,
         detail: `Ex ${originalCollect}`,
         date: deliveryDate,
         time: deliveryTime,
@@ -2806,11 +2842,13 @@ function buildMovementDisplay(job, movement) {
   return {
     collect: {
       location: fromName,
+      postcode: fromPostcode,
       detail: "",
       isDepot: false,
     },
     deliver: {
       location: toName,
+      postcode: toPostcode,
       detail: "",
       isDepot: false,
     },
