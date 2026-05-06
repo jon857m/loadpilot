@@ -3935,14 +3935,25 @@ document.getElementById("addRunBtn").addEventListener("click", async () => {
   selectRun(data.id);
 });
 
-document
-  .getElementById("runWindowOffsetToggle")
-  .addEventListener("change", (e) => {
-    includePreviousEveningRuns = e.target.checked;
-    activeRunId = null;
-    renderRuns();
-    renderActiveRun();
-  });
+  document
+    .getElementById("runWindowOffsetToggle")
+    .addEventListener("change", (e) => {
+      includePreviousEveningRuns = e.target.checked;
+
+      const selectedRunStillExists =
+        activeRunId && runs[activeRunId];
+
+      renderRuns();
+
+    if (selectedRunStillExists) {
+      const runToKeepSelected = activeRunId;
+      activeRunId = null;
+      selectRun(runToKeepSelected);
+    } else {
+      activeRunId = null;
+      renderActiveRun();
+    }
+    });
 
 document.getElementById("runEditModeToggle").addEventListener("change", (e) => {
   runEditMode = e.target.checked;
