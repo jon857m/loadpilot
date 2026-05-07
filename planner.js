@@ -3798,6 +3798,7 @@ function renderRuns() {
     const timeInput = card.querySelector(".run-time-input");
     const nameInput = card.querySelector(".run-name-input");
     const vehicleTypeInput = card.querySelector(".run-vehicle-type-input");
+    const driverSelect = card.querySelector(".run-driver-select");
 
     timeInput.addEventListener("click", (e) => e.stopPropagation());
     nameInput.addEventListener("click", (e) => e.stopPropagation());
@@ -3814,20 +3815,45 @@ function renderRuns() {
         .update({ required_vehicle_type: value })
         .eq("id", run.id);
 
-    if (error) {
-      console.error("Could not update vehicle type:", error);
-      alert("Could not update vehicle type. Check console.");
-      return;
+      if (error) {
+        console.error("Could not update vehicle type:", error);
+        alert("Could not update vehicle type. Check console.");
+        return;
     }
 
-    card.classList.add("saved-flash");
+      card.classList.add("saved-flash");
 
-    setTimeout(() => {
-      card.classList.remove("saved-flash");
-    }, 220);
+        setTimeout(() => {
+          card.classList.remove("saved-flash");
+        }, 220);
 
-    e.target.blur();
-    });
+        e.target.blur();
+      });
+
+    driverSelect?.addEventListener("change", async (e) => {
+        e.stopPropagation();
+
+        const driverId = e.target.value || null;
+
+        runs[run.id].driverId = driverId;
+
+        const { error } = await supabaseClient
+          .from("runs")
+          .update({
+            driver_id: driverId
+          })
+          .eq("id", run.id);
+
+        if (error) {
+          console.error("Error updating driver:", error);
+          alert("Could not update driver.");
+          return;
+        }
+
+        console.log("Driver updated:", run.id, driverId);
+      });
+
+    
 
     timeInput.addEventListener("input", async (e) => {
       const value = e.target.value || "";
