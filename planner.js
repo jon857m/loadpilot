@@ -3803,9 +3803,14 @@ function renderRuns() {
         `
       }
 
-        <span class="run-resource trailer-resource">
-          ${getTrailerLabel(run.trailerId)}
-        </span>
+      ${runEditMode
+        ? renderTrailerSelect(run.trailerId, run.id)
+        : `
+          <span class="run-resource trailer-resource">
+            ${getTrailerLabel(run.trailerId)}
+          </span>
+        `
+      }
       </div>
 
     `;
@@ -3819,6 +3824,7 @@ function renderRuns() {
     const vehicleTypeInput = card.querySelector(".run-vehicle-type-input");
     const driverSelect = card.querySelector(".run-driver-select");
     const vehicleSelect = card.querySelector(".run-vehicle-select");
+    const trailerSelect = card.querySelector(".run-trailer-select");
 
     timeInput.addEventListener("click", (e) => e.stopPropagation());
     nameInput.addEventListener("click", (e) => e.stopPropagation());
@@ -3894,6 +3900,29 @@ function renderRuns() {
       }
 
       console.log("Vehicle updated:", run.id, vehicleId);
+    });
+
+        trailerSelect?.addEventListener("change", async (e) => {
+      e.stopPropagation();
+
+      const trailerId = e.target.value || null;
+
+      runs[run.id].trailerId = trailerId;
+
+      const { error } = await supabaseClient
+        .from("runs")
+        .update({
+          trailer_id: trailerId
+        })
+        .eq("id", run.id);
+
+      if (error) {
+        console.error("Error updating trailer:", error);
+        alert("Could not update trailer.");
+        return;
+      }
+
+      console.log("Trailer updated:", run.id, trailerId);
     });
 
     timeInput.addEventListener("input", async (e) => {
@@ -4208,6 +4237,23 @@ function renderVehicleSelect(selectedVehicleId, runId) {
       `,
         )
         .join("")}
+    </select>
+  `;
+}
+
+function renderTrailerSelect(selectedTrailerId, runId) {
+  return `
+    <select class="run-trailer-select" data-run-id="${runId}">
+      <option value="">No trailer</option>
+
+      ${trailers.map(trailer => `
+        <option
+          value="${trailer.id}"
+          ${trailer.id === selectedTrailerId ? "selected" : ""}
+        >
+          ${trailer.trailer_number}
+        </option>
+      `).join("")}
     </select>
   `;
 }
