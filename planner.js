@@ -3803,9 +3803,10 @@ function renderRuns() {
         `
       }
 
-      ${runEditMode
-        ? renderTrailerSelect(run.trailerId, run.id)
-        : `
+      ${
+        runEditMode
+          ? renderTrailerSelect(run.trailerId, run.id)
+          : `
           <span class="run-resource trailer-resource">
             ${getTrailerLabel(run.trailerId)}
           </span>
@@ -3823,8 +3824,8 @@ function renderRuns() {
     const nameInput = card.querySelector(".run-name-input");
     const vehicleTypeInput = card.querySelector(".run-vehicle-type-input");
     const driverSearch = card.querySelector(".run-driver-search");
-    const vehicleSelect = card.querySelector(".run-vehicle-select");
-    const trailerSelect = card.querySelector(".run-trailer-select");
+    const vehicleSearch = card.querySelector(".run-vehicle-search");
+    const trailerSearch = card.querySelector(".run-trailer-search");
 
     timeInput.addEventListener("click", (e) => e.stopPropagation());
     nameInput.addEventListener("click", (e) => e.stopPropagation());
@@ -3856,46 +3857,58 @@ function renderRuns() {
       e.target.blur();
     });
 
-  driverSearch?.addEventListener("change", async (e) => {
-    e.stopPropagation();
-
-    const typedValue = e.target.value.trim().toLowerCase();
-
-    const matchedDriver = drivers.find((driver) => {
-      const label = `${driver.last_name}, ${driver.first_name}`.toLowerCase();
-      return label === typedValue;
-    });
-
-    if (!matchedDriver && typedValue) {
-      alert("Please select a driver from the list.");
-      e.target.value = getDriverLabel(runs[run.id].driverId);
-      return;
-    }
-
-    const driverId = matchedDriver ? matchedDriver.id : null;
-
-    runs[run.id].driverId = driverId;
-
-    const { error } = await supabaseClient
-      .from("runs")
-      .update({
-        driver_id: driverId
-      })
-      .eq("id", run.id);
-
-    if (error) {
-      console.error("Error updating driver:", error);
-      alert("Could not update driver.");
-      return;
-    }
-
-    console.log("Driver updated:", run.id, driverId);
-  });
-
-    vehicleSelect?.addEventListener("change", async (e) => {
+    driverSearch?.addEventListener("change", async (e) => {
       e.stopPropagation();
 
-      const vehicleId = e.target.value || null;
+      const typedValue = e.target.value.trim().toLowerCase();
+
+      const matchedDriver = drivers.find((driver) => {
+        const label = `${driver.last_name}, ${driver.first_name}`.toLowerCase();
+        return label === typedValue;
+      });
+
+      if (!matchedDriver && typedValue) {
+        alert("Please select a driver from the list.");
+        e.target.value = getDriverLabel(runs[run.id].driverId);
+        return;
+      }
+
+      const driverId = matchedDriver ? matchedDriver.id : null;
+
+      runs[run.id].driverId = driverId;
+
+      const { error } = await supabaseClient
+        .from("runs")
+        .update({
+          driver_id: driverId,
+        })
+        .eq("id", run.id);
+
+      if (error) {
+        console.error("Error updating driver:", error);
+        alert("Could not update driver.");
+        return;
+      }
+
+      console.log("Driver updated:", run.id, driverId);
+    });
+
+    vehicleSearch?.addEventListener("change", async (e) => {
+      e.stopPropagation();
+
+      const typedValue = e.target.value.trim().toLowerCase();
+
+      const matchedVehicle = vehicles.find((vehicle) => {
+        return vehicle.registration.toLowerCase() === typedValue;
+      });
+
+      if (!matchedVehicle && typedValue) {
+        alert("Please select a vehicle from the list.");
+        e.target.value = getVehicleLabel(runs[run.id].vehicleId);
+        return;
+      }
+
+      const vehicleId = matchedVehicle ? matchedVehicle.id : null;
 
       runs[run.id].vehicleId = vehicleId;
 
@@ -3915,10 +3928,22 @@ function renderRuns() {
       console.log("Vehicle updated:", run.id, vehicleId);
     });
 
-        trailerSelect?.addEventListener("change", async (e) => {
+    trailerSearch?.addEventListener("change", async (e) => {
       e.stopPropagation();
 
-      const trailerId = e.target.value || null;
+      const typedValue = e.target.value.trim().toLowerCase();
+
+      const matchedTrailer = trailers.find((trailer) => {
+        return trailer.trailer_number.toLowerCase() === typedValue;
+      });
+
+      if (!matchedTrailer && typedValue) {
+        alert("Please select a trailer from the list.");
+        e.target.value = getTrailerLabel(runs[run.id].trailerId);
+        return;
+      }
+
+      const trailerId = matchedTrailer ? matchedTrailer.id : null;
 
       runs[run.id].trailerId = trailerId;
 
@@ -4213,7 +4238,9 @@ function getDriverLabel(driverId) {
 }
 
 function renderDriverSelect(selectedDriverId, runId) {
-  const selectedDriver = drivers.find((driver) => driver.id === selectedDriverId);
+  const selectedDriver = drivers.find(
+    (driver) => driver.id === selectedDriverId,
+  );
 
   return `
     <input
@@ -4225,51 +4252,75 @@ function renderDriverSelect(selectedDriverId, runId) {
     />
 
     <datalist id="driverOptions-${runId}">
-      ${drivers.map(driver => `
+      ${drivers
+        .map(
+          (driver) => `
         <option
           value="${driver.last_name}, ${driver.first_name}"
           data-driver-id="${driver.id}"
         ></option>
-      `).join("")}
+      `,
+        )
+        .join("")}
     </datalist>
   `;
 }
 
 function renderVehicleSelect(selectedVehicleId, runId) {
-  return `
-    <select class="run-vehicle-select" data-run-id="${runId}">
-      <option value="">No vehicle</option>
+  const selectedVehicle = vehicles.find(
+    (vehicle) => vehicle.id === selectedVehicleId,
+  );
 
+  return `
+    <input
+      class="run-vehicle-search"
+      data-run-id="${runId}"
+      list="vehicleOptions-${runId}"
+      value="${selectedVehicle ? selectedVehicle.registration : ""}"
+      placeholder="No vehicle"
+    />
+
+    <datalist id="vehicleOptions-${runId}">
       ${vehicles
         .map(
           (vehicle) => `
         <option
-          value="${vehicle.id}"
-          ${vehicle.id === selectedVehicleId ? "selected" : ""}
-        >
-          ${vehicle.registration}
-        </option>
+          value="${vehicle.registration}"
+          data-vehicle-id="${vehicle.id}"
+        ></option>
       `,
         )
         .join("")}
-    </select>
+    </datalist>
   `;
 }
 
 function renderTrailerSelect(selectedTrailerId, runId) {
-  return `
-    <select class="run-trailer-select" data-run-id="${runId}">
-      <option value="">No trailer</option>
+  const selectedTrailer = trailers.find(
+    (trailer) => trailer.id === selectedTrailerId,
+  );
 
-      ${trailers.map(trailer => `
+  return `
+    <input
+      class="run-trailer-search"
+      data-run-id="${runId}"
+      list="trailerOptions-${runId}"
+      value="${selectedTrailer ? selectedTrailer.trailer_number : ""}"
+      placeholder="No trailer"
+    />
+
+    <datalist id="trailerOptions-${runId}">
+      ${trailers
+        .map(
+          (trailer) => `
         <option
-          value="${trailer.id}"
-          ${trailer.id === selectedTrailerId ? "selected" : ""}
-        >
-          ${trailer.trailer_number}
-        </option>
-      `).join("")}
-    </select>
+          value="${trailer.trailer_number}"
+          data-trailer-id="${trailer.id}"
+        ></option>
+      `,
+        )
+        .join("")}
+    </datalist>
   `;
 }
 
