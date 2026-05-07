@@ -3941,11 +3941,24 @@ function renderRuns() {
       unallocateDropzone.classList.remove("visible", "drag-over");
     });
 
-    const driverSelect = card.querySelector(".run-driver-select");
+    const driverSearch = card.querySelector(".run-driver-search");
 
-    if (driverSelect) {
-      driverSelect.addEventListener("change", async (e) => {
-        const newDriverId = e.target.value || null;
+    if (driverSearch) {
+      driverSearch.addEventListener("change", async (e) => {
+        const typedValue = e.target.value.trim().toLowerCase();
+
+        const matchedDriver = drivers.find((driver) => {
+          const label = `${driver.last_name}, ${driver.first_name}`.toLowerCase();
+          return label === typedValue;
+        });
+
+        if (!matchedDriver && typedValue) {
+          alert("Please select a driver from the list.");
+          e.target.value = getDriverLabel(runs[run.id].driverId);
+          return;
+        }
+
+        const newDriverId = matchedDriver ? matchedDriver.id : null;
 
         runs[run.id].driverId = newDriverId;
 
@@ -3966,11 +3979,23 @@ function renderRuns() {
       });
     }
 
-    const vehicleSelect = card.querySelector(".run-vehicle-select");
+      const vehicleSearch = card.querySelector(".run-vehicle-search");
 
-      if (vehicleSelect) {
-        vehicleSelect.addEventListener("change", async (e) => {
-          const newVehicleId = e.target.value || null;
+      if (vehicleSearch) {
+        vehicleSearch.addEventListener("change", async (e) => {
+          const typedValue = e.target.value.trim().toLowerCase();
+
+          const matchedVehicle = vehicles.find((vehicle) => {
+            return vehicle.registration.toLowerCase() === typedValue;
+          });
+
+          if (!matchedVehicle && typedValue) {
+            alert("Please select a vehicle from the list.");
+            e.target.value = getVehicleLabel(runs[run.id].vehicleId);
+            return;
+          }
+
+          const newVehicleId = matchedVehicle ? matchedVehicle.id : null;
 
           runs[run.id].vehicleId = newVehicleId;
 
@@ -3991,11 +4016,23 @@ function renderRuns() {
         });
       }
 
-      const trailerSelect = card.querySelector(".run-trailer-select");
+      const trailerSearch = card.querySelector(".run-trailer-search");
 
-      if (trailerSelect) {
-        trailerSelect.addEventListener("change", async (e) => {
-          const newTrailerId = e.target.value || null;
+      if (trailerSearch) {
+        trailerSearch.addEventListener("change", async (e) => {
+          const typedValue = e.target.value.trim().toLowerCase();
+
+          const matchedTrailer = trailers.find((trailer) => {
+            return trailer.trailer_number.toLowerCase() === typedValue;
+          });
+
+          if (!matchedTrailer && typedValue) {
+            alert("Please select a trailer from the list.");
+            e.target.value = getTrailerLabel(runs[run.id].trailerId);
+            return;
+          }
+
+          const newTrailerId = matchedTrailer ? matchedTrailer.id : null;
 
           runs[run.id].trailerId = newTrailerId;
 
@@ -4223,67 +4260,66 @@ function getTrailerLabel(trailerId) {
 }
 
 function renderDriverSelect(driverId, runId) {
-  const options = [
-    `<option value="">No driver</option>`,
-    ...drivers.map((driver) => {
-      const label = `${driver.last_name}, ${driver.first_name}`;
-
-      return `
-        <option value="${driver.id}" ${
-          driver.id === driverId ? "selected" : ""
-        }>
-          ${label}
-        </option>
-      `;
-    }),
-  ];
+  const selectedDriver = drivers.find((driver) => driver.id === driverId);
 
   return `
-    <select class="run-driver-select" data-run-id="${runId}">
-      ${options.join("")}
-    </select>
+    <input
+      class="run-driver-search run-resource-input"
+      data-run-id="${runId}"
+      list="driverOptions-${runId}"
+      value="${selectedDriver ? `${selectedDriver.last_name}, ${selectedDriver.first_name}` : ""}"
+      placeholder="No driver"
+    />
+
+    <datalist id="driverOptions-${runId}">
+      ${drivers.map((driver) => `
+        <option value="${driver.last_name}, ${driver.first_name}"></option>
+      `).join("")}
+    </datalist>
   `;
 }
 
 function renderVehicleSelect(vehicleId, runId) {
-  const options = [
-    `<option value="">No vehicle</option>`,
-    ...vehicles.map((vehicle) => {
-      return `
-        <option value="${vehicle.id}" ${
-          vehicle.id === vehicleId ? "selected" : ""
-        }>
-          ${vehicle.registration}
-        </option>
-      `;
-    }),
-  ];
+  const selectedVehicle = vehicles.find(
+    (vehicle) => vehicle.id === vehicleId
+  );
 
   return `
-    <select class="run-vehicle-select" data-run-id="${runId}">
-      ${options.join("")}
-    </select>
+    <input
+      class="run-vehicle-search run-resource-input"
+      data-run-id="${runId}"
+      list="vehicleOptions-${runId}"
+      value="${selectedVehicle ? selectedVehicle.registration : ""}"
+      placeholder="No vehicle"
+    />
+
+    <datalist id="vehicleOptions-${runId}">
+      ${vehicles.map((vehicle) => `
+        <option value="${vehicle.registration}"></option>
+      `).join("")}
+    </datalist>
   `;
 }
 
 function renderTrailerSelect(trailerId, runId) {
-  const options = [
-    `<option value="">No trailer</option>`,
-    ...trailers.map((trailer) => {
-      return `
-        <option value="${trailer.id}" ${
-          trailer.id === trailerId ? "selected" : ""
-        }>
-          ${trailer.trailer_number}
-        </option>
-      `;
-    }),
-  ];
+  const selectedTrailer = trailers.find(
+    (trailer) => trailer.id === trailerId
+  );
 
   return `
-    <select class="run-trailer-select" data-run-id="${runId}">
-      ${options.join("")}
-    </select>
+    <input
+      class="run-trailer-search run-resource-input"
+      data-run-id="${runId}"
+      list="trailerOptions-${runId}"
+      value="${selectedTrailer ? selectedTrailer.trailer_number : ""}"
+      placeholder="No trailer"
+    />
+
+    <datalist id="trailerOptions-${runId}">
+      ${trailers.map((trailer) => `
+        <option value="${trailer.trailer_number}"></option>
+      `).join("")}
+    </datalist>
   `;
 }
 
