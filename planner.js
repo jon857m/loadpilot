@@ -3746,6 +3746,12 @@ function renderRuns() {
       return;
     }
 
+    card.classList.add("saved-flash");
+
+    setTimeout(() => {
+      card.classList.remove("saved-flash");
+    }, 220);
+
     e.target.blur();
     });
 
