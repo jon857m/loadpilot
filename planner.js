@@ -188,13 +188,17 @@ function renderJobPot() {
             </span>
           </div>
 
-          <div class="col cd-col collect-col">C</div>
+          <div class="col cd-col collect-col">
+            <span class="cd-badge cd-collect">C</span>
+          </div>
           <div class="col date-col collect-col">${movement.collect.date || ""}</div>
           <div class="col time-col collect-col">${movement.collect.time || ""}</div>
           <div class="col location-col collect-col">${movement.collect.location}</div>
           <div class="col detail-col collect-col">${movement.collect.detail}</div>
 
-          <div class="col cd-col deliver-col">D</div>
+          <div class="col cd-col deliver-col">
+            <span class="cd-badge cd-deliver">D</span>
+          </div>
           <div class="col date-col deliver-col">${movement.deliver.date || ""}</div>
           <div class="col time-col deliver-col">${movement.deliver.time || ""}</div>
           <div class="col location-col deliver-col">${movement.deliver.location}</div>
@@ -227,7 +231,11 @@ function renderJobPot() {
             </span>
           </div>
 
-          <div class="col cd-col">${stopView.cd}</div>
+          <div class="col cd-col">
+            <span class="cd-badge ${stopView.cd === "C" ? "cd-collect" : "cd-deliver"}">
+              ${stopView.cd}
+            </span>
+          </div>
           <div class="col date-col">${stopView.stop.date || ""}</div>
           <div class="col time-col">${stopView.stop.time || ""}</div>
           <div class="col location-col">${stopView.stop.location || ""}</div>

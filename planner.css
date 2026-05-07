@@ -1207,6 +1207,33 @@ grid-template-columns:
   justify-self: start;
 }
 
+.cd-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 22px;
+  height: 22px;
+
+  border-radius: 6px;
+
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.cd-collect {
+  color: #7ee2a8;
+  background: rgba(126, 226, 168, 0.08);
+  border: 1px solid rgba(126, 226, 168, 0.28);
+}
+
+.cd-deliver {
+  color: #ffbd6b;
+  background: rgba(255, 189, 107, 0.08);
+  border: 1px solid rgba(255, 189, 107, 0.32);
+}
+
 .leg-load-cell {
   display: flex;
   align-items: center;
