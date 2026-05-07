@@ -3795,7 +3795,8 @@ function renderRuns() {
         runEditMode
           ? renderDriverSelect(run.driverId, run.id)
           : `
-            <span class="run-resource driver-resource">
+            <span class="run-resource driver-resource ${!run.driverId ? "empty-resource" : ""}">
+              ${getDriverIcon()}
               ${getDriverLabel(run.driverId)}
             </span>
           `
@@ -3805,7 +3806,8 @@ function renderRuns() {
         runEditMode
           ? renderVehicleSelect(run.vehicleId, run.id)
           : `
-            <span class="run-resource vehicle-resource">
+            <span class="run-resource vehicle-resource ${!run.vehicleId ? "empty-resource" : ""}">
+              ${getVehicleIcon()}
               ${getVehicleLabel(run.vehicleId)}
             </span>
           `
@@ -3815,7 +3817,8 @@ function renderRuns() {
         runEditMode
           ? renderTrailerSelect(run.trailerId, run.id)
           : `
-            <span class="run-resource trailer-resource">
+            <span class="run-resource trailer-resource ${!run.trailerId ? "empty-resource" : ""}">
+              ${getTrailerIcon()}
               ${getTrailerLabel(run.trailerId)}
             </span>
           `
@@ -4260,6 +4263,36 @@ function getTrailerLabel(trailerId) {
   const trailer = trailers.find((t) => t.id === trailerId);
   if (!trailer) return "No trailer";
   return trailer.trailer_number;
+}
+
+function getDriverIcon() {
+  return `
+    <svg viewBox="0 0 24 24" class="run-resource-icon" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M20 21a8 8 0 0 0-16 0"></path>
+      <circle cx="12" cy="7" r="4"></circle>
+    </svg>
+  `;
+}
+
+function getVehicleIcon() {
+  return `
+    <svg viewBox="0 0 24 24" class="run-resource-icon" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M3 7h13l4 4v6h-2"></path>
+      <path d="M5 17H3V9"></path>
+      <circle cx="7" cy="17" r="2"></circle>
+      <circle cx="17" cy="17" r="2"></circle>
+    </svg>
+  `;
+}
+
+function getTrailerIcon() {
+  return `
+    <svg viewBox="0 0 24 24" class="run-resource-icon" fill="none" stroke="currentColor" stroke-width="2">
+      <rect x="3" y="7" width="16" height="10" rx="2"></rect>
+      <circle cx="7" cy="19" r="1.5"></circle>
+      <circle cx="15" cy="19" r="1.5"></circle>
+    </svg>
+  `;
 }
 
 function renderDriverSelect(driverId, runId) {
