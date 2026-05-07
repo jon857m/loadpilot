@@ -471,8 +471,9 @@ function findAddressByName(name) {
 // attachJobPotEvents();
 
 document.getElementById("runDatePicker").value = currentRunDate;
-document.getElementById("jobDatePicker").value =
-  new Date().toISOString().split("T")[0];
+document.getElementById("jobDatePicker").value = new Date()
+  .toISOString()
+  .split("T")[0];
 
 const runCards = document.querySelectorAll(".run-card");
 const jobRows = document.querySelectorAll(".job-row");
@@ -534,12 +535,12 @@ function updateBoxSelection(e) {
   const box = selectionBoxEl.getBoundingClientRect();
 
   const selectionScope = routeList.dataset.shiftClickRouteStopKey
-      ? routeList.querySelectorAll(".route-stop-grid")
-      : jobPot.dataset.shiftClickMovementId
-        ? jobPot.querySelectorAll(".job-row")
-        : routeList.querySelectorAll(".job-leg-row");
+    ? routeList.querySelectorAll(".route-stop-grid")
+    : jobPot.dataset.shiftClickMovementId
+      ? jobPot.querySelectorAll(".job-row")
+      : routeList.querySelectorAll(".job-leg-row");
 
-    selectionScope.forEach((row) => {
+  selectionScope.forEach((row) => {
     const group = row.closest(".job-group");
 
     const isVisible =
@@ -609,7 +610,7 @@ function finishBoxSelection() {
     setOrderMovementSelection(movementId, true);
   });
 
-    document.querySelectorAll(".route-stop-grid.box-selecting").forEach((row) => {
+  document.querySelectorAll(".route-stop-grid.box-selecting").forEach((row) => {
     const checkbox = row.querySelector(".route-row-select");
     const stopKey = checkbox?.dataset.stopKey;
 
@@ -775,11 +776,11 @@ function clearAllSelections() {
   selectedOrderMovements.clear();
   selectedRouteStops.clear();
 
-  document.querySelectorAll(
-    ".row-select, .order-row-select, .route-row-select"
-  ).forEach((checkbox) => {
-    checkbox.checked = false;
-  });
+  document
+    .querySelectorAll(".row-select, .order-row-select, .route-row-select")
+    .forEach((checkbox) => {
+      checkbox.checked = false;
+    });
 
   document.querySelectorAll(".selected, .box-selecting").forEach((row) => {
     row.classList.remove("selected", "box-selecting");
@@ -824,7 +825,7 @@ function openSelectedStopsInGoogleMaps() {
 
       // detect if row is split view (C or D)
       const rows = document.querySelectorAll(
-        `.job-row[data-movement-id="${m.id}"], .job-leg-row[data-movement-id="${m.id}"]`
+        `.job-row[data-movement-id="${m.id}"], .job-leg-row[data-movement-id="${m.id}"]`,
       );
 
       rows.forEach((row) => {
@@ -901,8 +902,6 @@ document.addEventListener("keydown", (e) => {
 
   clearAllSelections();
 });
-
-
 
 const unallocateDropzone = document.querySelector(".unallocate-dropzone");
 
@@ -1113,15 +1112,15 @@ function selectRun(runId) {
   }
 }
 
-  function getRunIdFromPlannerNo(value) {
-    const typedRunNo = String(value || "").trim();
+function getRunIdFromPlannerNo(value) {
+  const typedRunNo = String(value || "").trim();
 
-    if (!typedRunNo) return null;
+  if (!typedRunNo) return null;
 
-    return Object.keys(runs).find((id) => {
-      return String(Number(runs[id].plannerRunNo)) === String(Number(typedRunNo));
-    });
-  }
+  return Object.keys(runs).find((id) => {
+    return String(Number(runs[id].plannerRunNo)) === String(Number(typedRunNo));
+  });
+}
 
 function focusRun(runId) {
   const run = runs[runId];
@@ -1189,8 +1188,8 @@ function assignMovementToRun(movementId, runId) {
     renderOrderDetail(activeOrderId);
   }
 
-    saveAllocationToSupabase(movementId, runId);
-  }
+  saveAllocationToSupabase(movementId, runId);
+}
 
 function moveMovementToRun(movementKey, newRunId) {
   const movementStops = removeMovementFromAllRuns(movementKey);
@@ -1208,7 +1207,7 @@ function moveMovementToRun(movementKey, newRunId) {
   }
 
   saveAllocationToSupabase(movementKey, newRunId);
-  }
+}
 
 function unallocateMovement(movementKey) {
   removeMovementFromAllRuns(movementKey);
@@ -1287,7 +1286,9 @@ function updateUnallocateDropzoneVisibility() {
 }
 
 function normaliseOrderLookup(value) {
-  return String(value || "").trim().replace(/^ORD-/i, "");
+  return String(value || "")
+    .trim()
+    .replace(/^ORD-/i, "");
 }
 
 function findOrderIdFromInput(value) {
@@ -1377,10 +1378,10 @@ function renderOrderDetail(orderId) {
     </label>
 
     ${
-    returnToRunId
-      ? `<button id="backToRunBtn" class="primary-btn">Back to Run</button>`
-      : `<button id="addJobBtn" class="primary-btn" data-order="${orderId}">Add Job</button>`
-  }
+      returnToRunId
+        ? `<button id="backToRunBtn" class="primary-btn">Back to Run</button>`
+        : `<button id="addJobBtn" class="primary-btn" data-order="${orderId}">Add Job</button>`
+    }
     <button id="closeOrderBtn" class="danger-btn" data-order="${orderId}">×</button>
   `;
 
@@ -1490,21 +1491,21 @@ function renderOrderDetail(orderId) {
 
   const orderLookupInput = document.getElementById("orderLookupInput");
 
-    if (orderLookupInput) {
-      orderLookupInput.addEventListener("keydown", (e) => {
-        if (e.key !== "Enter") return;
+  if (orderLookupInput) {
+    orderLookupInput.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter") return;
 
-        const foundOrderId = findOrderIdFromInput(e.target.value);
+      const foundOrderId = findOrderIdFromInput(e.target.value);
 
-        if (!foundOrderId) {
-          alert("Order not found.");
-          return;
-        }
+      if (!foundOrderId) {
+        alert("Order not found.");
+        return;
+      }
 
-        e.target.blur();
-        renderOrderDetail(foundOrderId);
-      });
-    }
+      e.target.blur();
+      renderOrderDetail(foundOrderId);
+    });
+  }
 
   const fullOrderToggle = document.getElementById("fullOrderToggle");
 
@@ -1626,15 +1627,15 @@ function renderFullOrderMovementRows(orderMovements, orderId) {
 
       const checkbox = row.querySelector(".order-row-select");
 
-        if (checkbox) {
-          checkbox.addEventListener("change", () => {
-            const movementId = checkbox.dataset.movementId;
-            const isChecked = checkbox.checked;
+      if (checkbox) {
+        checkbox.addEventListener("change", () => {
+          const movementId = checkbox.dataset.movementId;
+          const isChecked = checkbox.checked;
 
-            setOrderMovementSelection(movementId, isChecked);
-            updateSelectedCount();
-          });
-        }
+          setOrderMovementSelection(movementId, isChecked);
+          updateSelectedCount();
+        });
+      }
 
       if (showFullOrderMovements) {
         row.addEventListener("dragstart", () => {
@@ -1670,16 +1671,16 @@ function renderFullOrderMovementRows(orderMovements, orderId) {
       row.querySelector(".run-input")?.addEventListener("keydown", (e) => {
         if (e.key !== "Enter") return;
 
-      const runId = getRunIdFromPlannerNo(e.target.value);
+        const runId = getRunIdFromPlannerNo(e.target.value);
 
-      if (!runId) {
-        alert("That run does not exist.");
-        e.target.value = "";
-        return;
-      }
+        if (!runId) {
+          alert("That run does not exist.");
+          e.target.value = "";
+          return;
+        }
 
-      e.target.blur();
-      assignMovementToRun(movement.id, runId);
+        e.target.blur();
+        assignMovementToRun(movement.id, runId);
       });
 
       return row;
@@ -1708,7 +1709,7 @@ function renderFullOrderMovementRows(orderMovements, orderId) {
     routeList.appendChild(collectRow);
     routeList.appendChild(deliverRow);
   });
-    updateUnallocateDropzoneVisibility();
+  updateUnallocateDropzoneVisibility();
 }
 
 function tidyActiveRunStops() {
@@ -1718,19 +1719,19 @@ function tidyActiveRunStops() {
   if (!run || !run.stops.length) return;
 
   const collectFromDepot = run.stops.filter(
-    (stop) => stop.type === "collect" && stop.location === "Depot"
+    (stop) => stop.type === "collect" && stop.location === "Depot",
   );
 
   const deliverToNonDepot = run.stops.filter(
-    (stop) => stop.type === "deliver" && stop.location !== "Depot"
+    (stop) => stop.type === "deliver" && stop.location !== "Depot",
   );
 
   const collectFromNonDepot = run.stops.filter(
-    (stop) => stop.type === "collect" && stop.location !== "Depot"
+    (stop) => stop.type === "collect" && stop.location !== "Depot",
   );
 
   const deliverToDepot = run.stops.filter(
-    (stop) => stop.type === "deliver" && stop.location === "Depot"
+    (stop) => stop.type === "deliver" && stop.location === "Depot",
   );
 
   const firstPassOrder = [
@@ -1748,7 +1749,7 @@ function tidyActiveRunStops() {
     run.stops = firstPassOrder;
   } else {
     const deliveryMovementKeys = deliverToNonDepot.map(
-      (stop) => stop.movementKey
+      (stop) => stop.movementKey,
     );
 
     const reorderedCollectFromDepot = [...collectFromDepot].sort((a, b) => {
@@ -1770,7 +1771,7 @@ function tidyActiveRunStops() {
   renderActiveRun();
 }
 
-  function updateActiveRunTotals(run, previewSelectedStops = null) {
+function updateActiveRunTotals(run, previewSelectedStops = null) {
   const totalsEl = document.getElementById("activeRunTotals");
   if (!totalsEl || !run) return;
 
@@ -1809,10 +1810,12 @@ function tidyActiveRunStops() {
     }
   `;
 
-  document.getElementById("clearRouteSelection")?.addEventListener("click", () => {
-    selectedRouteStops.clear();
-    renderActiveRun();
-  });
+  document
+    .getElementById("clearRouteSelection")
+    ?.addEventListener("click", () => {
+      selectedRouteStops.clear();
+      renderActiveRun();
+    });
 }
 
 function renderActiveRun() {
@@ -1839,17 +1842,17 @@ function renderActiveRun() {
     activeRunInput.addEventListener("keydown", (e) => {
       if (e.key !== "Enter") return;
 
-    e.preventDefault();
+      e.preventDefault();
 
-    const runId = getRunIdFromPlannerNo(e.target.value);
+      const runId = getRunIdFromPlannerNo(e.target.value);
 
-    if (!runId) {
-      alert("That run does not exist.");
-      return;
-    }
+      if (!runId) {
+        alert("That run does not exist.");
+        return;
+      }
 
-    e.target.blur();
-    focusRun(runId);
+      e.target.blur();
+      focusRun(runId);
     });
   }
 
@@ -1894,10 +1897,11 @@ function renderActiveRun() {
 
   run.stops.forEach((stop, index) => {
     const stopRow = document.createElement("div");
-    stopRow.className = "route-stop active-run-grid job-leg-row active-run-row route-stop-grid";
+    stopRow.className =
+      "route-stop active-run-grid job-leg-row active-run-row route-stop-grid";
     stopRow.setAttribute("draggable", "true");
 
-  stopRow.innerHTML = `
+    stopRow.innerHTML = `
         <div>
           <input 
             type="checkbox" 
@@ -1943,21 +1947,24 @@ function renderActiveRun() {
         .filter((item) => selectedRouteStops.has(item.key))
         .map((item) => item.index);
 
-    if (selectedRouteStops.has(thisStopKey) && selectedStopIndexes.length > 1) {
-      dragPayload = {
-        type: "routeStopGroup",
-        runId: activeRunId,
-        stopIndexes: selectedStopIndexes,
-      };
-      return;
-    }
+      if (
+        selectedRouteStops.has(thisStopKey) &&
+        selectedStopIndexes.length > 1
+      ) {
+        dragPayload = {
+          type: "routeStopGroup",
+          runId: activeRunId,
+          stopIndexes: selectedStopIndexes,
+        };
+        return;
+      }
 
-    dragPayload = {
-      type: "routeMovement",
-      runId: activeRunId,
-      movementKey: stop.movementKey,
-      stopIndex: index,
-    };
+      dragPayload = {
+        type: "routeMovement",
+        runId: activeRunId,
+        movementKey: stop.movementKey,
+        stopIndex: index,
+      };
     });
 
     stopRow.addEventListener("dragover", (e) => {
@@ -1980,7 +1987,9 @@ function renderActiveRun() {
       if (dragPayload.type === "routeStopGroup") {
         const fromIndexes = [...dragPayload.stopIndexes].sort((a, b) => a - b);
 
-        const movingStops = fromIndexes.map((fromIndex) => run.stops[fromIndex]);
+        const movingStops = fromIndexes.map(
+          (fromIndex) => run.stops[fromIndex],
+        );
 
         const remainingStops = run.stops.filter((_, routeIndex) => {
           return !fromIndexes.includes(routeIndex);
@@ -2048,41 +2057,76 @@ function renderActiveRun() {
 
     routeList.appendChild(stopRow);
 
-        const routeCheckbox = stopRow.querySelector(".route-row-select");
+    const routeCheckbox = stopRow.querySelector(".route-row-select");
 
     if (routeCheckbox) {
       routeCheckbox.addEventListener("click", (e) => {
-      e.stopPropagation();
+        e.stopPropagation();
 
-      const allCheckboxes = Array.from(
-        document.querySelectorAll(".route-row-select")
-      );
+        const allCheckboxes = Array.from(
+          document.querySelectorAll(".route-row-select"),
+        );
 
-      const currentIndex = allCheckboxes.indexOf(routeCheckbox);
+        const currentIndex = allCheckboxes.indexOf(routeCheckbox);
 
-      if (e.shiftKey && lastRouteSelectedIndex !== null) {
-        const start = Math.min(lastRouteSelectedIndex, currentIndex);
-        const end = Math.max(lastRouteSelectedIndex, currentIndex);
+        if (e.shiftKey && lastRouteSelectedIndex !== null) {
+          const start = Math.min(lastRouteSelectedIndex, currentIndex);
+          const end = Math.max(lastRouteSelectedIndex, currentIndex);
 
-        for (let i = start; i <= end; i++) {
-          const cb = allCheckboxes[i];
-          const key = cb.dataset.stopKey;
-          const row = cb.closest(".route-stop");
+          for (let i = start; i <= end; i++) {
+            const cb = allCheckboxes[i];
+            const key = cb.dataset.stopKey;
+            const row = cb.closest(".route-stop");
 
-          cb.checked = true;
-          selectedRouteStops.add(key);
+            cb.checked = true;
+            selectedRouteStops.add(key);
+            updateActiveRunTotals(run);
+            row?.classList.add("selected");
+          }
+
+          lastRouteSelectedIndex = currentIndex;
+          return;
+        }
+
+        const stopKey = routeCheckbox.dataset.stopKey;
+        if (!stopKey) return;
+
+        if (routeCheckbox.checked) {
+          selectedRouteStops.add(stopKey);
           updateActiveRunTotals(run);
-          row?.classList.add("selected");
+          stopRow.classList.add("selected");
+        } else {
+          selectedRouteStops.delete(stopKey);
+          updateActiveRunTotals(run);
+          stopRow.classList.remove("selected");
         }
 
         lastRouteSelectedIndex = currentIndex;
+      });
+    }
+
+    stopRow.addEventListener("click", (e) => {
+      if (
+        e.target.closest("button") ||
+        e.target.closest("input") ||
+        e.target.closest(".run-input")
+      ) {
         return;
       }
+
+      if (!e.shiftKey) return;
+
+      const routeCheckbox = stopRow.querySelector(".route-row-select");
+      if (!routeCheckbox) return;
 
       const stopKey = routeCheckbox.dataset.stopKey;
       if (!stopKey) return;
 
-      if (routeCheckbox.checked) {
+      const shouldSelect = !selectedRouteStops.has(stopKey);
+
+      routeCheckbox.checked = shouldSelect;
+
+      if (shouldSelect) {
         selectedRouteStops.add(stopKey);
         updateActiveRunTotals(run);
         stopRow.classList.add("selected");
@@ -2091,73 +2135,40 @@ function renderActiveRun() {
         updateActiveRunTotals(run);
         stopRow.classList.remove("selected");
       }
-
-      lastRouteSelectedIndex = currentIndex;
-     });
-    }
-
-    stopRow.addEventListener("click", (e) => {
-    if (
-      e.target.closest("button") ||
-      e.target.closest("input") ||
-      e.target.closest(".run-input")
-    ) {
-      return;
-    }
-
-    if (!e.shiftKey) return;
-
-    const routeCheckbox = stopRow.querySelector(".route-row-select");
-    if (!routeCheckbox) return;
-
-    const stopKey = routeCheckbox.dataset.stopKey;
-    if (!stopKey) return;
-
-    const shouldSelect = !selectedRouteStops.has(stopKey);
-
-    routeCheckbox.checked = shouldSelect;
-
-    if (shouldSelect) {
-      selectedRouteStops.add(stopKey);
-      updateActiveRunTotals(run);
-      stopRow.classList.add("selected");
-    } else {
-      selectedRouteStops.delete(stopKey);
-      updateActiveRunTotals(run);
-      stopRow.classList.remove("selected");
-    }
-  });
-  });
-
-    updateUnallocateDropzoneVisibility();
-
-    const selectAllRouteCheckbox = document.getElementById("selectRouteStopsCheckbox");
-
-if (selectAllRouteCheckbox) {
-  selectAllRouteCheckbox.addEventListener("change", (e) => {
-    const shouldSelect = e.target.checked;
-
-    selectedRouteStops.clear();
-
-    document.querySelectorAll(".route-row-select").forEach((checkbox) => {
-      const stopKey = checkbox.dataset.stopKey;
-      if (!stopKey) return;
-
-      checkbox.checked = shouldSelect;
-
-      const row = checkbox.closest(".route-stop");
-
-      if (shouldSelect) {
-        selectedRouteStops.add(stopKey);
-        updateActiveRunTotals(run);
-        row?.classList.add("selected");
-      } else {
-        row?.classList.remove("selected");
-      }
     });
   });
-}
-updateActiveRunTotals(run);
+
+  updateUnallocateDropzoneVisibility();
+
+  const selectAllRouteCheckbox = document.getElementById(
+    "selectRouteStopsCheckbox",
+  );
+
+  if (selectAllRouteCheckbox) {
+    selectAllRouteCheckbox.addEventListener("change", (e) => {
+      const shouldSelect = e.target.checked;
+
+      selectedRouteStops.clear();
+
+      document.querySelectorAll(".route-row-select").forEach((checkbox) => {
+        const stopKey = checkbox.dataset.stopKey;
+        if (!stopKey) return;
+
+        checkbox.checked = shouldSelect;
+
+        const row = checkbox.closest(".route-stop");
+
+        if (shouldSelect) {
+          selectedRouteStops.add(stopKey);
+          updateActiveRunTotals(run);
+          row?.classList.add("selected");
+        } else {
+          row?.classList.remove("selected");
+        }
+      });
+    });
+  }
+  updateActiveRunTotals(run);
 }
 
 function updateJobPotAllocationDisplay() {
@@ -2630,7 +2641,6 @@ function clearSelectedMovements() {
   updateSelectedCount();
 }
 
-
 function updateSelectedCount() {
   const countEl = document.getElementById("selectedCount");
   if (!countEl) return;
@@ -2785,7 +2795,9 @@ function clearAllSelectedMovements() {
     row.classList.remove("box-selecting");
   });
 
-  const selectVisibleCheckbox = document.getElementById("selectVisibleJobsCheckbox");
+  const selectVisibleCheckbox = document.getElementById(
+    "selectVisibleJobsCheckbox",
+  );
   if (selectVisibleCheckbox) {
     selectVisibleCheckbox.checked = false;
   }
@@ -3771,18 +3783,25 @@ function renderRuns() {
       </div>
 
       <div class="run-resources">
-        ${runEditMode
-          ? renderDriverSelect(run.driverId, run.id)
-          : `
+        ${
+          runEditMode
+            ? renderDriverSelect(run.driverId, run.id)
+            : `
             <span class="run-resource driver-resource">
               ${getDriverLabel(run.driverId)}
             </span>
           `
         }
 
-        <span class="run-resource vehicle-resource">
-          ${getVehicleLabel(run.vehicleId)}
-        </span>
+      ${
+        runEditMode
+          ? renderVehicleSelect(run.vehicleId, run.id)
+          : `
+          <span class="run-resource vehicle-resource">
+            ${getVehicleLabel(run.vehicleId)}
+          </span>
+        `
+      }
 
         <span class="run-resource trailer-resource">
           ${getTrailerLabel(run.trailerId)}
@@ -3799,6 +3818,7 @@ function renderRuns() {
     const nameInput = card.querySelector(".run-name-input");
     const vehicleTypeInput = card.querySelector(".run-vehicle-type-input");
     const driverSelect = card.querySelector(".run-driver-select");
+    const vehicleSelect = card.querySelector(".run-vehicle-select");
 
     timeInput.addEventListener("click", (e) => e.stopPropagation());
     nameInput.addEventListener("click", (e) => e.stopPropagation());
@@ -3819,41 +3839,62 @@ function renderRuns() {
         console.error("Could not update vehicle type:", error);
         alert("Could not update vehicle type. Check console.");
         return;
-    }
+      }
 
       card.classList.add("saved-flash");
 
-        setTimeout(() => {
-          card.classList.remove("saved-flash");
-        }, 220);
+      setTimeout(() => {
+        card.classList.remove("saved-flash");
+      }, 220);
 
-        e.target.blur();
-      });
+      e.target.blur();
+    });
 
     driverSelect?.addEventListener("change", async (e) => {
-        e.stopPropagation();
+      e.stopPropagation();
 
-        const driverId = e.target.value || null;
+      const driverId = e.target.value || null;
 
-        runs[run.id].driverId = driverId;
+      runs[run.id].driverId = driverId;
 
-        const { error } = await supabaseClient
-          .from("runs")
-          .update({
-            driver_id: driverId
-          })
-          .eq("id", run.id);
+      const { error } = await supabaseClient
+        .from("runs")
+        .update({
+          driver_id: driverId,
+        })
+        .eq("id", run.id);
 
-        if (error) {
-          console.error("Error updating driver:", error);
-          alert("Could not update driver.");
-          return;
-        }
+      if (error) {
+        console.error("Error updating driver:", error);
+        alert("Could not update driver.");
+        return;
+      }
 
-        console.log("Driver updated:", run.id, driverId);
-      });
+      console.log("Driver updated:", run.id, driverId);
+    });
 
-    
+    vehicleSelect?.addEventListener("change", async (e) => {
+      e.stopPropagation();
+
+      const vehicleId = e.target.value || null;
+
+      runs[run.id].vehicleId = vehicleId;
+
+      const { error } = await supabaseClient
+        .from("runs")
+        .update({
+          vehicle_id: vehicleId,
+        })
+        .eq("id", run.id);
+
+      if (error) {
+        console.error("Error updating vehicle:", error);
+        alert("Could not update vehicle.");
+        return;
+      }
+
+      console.log("Vehicle updated:", run.id, vehicleId);
+    });
 
     timeInput.addEventListener("input", async (e) => {
       const value = e.target.value || "";
@@ -3920,8 +3961,8 @@ function renderRuns() {
         const movementKeys = [
           ...new Set(
             dragPayload.stopIndexes.map(
-              (i) => runs[dragPayload.runId].stops[i].movementKey
-            )
+              (i) => runs[dragPayload.runId].stops[i].movementKey,
+            ),
           ),
         ];
 
@@ -4063,15 +4104,14 @@ document.getElementById("addRunBtn").addEventListener("click", async () => {
   selectRun(data.id);
 });
 
-  document
-    .getElementById("runWindowOffsetToggle")
-    .addEventListener("change", (e) => {
-      includePreviousEveningRuns = e.target.checked;
+document
+  .getElementById("runWindowOffsetToggle")
+  .addEventListener("change", (e) => {
+    includePreviousEveningRuns = e.target.checked;
 
-      const selectedRunStillExists =
-        activeRunId && runs[activeRunId];
+    const selectedRunStillExists = activeRunId && runs[activeRunId];
 
-      renderRuns();
+    renderRuns();
 
     if (selectedRunStillExists) {
       const runToKeepSelected = activeRunId;
@@ -4081,7 +4121,7 @@ document.getElementById("addRunBtn").addEventListener("click", async () => {
       activeRunId = null;
       renderActiveRun();
     }
-    });
+  });
 
 document.getElementById("runEditModeToggle").addEventListener("change", (e) => {
   runEditMode = e.target.checked;
@@ -4135,14 +4175,39 @@ function renderDriverSelect(selectedDriverId, runId) {
     <select class="run-driver-select" data-run-id="${runId}">
       <option value="">No driver</option>
 
-      ${drivers.map(driver => `
+      ${drivers
+        .map(
+          (driver) => `
         <option
           value="${driver.id}"
           ${driver.id === selectedDriverId ? "selected" : ""}
         >
           ${driver.last_name}, ${driver.first_name}
         </option>
-      `).join("")}
+      `,
+        )
+        .join("")}
+    </select>
+  `;
+}
+
+function renderVehicleSelect(selectedVehicleId, runId) {
+  return `
+    <select class="run-vehicle-select" data-run-id="${runId}">
+      <option value="">No vehicle</option>
+
+      ${vehicles
+        .map(
+          (vehicle) => `
+        <option
+          value="${vehicle.id}"
+          ${vehicle.id === selectedVehicleId ? "selected" : ""}
+        >
+          ${vehicle.registration}
+        </option>
+      `,
+        )
+        .join("")}
     </select>
   `;
 }
@@ -4337,11 +4402,11 @@ function renderJobLegDetail(jobId) {
 
   const firstMovement = jobMovements[0];
 
-    activeOrderId = firstMovement.orderId;
+  activeOrderId = firstMovement.orderId;
 
-    if (!returnToRunId) {
-      activeRunId = null;
-    }
+  if (!returnToRunId) {
+    activeRunId = null;
+  }
 
   activeRouteHeader.innerHTML = `
       Job Legs —
@@ -4356,23 +4421,23 @@ function renderJobLegDetail(jobId) {
       <button id="closeLegBtn" class="danger-btn">×</button>
     `;
 
-    const jobLookupInput = document.getElementById("jobLookupInput");
+  const jobLookupInput = document.getElementById("jobLookupInput");
 
-if (jobLookupInput) {
-  jobLookupInput.addEventListener("keydown", (e) => {
-    if (e.key !== "Enter") return;
+  if (jobLookupInput) {
+    jobLookupInput.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter") return;
 
-    const foundJobId = findJobIdFromInput(e.target.value);
+      const foundJobId = findJobIdFromInput(e.target.value);
 
-    if (!foundJobId) {
-      alert("Job not found.");
-      return;
-    }
+      if (!foundJobId) {
+        alert("Job not found.");
+        return;
+      }
 
-    e.target.blur();
-    renderJobLegDetail(foundJobId);
-  });
-}
+      e.target.blur();
+      renderJobLegDetail(foundJobId);
+    });
+  }
 
   routeEmpty.style.display = "none";
   routeList.style.display = "flex";
