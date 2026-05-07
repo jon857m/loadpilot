@@ -1472,13 +1472,17 @@ function renderOrderDetail(orderId) {
         </span>
       </div>
 
-      <div>C</div>
+      <div>
+        <span class="cd-badge cd-collect">C</span>
+      </div>
       <div>${firstMovement.collect.date || ""}</div>
       <div>${firstMovement.collect.time || ""}</div>
       <div>${firstMovement.collect.location || ""}</div>
       <div>${firstMovement.collect.detail || ""}</div>
 
-      <div>D</div>
+      <div>
+        <span class="cd-badge cd-deliver">D</span>
+      </div>
       <div>${lastMovement.deliver.date || ""}</div>
       <div>${lastMovement.deliver.time || ""}</div>
       <div>${lastMovement.deliver.location || ""}</div>
@@ -1613,7 +1617,11 @@ function renderFullOrderMovementRows(orderMovements, orderId) {
           />
         </div>
         <div>${shortJobFullLabel(movement.jobId)}</div>
-        <div>${type === "collect" ? "C" : "D"}</div>
+        <div>
+          <span class="cd-badge ${type === "collect" ? "cd-collect" : "cd-deliver"}">
+            ${type === "collect" ? "C" : "D"}
+          </span>
+        </div>
         <div>${formatDateTime(stop.date, stop.time)}</div>
         <div>${stop.location || ""}</div>
         <div>${stop.detail || ""}</div>
@@ -4619,7 +4627,11 @@ if (jobLookupInput) {
       row.innerHTML = `
         <div>${seq}</div>
         <div>${shortJobFullLabel(movement.jobId)}</div>
-        <div>${type === "collect" ? "C" : "D"}</div>
+        <div>
+          <span class="cd-badge ${type === "collect" ? "cd-collect" : "cd-deliver"}">
+            ${type === "collect" ? "C" : "D"}
+          </span>
+        </div>
         <div>${formatDateTime(stop.date, stop.time)}</div>
         <div>${stop.location || ""}</div>
         <div>${stop.detail || ""}</div>
