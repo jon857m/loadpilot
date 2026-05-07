@@ -3822,7 +3822,7 @@ function renderRuns() {
     const timeInput = card.querySelector(".run-time-input");
     const nameInput = card.querySelector(".run-name-input");
     const vehicleTypeInput = card.querySelector(".run-vehicle-type-input");
-    const driverSelect = card.querySelector(".run-driver-select");
+    const driverSearch = card.querySelector(".run-driver-search");
     const vehicleSelect = card.querySelector(".run-vehicle-select");
     const trailerSelect = card.querySelector(".run-trailer-select");
 
@@ -3856,28 +3856,41 @@ function renderRuns() {
       e.target.blur();
     });
 
-    driverSelect?.addEventListener("change", async (e) => {
-      e.stopPropagation();
+  driverSearch?.addEventListener("change", async (e) => {
+    e.stopPropagation();
 
-      const driverId = e.target.value || null;
+    const typedValue = e.target.value.trim().toLowerCase();
 
-      runs[run.id].driverId = driverId;
-
-      const { error } = await supabaseClient
-        .from("runs")
-        .update({
-          driver_id: driverId,
-        })
-        .eq("id", run.id);
-
-      if (error) {
-        console.error("Error updating driver:", error);
-        alert("Could not update driver.");
-        return;
-      }
-
-      console.log("Driver updated:", run.id, driverId);
+    const matchedDriver = drivers.find((driver) => {
+      const label = `${driver.last_name}, ${driver.first_name}`.toLowerCase();
+      return label === typedValue;
     });
+
+    if (!matchedDriver && typedValue) {
+      alert("Please select a driver from the list.");
+      e.target.value = getDriverLabel(runs[run.id].driverId);
+      return;
+    }
+
+    const driverId = matchedDriver ? matchedDriver.id : null;
+
+    runs[run.id].driverId = driverId;
+
+    const { error } = await supabaseClient
+      .from("runs")
+      .update({
+        driver_id: driverId
+      })
+      .eq("id", run.id);
+
+    if (error) {
+      console.error("Error updating driver:", error);
+      alert("Could not update driver.");
+      return;
+    }
+
+    console.log("Driver updated:", run.id, driverId);
+  });
 
     vehicleSelect?.addEventListener("change", async (e) => {
       e.stopPropagation();
@@ -4200,23 +4213,25 @@ function getDriverLabel(driverId) {
 }
 
 function renderDriverSelect(selectedDriverId, runId) {
-  return `
-    <select class="run-driver-select" data-run-id="${runId}">
-      <option value="">No driver</option>
+  const selectedDriver = drivers.find((driver) => driver.id === selectedDriverId);
 
-      ${drivers
-        .map(
-          (driver) => `
+  return `
+    <input
+      class="run-driver-search"
+      data-run-id="${runId}"
+      list="driverOptions-${runId}"
+      value="${selectedDriver ? `${selectedDriver.last_name}, ${selectedDriver.first_name}` : ""}"
+      placeholder="No driver"
+    />
+
+    <datalist id="driverOptions-${runId}">
+      ${drivers.map(driver => `
         <option
-          value="${driver.id}"
-          ${driver.id === selectedDriverId ? "selected" : ""}
-        >
-          ${driver.last_name}, ${driver.first_name}
-        </option>
-      `,
-        )
-        .join("")}
-    </select>
+          value="${driver.last_name}, ${driver.first_name}"
+          data-driver-id="${driver.id}"
+        ></option>
+      `).join("")}
+    </datalist>
   `;
 }
 
