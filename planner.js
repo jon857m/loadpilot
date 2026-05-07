@@ -378,7 +378,59 @@ let includePreviousEveningRuns = false;
 
 const movementAllocations = {};
 
+let drivers = [];
+let vehicles = [];
+let trailers = [];
+
 let addressBook = [];
+
+async function loadResourcesFromSupabase() {
+  const accountId = await getAccountId();
+
+  const { data: driverData, error: driverError } = await supabaseClient
+    .from("drivers")
+    .select("id, first_name, last_name, licence_class, employer")
+    .eq("account_id", accountId)
+    .order("last_name", { ascending: true });
+
+  if (driverError) {
+    console.error("Error loading drivers:", driverError);
+    return;
+  }
+
+  const { data: vehicleData, error: vehicleError } = await supabaseClient
+    .from("vehicles")
+    .select("id, registration, vehicle_type, owner, vor")
+    .eq("account_id", accountId)
+    .eq("vor", false)
+    .order("registration", { ascending: true });
+
+  if (vehicleError) {
+    console.error("Error loading vehicles:", vehicleError);
+    return;
+  }
+
+  const { data: trailerData, error: trailerError } = await supabaseClient
+    .from("trailers")
+    .select("id, trailer_number, owner, vor")
+    .eq("account_id", accountId)
+    .eq("vor", false)
+    .order("trailer_number", { ascending: true });
+
+  if (trailerError) {
+    console.error("Error loading trailers:", trailerError);
+    return;
+  }
+
+  drivers = driverData || [];
+  vehicles = vehicleData || [];
+  trailers = trailerData || [];
+
+  console.log("Drivers loaded:", drivers);
+  console.log("Vehicles loaded:", vehicles);
+  console.log("Trailers loaded:", trailers);
+}
+
 
 async function loadAddressBookFromSupabase() {
   const accountId = await getAccountId();
@@ -856,6 +908,7 @@ document.addEventListener("keydown", (e) => {
 const unallocateDropzone = document.querySelector(".unallocate-dropzone");
 
 loadRunsFromDB();
+loadResourcesFromSupabase();
 
 runCards.forEach((card) => {
   card.addEventListener("click", () => {
