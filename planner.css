@@ -126,6 +126,7 @@ body {
   cursor: pointer;
   border: 1px solid #2a2d33;
   transition: 0.2s;
+  position: relative;
 }
 
 .run-card:hover {
@@ -837,6 +838,22 @@ grid-template-columns:
   font-size: 12px;
 }
 
+.run-side-meta {
+  position: absolute;
+  right: 12px;
+  top: 34px;
+
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.run-number {
+  color: #9aa3ad;
+  font-size: 11px;
+  font-weight: 600;
+}
+
 .run-resources {
   display: flex;
   gap: 8px;
@@ -845,12 +862,69 @@ grid-template-columns:
 }
 
 .run-resource {
-  font-size: 11px;
-  padding: 3px 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  height: 28px;
+  min-width: 145px;
+  max-width: 145px;
+
+  padding: 0 10px;
+
   border-radius: 999px;
+
+  background: rgba(255,255,255,0.045);
+  border: 1px solid rgba(255,255,255,0.08);
+
+  color: #d6dde7;
+
+  font-size: 11px;
+  font-weight: 500;
+
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+
+  backdrop-filter: blur(6px);
+}
+
+.run-resource-input {
+  height: 28px;
+  min-width: 145px;
+  max-width: 145px;
+
+  padding: 0 10px;
+
+  border-radius: 999px;
+
+  border: 1px solid rgba(255,255,255,0.1);
   background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.06);
-  color: #cfd3dc;
+
+  color: #e7edf5;
+
+  font-size: 11px;
+  font-weight: 500;
+
+  outline: none;
+
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.run-resource-input:hover {
+  border-color: rgba(255,255,255,0.16);
+}
+
+.run-resource-input:focus {
+  border-color: rgba(74,144,226,0.8);
+
+  background: rgba(255,255,255,0.07);
+
+  box-shadow:
+    0 0 0 3px rgba(74,144,226,0.15);
 }
 
 .run-window-toggle {

@@ -3782,8 +3782,11 @@ function renderRuns() {
         <option value="VAN" ${run.requiredVehicleType === "VAN" ? "selected" : ""}>VAN</option>
       </select>
       </div>
-      <div class="run-ref">
-        #${run.plannerRunNo ? String(Number(run.plannerRunNo)) : ""}
+      <div class="run-side-meta">
+        <div class="run-number">
+          #${run.plannerRunNo ? String(Number(run.plannerRunNo)) : ""}
+        </div>
+
         <button class="run-delete-btn ${runEditMode ? "" : "run-delete-btn-hidden"}" data-run-id="${run.id}">×</button>
       </div>
 
