@@ -3788,18 +3788,36 @@ function renderRuns() {
       </div>
 
       <div class="run-resources">
-      <span class="run-resource driver-resource">
-        ${getDriverLabel(run.driverId)}
-      </span>
+      ${
+        runEditMode
+          ? renderDriverSelect(run.driverId, run.id)
+          : `
+            <span class="run-resource driver-resource">
+              ${getDriverLabel(run.driverId)}
+            </span>
+          `
+      }
 
-      <span class="run-resource vehicle-resource">
-        ${getVehicleLabel(run.vehicleId)}
-      </span>
+      ${
+        runEditMode
+          ? renderVehicleSelect(run.vehicleId, run.id)
+          : `
+            <span class="run-resource vehicle-resource">
+              ${getVehicleLabel(run.vehicleId)}
+            </span>
+          `
+      }
 
-      <span class="run-resource trailer-resource">
-        ${getTrailerLabel(run.trailerId)}
-      </span>
-    </div>
+      ${
+        runEditMode
+          ? renderTrailerSelect(run.trailerId, run.id)
+          : `
+            <span class="run-resource trailer-resource">
+              ${getTrailerLabel(run.trailerId)}
+            </span>
+          `
+      }
+          </div>
 
     `;
 
@@ -3922,6 +3940,82 @@ function renderRuns() {
       clearSelectedMovements();
       unallocateDropzone.classList.remove("visible", "drag-over");
     });
+
+    const driverSelect = card.querySelector(".run-driver-select");
+
+    if (driverSelect) {
+      driverSelect.addEventListener("change", async (e) => {
+        const newDriverId = e.target.value || null;
+
+        runs[run.id].driverId = newDriverId;
+
+        const { error } = await supabaseClient
+          .from("runs")
+          .update({
+            driver_id: newDriverId,
+          })
+          .eq("id", run.id);
+
+        if (error) {
+          console.error("Error saving driver:", error);
+          alert("Could not save driver.");
+          return;
+        }
+
+        renderRuns();
+      });
+    }
+
+    const vehicleSelect = card.querySelector(".run-vehicle-select");
+
+      if (vehicleSelect) {
+        vehicleSelect.addEventListener("change", async (e) => {
+          const newVehicleId = e.target.value || null;
+
+          runs[run.id].vehicleId = newVehicleId;
+
+          const { error } = await supabaseClient
+            .from("runs")
+            .update({
+              vehicle_id: newVehicleId,
+            })
+            .eq("id", run.id);
+
+          if (error) {
+            console.error("Error saving vehicle:", error);
+            alert("Could not save vehicle.");
+            return;
+          }
+
+          renderRuns();
+        });
+      }
+
+      const trailerSelect = card.querySelector(".run-trailer-select");
+
+      if (trailerSelect) {
+        trailerSelect.addEventListener("change", async (e) => {
+          const newTrailerId = e.target.value || null;
+
+          runs[run.id].trailerId = newTrailerId;
+
+          const { error } = await supabaseClient
+            .from("runs")
+            .update({
+              trailer_id: newTrailerId,
+            })
+            .eq("id", run.id);
+
+          if (error) {
+            console.error("Error saving trailer:", error);
+            alert("Could not save trailer.");
+            return;
+          }
+
+          renderRuns();
+        });
+      }
+
 
     runList.appendChild(card);
   });
@@ -4098,6 +4192,9 @@ async function loadRunsFromDB() {
       name: row.run_name || "Unknown",
       date: row.run_date,
       startTime: row.start_time ? row.start_time.slice(0, 5) : "00:00",
+      driverId: row.driver_id || null,
+      vehicleId: row.vehicle_id || null,
+      trailerId: row.trailer_id || null,
       plannerRunNo: row.planner_run_no,
       requiredVehicleType: row.required_vehicle_type || "",
       stops: [],
@@ -4123,6 +4220,71 @@ function getTrailerLabel(trailerId) {
   const trailer = trailers.find((t) => t.id === trailerId);
   if (!trailer) return "No trailer";
   return trailer.trailer_number;
+}
+
+function renderDriverSelect(driverId, runId) {
+  const options = [
+    `<option value="">No driver</option>`,
+    ...drivers.map((driver) => {
+      const label = `${driver.last_name}, ${driver.first_name}`;
+
+      return `
+        <option value="${driver.id}" ${
+          driver.id === driverId ? "selected" : ""
+        }>
+          ${label}
+        </option>
+      `;
+    }),
+  ];
+
+  return `
+    <select class="run-driver-select" data-run-id="${runId}">
+      ${options.join("")}
+    </select>
+  `;
+}
+
+function renderVehicleSelect(vehicleId, runId) {
+  const options = [
+    `<option value="">No vehicle</option>`,
+    ...vehicles.map((vehicle) => {
+      return `
+        <option value="${vehicle.id}" ${
+          vehicle.id === vehicleId ? "selected" : ""
+        }>
+          ${vehicle.registration}
+        </option>
+      `;
+    }),
+  ];
+
+  return `
+    <select class="run-vehicle-select" data-run-id="${runId}">
+      ${options.join("")}
+    </select>
+  `;
+}
+
+function renderTrailerSelect(trailerId, runId) {
+  const options = [
+    `<option value="">No trailer</option>`,
+    ...trailers.map((trailer) => {
+      return `
+        <option value="${trailer.id}" ${
+          trailer.id === trailerId ? "selected" : ""
+        }>
+          ${trailer.trailer_number}
+        </option>
+      `;
+    }),
+  ];
+
+  return `
+    <select class="run-trailer-select" data-run-id="${runId}">
+      ${options.join("")}
+    </select>
+  `;
 }
 
 async function softDeleteRun(runId) {
