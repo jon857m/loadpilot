@@ -3708,6 +3708,7 @@ function renderRuns() {
         <select class="run-vehicle-type-input" ${runEditMode ? "" : "disabled"}>
         <option value="C1 ARTIC" ${run.requiredVehicleType === "C1 ARTIC" ? "selected" : ""}>C1 ARTIC</option>
         <option value="C2 RIGID" ${run.requiredVehicleType === "C2 RIGID" ? "selected" : ""}>C2 RIGID</option>
+        <option value="7.5t" ${run.requiredVehicleType === "7.5t" ? "selected" : ""}>7.5t</option>
         <option value="VAN" ${run.requiredVehicleType === "VAN" ? "selected" : ""}>VAN</option>
       </select>
       </div>
