@@ -837,6 +837,22 @@ grid-template-columns:
   font-size: 12px;
 }
 
+.run-resources {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+
+.run-resource {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.05);
+  color: #9fb0c8;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
 .run-window-toggle {
   display: flex;
   align-items: center;

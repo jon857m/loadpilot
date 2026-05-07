@@ -378,7 +378,58 @@ let includePreviousEveningRuns = false;
 
 const movementAllocations = {};
 
+let drivers = [];
+let vehicles = [];
+let trailers = [];
+
 let addressBook = [];
+
+async function loadResourcesFromSupabase() {
+  const accountId = await getAccountId();
+
+  const { data: driverData, error: driverError } = await supabaseClient
+    .from("drivers")
+    .select("id, first_name, last_name, licence_class, employer")
+    .eq("account_id", accountId)
+    .order("last_name", { ascending: true });
+
+  if (driverError) {
+    console.error("Error loading drivers:", driverError);
+    return;
+  }
+
+  const { data: vehicleData, error: vehicleError } = await supabaseClient
+    .from("vehicles")
+    .select("id, registration, vehicle_type, owner, vor")
+    .eq("account_id", accountId)
+    .eq("vor", false)
+    .order("registration", { ascending: true });
+
+  if (vehicleError) {
+    console.error("Error loading vehicles:", vehicleError);
+    return;
+  }
+
+  const { data: trailerData, error: trailerError } = await supabaseClient
+    .from("trailers")
+    .select("id, trailer_number, owner, vor")
+    .eq("account_id", accountId)
+    .eq("vor", false)
+    .order("trailer_number", { ascending: true });
+
+  if (trailerError) {
+    console.error("Error loading trailers:", trailerError);
+    return;
+  }
+
+  drivers = driverData || [];
+  vehicles = vehicleData || [];
+  trailers = trailerData || [];
+
+  console.log("Drivers loaded:", drivers);
+  console.log("Vehicles loaded:", vehicles);
+  console.log("Trailers loaded:", trailers);
+}
 
 async function loadAddressBookFromSupabase() {
   const accountId = await getAccountId();
@@ -855,7 +906,9 @@ document.addEventListener("keydown", (e) => {
 
 const unallocateDropzone = document.querySelector(".unallocate-dropzone");
 
-loadRunsFromDB();
+loadResourcesFromSupabase().then(() => {
+  loadRunsFromDB();
+});
 
 runCards.forEach((card) => {
   card.addEventListener("click", () => {
@@ -3716,6 +3769,21 @@ function renderRuns() {
         #${run.plannerRunNo ? String(Number(run.plannerRunNo)) : ""}
         <button class="run-delete-btn ${runEditMode ? "" : "run-delete-btn-hidden"}" data-run-id="${run.id}">×</button>
       </div>
+
+      <div class="run-resources">
+        <span class="run-resource driver-resource">
+          ${getDriverLabel(run.driverId)}
+        </span>
+
+        <span class="run-resource vehicle-resource">
+          ${getVehicleLabel(run.vehicleId)}
+        </span>
+
+        <span class="run-resource trailer-resource">
+          ${getTrailerLabel(run.trailerId)}
+        </span>
+      </div>
+
     `;
 
     card.addEventListener("click", () => {
@@ -4013,6 +4081,9 @@ async function loadRunsFromDB() {
       name: row.run_name || "Unknown",
       date: row.run_date,
       startTime: row.start_time ? row.start_time.slice(0, 5) : "00:00",
+      driverId: row.driver_id || null,
+      vehicleId: row.vehicle_id || null,
+      trailerId: row.trailer_id || null,
       plannerRunNo: row.planner_run_no,
       requiredVehicleType: row.required_vehicle_type || "",
       stops: [],
@@ -4020,6 +4091,24 @@ async function loadRunsFromDB() {
   });
 
   renderRuns();
+}
+
+function getDriverLabel(driverId) {
+  const driver = drivers.find((d) => d.id === driverId);
+  if (!driver) return "No driver";
+  return `${driver.last_name}, ${driver.first_name}`;
+}
+
+function getVehicleLabel(vehicleId) {
+  const vehicle = vehicles.find((v) => v.id === vehicleId);
+  if (!vehicle) return "No vehicle";
+  return vehicle.registration;
+}
+
+function getTrailerLabel(trailerId) {
+  const trailer = trailers.find((t) => t.id === trailerId);
+  if (!trailer) return "No trailer";
+  return trailer.trailer_number;
 }
 
 async function softDeleteRun(runId) {
