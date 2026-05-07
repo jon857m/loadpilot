@@ -3771,9 +3771,14 @@ function renderRuns() {
       </div>
 
       <div class="run-resources">
-        <span class="run-resource driver-resource">
-          ${getDriverLabel(run.driverId)}
-        </span>
+        ${runEditMode
+          ? renderDriverSelect(run.driverId, run.id)
+          : `
+            <span class="run-resource driver-resource">
+              ${getDriverLabel(run.driverId)}
+            </span>
+          `
+        }
 
         <span class="run-resource vehicle-resource">
           ${getVehicleLabel(run.vehicleId)}
@@ -4097,6 +4102,23 @@ function getDriverLabel(driverId) {
   const driver = drivers.find((d) => d.id === driverId);
   if (!driver) return "No driver";
   return `${driver.last_name}, ${driver.first_name}`;
+}
+
+function renderDriverSelect(selectedDriverId, runId) {
+  return `
+    <select class="run-driver-select" data-run-id="${runId}">
+      <option value="">No driver</option>
+
+      ${drivers.map(driver => `
+        <option
+          value="${driver.id}"
+          ${driver.id === selectedDriverId ? "selected" : ""}
+        >
+          ${driver.last_name}, ${driver.first_name}
+        </option>
+      `).join("")}
+    </select>
+  `;
 }
 
 function getVehicleLabel(vehicleId) {
