@@ -2651,6 +2651,17 @@ async function saveAllocationToSupabase(movementId, runId) {
 
     const accountId = await getAccountId();
 
+    const collectIndex = run.stops.findIndex((stop) => {
+      return stop.movementKey === movementId && stop.type === "collect";
+    });
+
+    const deliverIndex = run.stops.findIndex((stop) => {
+      return stop.movementKey === movementId && stop.type === "deliver";
+    });
+
+    const collectSequence = collectIndex >= 0 ? collectIndex + 1 : null;
+    const deliverSequence = deliverIndex >= 0 ? deliverIndex + 1 : null;
+
     const { error: upsertError } = await supabaseClient
       .from("run_allocations")
       .upsert(
@@ -2658,7 +2669,9 @@ async function saveAllocationToSupabase(movementId, runId) {
           account_id: accountId,
           run_id: run.id,
           movement_id: movementId,
-          stop_sequence: 1,
+          stop_sequence: collectSequence || 1,
+          collect_sequence: collectSequence,
+          deliver_sequence: deliverSequence,
         },
         {
           onConflict: "movement_id",
@@ -2667,7 +2680,12 @@ async function saveAllocationToSupabase(movementId, runId) {
 
     if (upsertError) throw upsertError;
 
-    console.log("Saved allocation:", movementId, "→ run", run.plannerRunNo);
+    console.log("Saved allocation:", {
+      movementId,
+      run: run.plannerRunNo,
+      collectSequence,
+      deliverSequence,
+    });
   } catch (err) {
     console.error("Error saving allocation:", err);
   }
@@ -3768,6 +3786,21 @@ function renderRuns() {
         #${run.plannerRunNo ? String(Number(run.plannerRunNo)) : ""}
         <button class="run-delete-btn ${runEditMode ? "" : "run-delete-btn-hidden"}" data-run-id="${run.id}">×</button>
       </div>
+
+      <div class="run-resources">
+      <span class="run-resource driver-resource">
+        ${getDriverLabel(run.driverId)}
+      </span>
+
+      <span class="run-resource vehicle-resource">
+        ${getVehicleLabel(run.vehicleId)}
+      </span>
+
+      <span class="run-resource trailer-resource">
+        ${getTrailerLabel(run.trailerId)}
+      </span>
+    </div>
+
     `;
 
     card.addEventListener("click", () => {
@@ -4072,6 +4105,24 @@ async function loadRunsFromDB() {
   });
 
   renderRuns();
+}
+
+function getDriverLabel(driverId) {
+  const driver = drivers.find((d) => d.id === driverId);
+  if (!driver) return "No driver";
+  return `${driver.last_name}, ${driver.first_name}`;
+}
+
+function getVehicleLabel(vehicleId) {
+  const vehicle = vehicles.find((v) => v.id === vehicleId);
+  if (!vehicle) return "No vehicle";
+  return vehicle.registration;
+}
+
+function getTrailerLabel(trailerId) {
+  const trailer = trailers.find((t) => t.id === trailerId);
+  if (!trailer) return "No trailer";
+  return trailer.trailer_number;
 }
 
 async function softDeleteRun(runId) {
