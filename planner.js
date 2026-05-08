@@ -2222,6 +2222,24 @@ unallocateDropzone.addEventListener("drop", (e) => {
     unallocateMovement(dragPayload.movementKey);
   }
 
+  if (dragPayload.type === "routeStopGroup") {
+    const run = runs[dragPayload.runId];
+
+    if (run) {
+      const movementIds = [
+        ...new Set(
+          dragPayload.stopIndexes
+            .map((index) => run.stops[index]?.movementKey)
+            .filter(Boolean),
+        ),
+      ];
+
+      movementIds.forEach((movementId) => {
+        unallocateMovement(movementId);
+      });
+    }
+  }
+
   if (dragPayload.type === "jobMovement") {
     unallocateMovement(dragPayload.movementId);
   }
@@ -3845,6 +3863,14 @@ function renderRuns() {
 
     card.addEventListener("click", () => {
       selectRun(run.id);
+    });
+
+        card.addEventListener("dblclick", () => {
+      const runsLayoutBtn = document.querySelector('.layout-btn[data-layout="runs"]');
+
+      if (runsLayoutBtn) {
+        runsLayoutBtn.click();
+      }
     });
 
     const timeInput = card.querySelector(".run-time-input");
