@@ -862,6 +862,8 @@ grid-template-columns:
   gap: 8px;
   margin-top: 6px;
   flex-wrap: wrap;
+
+  padding-left: 52px;
 }
 
 .run-resource {
@@ -869,7 +871,7 @@ grid-template-columns:
   align-items: center;
   gap: 6px;
 
-  height: 28px;
+  height: 24px;
   min-width: 145px;
   max-width: 145px;
 
@@ -882,7 +884,7 @@ grid-template-columns:
 
   color: #d6dde7;
 
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 500;
 
   overflow: hidden;
@@ -931,6 +933,17 @@ grid-template-columns:
     border-color 0.15s ease,
     background 0.15s ease,
     box-shadow 0.15s ease;
+}
+
+.run-resource-input {
+  box-sizing: border-box;
+  line-height: 24px;
+}
+
+.run-driver-search,
+.run-vehicle-search,
+.run-trailer-search {
+  height: 24px;
 }
 
 .run-resource-input:hover {
@@ -2025,6 +2038,7 @@ box-shadow: inset 2px 0 0 rgba(90, 167, 255, 0.85);
 }
 
 .run-edit-row {
+  height: 26px;
   min-height: 26px;
   align-items: center;
 }
@@ -2108,4 +2122,26 @@ box-shadow: inset 2px 0 0 rgba(90, 167, 255, 0.85);
 .empty-resource .run-resource-icon {
   color: #68707c;
   opacity: 0.7;
+}
+
+.driver-resource .run-resource-icon {
+  color: #c98a3d;
+}
+
+.driver-resource.empty-resource .run-resource-icon {
+  color: #68707c;
+}
+
+.run-driver-primary {
+  margin-top: 6px;
+  padding-left: 18px;
+}
+
+.run-driver-primary .driver-resource,
+.run-driver-primary .run-resource-input {
+  min-width: 220px;
+  max-width: 220px;
+  height: 28px;
+  font-size: 12px;
+  font-weight: 650;
 }

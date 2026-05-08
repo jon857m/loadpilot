@@ -3824,7 +3824,7 @@ function renderRuns() {
         <button class="run-delete-btn ${runEditMode ? "" : "run-delete-btn-hidden"}" data-run-id="${run.id}">×</button>
       </div>
 
-      <div class="run-resources">
+      <div class="run-driver-primary">
       ${
         runEditMode
           ? renderDriverSelect(run.driverId, run.id)
@@ -3835,6 +3835,9 @@ function renderRuns() {
             </span>
           `
       }
+      </div>
+
+      <div class="run-resources">
 
       ${
         runEditMode
