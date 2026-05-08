@@ -3861,17 +3861,25 @@ function renderRuns() {
 
     `;
 
-    card.addEventListener("click", () => {
-      selectRun(run.id);
-    });
+card.addEventListener("click", () => {
+  selectRun(run.id);
+});
 
-        card.addEventListener("dblclick", () => {
-      const runsLayoutBtn = document.querySelector('.layout-btn[data-layout="runs"]');
+card.addEventListener("dblclick", () => {
+  activeRunId = run.id;
 
-      if (runsLayoutBtn) {
-        runsLayoutBtn.click();
-      }
-    });
+  document.querySelectorAll(".run-card").forEach((c) => {
+    c.classList.toggle("active", c.dataset.run === run.id);
+  });
+
+  renderActiveRun();
+
+  const runsLayoutBtn = document.querySelector('.layout-btn[data-layout="runs"]');
+
+  if (runsLayoutBtn) {
+    runsLayoutBtn.click();
+  }
+});
 
     const timeInput = card.querySelector(".run-time-input");
     const nameInput = card.querySelector(".run-name-input");
