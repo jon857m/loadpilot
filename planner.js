@@ -4632,7 +4632,9 @@ if (jobLookupInput) {
 
   routeList.innerHTML = `
     <div class="route-header job-leg-grid">
-      <div>Seq</div>
+      <div>
+        <input type="checkbox" id="jobLegSelectAll" title="Select all job legs" />
+      </div>
       <div>Job</div>
       <div>C/D</div>
       <div>Date / Time</div>
@@ -4662,7 +4664,14 @@ if (jobLookupInput) {
       row.dataset.runId = runId || "";
 
       row.innerHTML = `
-        <div>${seq}</div>
+        <div class="seq-select-cell">
+          <input
+            type="checkbox"
+            class="order-row-select"
+            data-movement-id="${movement.id}"
+          />
+          <span>${seq}</span>
+        </div>
         <div>${shortJobFullLabel(movement.jobId)}</div>
         <div>
           <span class="cd-badge ${type === "collect" ? "cd-collect" : "cd-deliver"}">
@@ -4687,11 +4696,35 @@ if (jobLookupInput) {
         </div>
       `;
 
+            const checkbox = row.querySelector(".order-row-select");
+
+      if (checkbox) {
+        checkbox.addEventListener("change", () => {
+          const movementId = checkbox.dataset.movementId;
+          const isChecked = checkbox.checked;
+
+          setOrderMovementSelection(movementId, isChecked);
+          updateSelectedCount();
+        });
+      }
+
       row.addEventListener("dragstart", () => {
-        dragPayload = {
-          type: "jobMovement",
-          movementId: movement.id,
-        };
+        const combinedSelected = getCombinedSelectedMovementIds();
+
+        if (
+          combinedSelected.includes(movement.id) &&
+          combinedSelected.length > 1
+        ) {
+          dragPayload = {
+            type: "jobMovementGroup",
+            movementIds: combinedSelected,
+          };
+        } else {
+          dragPayload = {
+            type: "jobMovement",
+            movementId: movement.id,
+          };
+        }
       });
 
       row.addEventListener("dblclick", () => {
@@ -4709,6 +4742,20 @@ if (jobLookupInput) {
 
     routeList.appendChild(makeLegRow("collect", movement.collect, index + 1));
     routeList.appendChild(makeLegRow("deliver", movement.deliver, index + 1));
+  });
+
+    document.getElementById("jobLegSelectAll")?.addEventListener("change", (e) => {
+    const shouldSelect = e.target.checked;
+
+    routeList.querySelectorAll(".job-leg-row").forEach((row) => {
+      const movementId = row.dataset.movementId;
+
+      if (!movementId) return;
+
+      setOrderMovementSelection(movementId, shouldSelect);
+    });
+
+    updateSelectedCount();
   });
 
   document.getElementById("backToOrderBtn")?.addEventListener("click", () => {
